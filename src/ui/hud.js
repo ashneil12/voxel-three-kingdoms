@@ -7,45 +7,22 @@
 // Styles live in index.html (#hud ...). Sizes are rem, and 1rem = 1/72 of the viewport height (10 px at 720p).
 import { Vector3 } from 'three';
 import { on } from '../core/events.js';
+import { HERO } from '../heroes/index.js';
 import { ST } from '../crowd/crowd.js';
 import { ARENA_RADIUS, WALL_Z, GATE_X } from '../world/world.js';
 
 const OFFICERS = [['夏侯恩', 'XIAHOU EN'], ['晏明', 'YAN MING'], ['淳于導', 'CHUNYU DAO'], ['張郃', 'ZHANG HE']];
-// 20×20 pixel portrait of Zhao Yun (voxel look): hair, teal headband, peach skin, white/teal armour collar.
-const FACE = [
-  '....................',
-  '.......KKKKK........',
-  '.....KKKKKKKKK......',
-  '....KKKKKKKKKKKK....',
-  '...KKKkkKKKKKKKKK...',
-  '...KKKKKKKKKKKKKKKK.',
-  '...KTTTTTTTTTTTTKKTt',
-  '...KKKKKKKKKKKKKKKtT',
-  '...KKKSKKKKKSKKKKKKt',
-  '...KKSSSSSSSSSSKKKKK',
-  '...KKEESSSSSSEEKKKK.',
-  '...KKSwESSSSwESKKKK.',
-  '...KKSSSSSsSSSSKKK..',
-  '....KSSSSSsSSSSKKK..',
-  '....KsSSSSSSSSsKK...',
-  '.....sSSSMMSSSsKK...',
-  '......ssSSSSssKK....',
-  '...WWTtssssssTtWW...',
-  '.WWWWWWTWWWWTWWWWW..',
-  'WWwwWWWWTWWTWWWWwwW.',
-];
-const PAL = { K: '#1d1514', k: '#4a3834', S: '#efc3a0', s: '#c38a6c', E: '#140c0c', M: '#7e3a2e', T: '#3fb8b0', t: '#1f5f5c', W: '#efe8de', w: '#ffffff' };
-
-function paintFace(cv) {
+/** Paint a hero's 20×20 pixel portrait into a canvas. */
+export function paintPortrait(cv, hero = HERO) {
   const g = cv.getContext('2d');
-  FACE.forEach((row, y) => [...row].forEach((ch, x) => { if (PAL[ch]) { g.fillStyle = PAL[ch]; g.fillRect(x, y, 1, 1); } }));
+  hero.face.forEach((row, y) => [...row].forEach((ch, x) => { if (hero.pal[ch]) { g.fillStyle = hero.pal[ch]; g.fillRect(x, y, 1, 1); } }));
 }
 
 export function createHud(root, game, { camera = null } = {}) {
   game.hudTagR = 44.7;   // render-only seam: crowd view skips its 3D officer ▼ where the floating tags below take over
   root.innerHTML = `
-    <div class="h-intro"><div class="zh">趙雲</div><i class="seal">常山</i><div class="en">ZHAO YUN</div>
-      <div class="sub">常山龍膽 · 單騎無雙 · 義貫雲天</div>
+    <div class="h-intro"><div class="zh">${HERO.zh}</div><i class="seal">${HERO.seal}</i><div class="en">${HERO.en}</div>
+      <div class="sub">${HERO.sub}</div>
       <div class="keys"><kbd>WASD</kbd> 移動 move · <kbd>J</kbd> 攻擊 attack · <kbd>K</kbd> 蓄力 charge<br>
         <kbd>Space</kbd> 跳躍 jump · <kbd>L</kbd> 閃避 dodge · <kbd>I</kbd> 無雙 musou · <kbd>Q</kbd><kbd>E</kbd> 視角 · <kbd>H</kbd> 說明</div></div>
     <div class="h-target"><i class="seal">將</i><b></b><span></span><div class="bar"><em></em><i></i></div><strong>擊破</strong></div>
@@ -54,9 +31,9 @@ export function createHud(root, game, { camera = null } = {}) {
     <div class="h-chain"><div class="num"><b class="dig" data-t="0"><span>0</span></b><u></u><u></u><u></u></div><small><em>連擊</em>CHAIN</small></div>
     <div class="h-mile"><b class="dig" data-t="50"><span>50</span></b><i class="seal">擊破</i></div>
     <div class="h-band"><p></p><small></small></div>
-    <div class="h-dlg"><canvas width="20" height="20"></canvas><div><b>趙雲 <span>ZHAO YUN</span></b><p></p><small></small></div></div>
-    <div class="h-copy">長槍所向<br>百軍皆破</div>
-    <div class="h-player"><div class="badge"><canvas width="20" height="20"></canvas></div><div class="name">趙雲</div>
+    <div class="h-dlg"><canvas width="20" height="20"></canvas><div><b>${HERO.zh} <span>${HERO.en}</span></b><p></p><small></small></div></div>
+    <div class="h-copy">${HERO.copy}</div>
+    <div class="h-player"><div class="badge"><canvas width="20" height="20"></canvas></div><div class="name">${HERO.zh}</div>
       <div class="bar hp"><em></em><i></i></div>
       <div class="mu"><div><i></i></div><div><i></i></div><div><i></i></div><span>無雙</span></div></div>
     <div class="h-ko"><div class="num"><b class="dig" data-t="0"><span>0</span></b><u></u></div><small><em>擊破</em>K.O. COUNT</small></div>`;
@@ -72,7 +49,7 @@ export function createHud(root, game, { camera = null } = {}) {
     bar: el.querySelector('.bar i'), lagEl: el.querySelector('.bar em'), lag: 1 }));
   const moraleI = $('.morale i'), mapEl = $('.h-map');
   const mapCv = $('.h-map canvas'), map = mapCv.getContext('2d');
-  $$('canvas[width="20"]').forEach(paintFace);
+  $$('canvas[width="20"]').forEach((cv) => paintPortrait(cv));
 
   // ---- event-driven state (frames are sim frames)
   const S = {};
@@ -90,7 +67,7 @@ export function createHud(root, game, { camera = null } = {}) {
   // (y 64-70 %) sit apart, so neither cancels the other. Dialogue holds 5 s like DW8.
   const banner = (html, en, dur = 150) => { if (S.bandQ.length < 3) S.bandQ.push({ html, en, dur }); };
   const say = (zh, en, dur = 300) => { S.dlg = { zh, en, f: game.frame, dur }; };
-  on('scenario', (e) => { reset(); resetText(); if (e.name === 'crowd' || e.name === 'arena') S.dlg = { zh: '主公之子在此，趙雲誓死護之！', en: 'My lord\'s son is in my care. None of you shall pass!', f: 185, dur: 300 }; });
+  on('scenario', (e) => { reset(); resetText(); if (e.name === 'crowd' || e.name === 'arena') S.dlg = { zh: HERO.lines.open[0], en: HERO.lines.open[1], f: 185, dur: 300 }; });
   on('crowd:wave', (e) => {
     if (game.frame - S.waveF > 600) { S.waveF = game.frame; banner('<em>魏軍</em>援兵 到着', 'Wei reinforcements have arrived!', 130); }
     S.waves.push({ x: e.x, z: e.z, f: game.frame });
@@ -104,7 +81,7 @@ export function createHud(root, game, { camera = null } = {}) {
     S.tgt = e.i; S.tgtKoF = game.frame;
   });
   on('musou:start', () => { S.musouF = S.actF = game.frame; S.band = null; S.dlg = null; });
-  on('musou:end', () => { S.musouEnd = game.frame; say('吾乃常山趙子龍也！', 'I am Zhao Zilong of Changshan!'); S.dlg.f += 20; });
+  on('musou:end', () => { S.musouEnd = game.frame; say(...HERO.lines.musou); S.dlg.f += 20; });
   on('hero:hurt', () => { S.hurtF = S.actF = game.frame; });
   addEventListener('keydown', (e) => { if (e.code === 'KeyH') showKeys = !(showKeys ?? true); });
 

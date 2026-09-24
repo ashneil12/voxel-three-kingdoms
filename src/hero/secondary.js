@@ -1,17 +1,14 @@
-// Secondary motion (render-only): five kinds of verlet spring chains with distinct weight, from light to heavy —
-// teal-blue hair ribbons, blue spear tassel strands, the long ponytail, the teal front apron and the white cape — plus
-// the pauldrons, which turn halfway with the upper arms. Chains are anchored to rig joints and simulated in world space
+// Secondary motion (render-only): verlet spring chains authored per hero (src/heroes/*.js: hair, ribbons, tassels,
+// apron, cape, beard) plus the pauldrons, which turn halfway with the upper arms. Chains are anchored to rig joints and simulated in world space
 // with gravity, gusting wind, drag, a pull toward the rest direction (in the anchor's frame) and sphere colliders on
 // the body (head, chest, hips, thighs, knees). Segment meshes are voxel slabs placed in world space every frame.
 // Visual state only — never touches the sim.
 import * as THREE from 'three';
-import { vox, C, HV } from './model.js';
-import { hash01 } from '../core/rng.js';
+import { HV } from './model.js';
 
 const _a = new THREE.Vector3(), _r = new THREE.Vector3(), _t = new THREE.Vector3(), _q = new THREE.Quaternion();
 const _x = new THREE.Vector3(), _y = new THREE.Vector3(), _z = new THREE.Vector3(), _m = new THREE.Matrix4();
 const _c = new THREE.Vector3(), _d = new THREE.Vector3();
-const B = (a, b, c) => ({ a, b, c });
 
 function chain(scene, mat, joint, { anchor, rest, n, len, seg, stiff = 0.12, drag = 0.08, grav = 1, wind = 1, face = [0, 0, -1], hit = [], cone = 100, sway = 0 }) {
   const meshes = [];
@@ -102,96 +99,13 @@ function chain(scene, mat, joint, { anchor, rest, n, len, seg, stiff = 0.12, dra
   };
 }
 
-// ---------------------------------------------------------------- segment voxel slabs (local -Y along the chain)
-const EMBLEM = [                     // blue dragon-swirl roundel on the cape
-  '..XXX..',
-  '.XX..X.',
-  'X...X.X',
-  'X.XXX.X',
-  'X.X...X',
-  '.X..XX.',
-  '..XXX..',
-];
-
-function hairSeg(i, n) {
-  const w = Math.max(1, Math.round(4 - (i * 3) / (n - 1)));
-  const tip = i === n - 1;
-  return vox([B([-w, tip ? -6 : -4, -w], [w, 0, w], (x, y, z) => {
-    const edge = x === -w || x === w - 1 || z === -w || z === w - 1;
-    if (edge && hash01(x + i * 11, y + 50, z) < 0.3) return null;
-    if (tip && y < -3 && hash01(x, z, i) < 0.5 + (-3 - y) * 0.15) return null;
-    return (x * 2 + z + 40) % 5 === 0 ? C.hairH : (x + z + 40) % 3 === 0 ? C.hairT : C.hair;
-  })], HV, { jitter: 0.06, ao: 0.3 });
-}
-
-function ribbonSeg(i, n) {
-  const tip = i === n - 1;
-  return vox([B([-2, -8, 0], [2, 0, 1], (x, y) => (tip && y <= -7 && (x === -1 || x === 0) ? null : x === -2 ? C.ribbonD : C.ribbon))],
-    0.012, { off: [0, 0, -0.5], jitter: 0.03, ao: 0.15 });
-}
-
-function capeSeg(i, n) {
-  const w = Math.round(6 + (i * 2.5) / (n - 1));                  // half-width in voxels: 0.3 m → 0.42 m wide
-  const last = i === n - 1;
-  const paint = (x, y) => {
-    if (last && y === -7 && hash01(x, i, 3) < 0.45) return null;  // ragged hem
-    if (last && (y === -5 || y === -4)) return y === -5 ? C.T : C.Td;
-    if (i === 1) {
-      const row = EMBLEM[-1 - y], ch = row && row[x + 3];
-      if (ch === 'X') return C.emb;
-    }
-    return x === -w || x === w - 1 ? C.capeD : C.cape;
-  };
-  // 1-voxel cloth whose side edges curl toward the body (a shallow U, not a flat board), with pleats standing out
-  // on the back every 5th column (AO shades the folds)
-  const curl = (x) => x === -w || x === w - 1 || (i >= 3 && (x === -w + 1 || x === w - 2));
-  return vox([
-    B([-w, -7, 0], [w, 0, 1], (x, y) => (curl(x) ? null : paint(x, y))),
-    B([-w, -7, -1], [w, 0, 0], (x, y) => (curl(x) ? paint(x, y) : null)),
-    B([-w, -7, 1], [w, 0, 2], (x, y) => ((x + 40) % 5 === 0 && !curl(x) && !(i === 1 && Math.abs(x) < 4) ? paint(x, y) : null)),
-  ],
-    0.025, { off: [0, 0, -0.5], jitter: 0.04, ao: 0.18 });
-}
-
-function apronSeg(i, n) {
-  const last = i === n - 1;
-  return vox([B([-3, -5, 0], [3, 0, 1], (x, y) => (last && y === -5 ? (x % 2 ? null : C.S) : last && y === -4 ? C.Wh : x === -3 || x === 2 ? C.Td : C.T))],
-    0.025, { off: [0, 0, -0.5], jitter: 0.05, ao: 0.2 });
-}
-
-function tasselSeg(i, n) {
-  // silk strands: every (x,z) column is one strand with its own shade; the last segment frays to uneven lengths
-  const w = i === 0 ? 3 : 2, last = i === n - 1;
-  return vox([B([-w, -7, -w], [w, 0, w], (x, y, z) => {
-    const h = hash01(x + 9, z + 9, 7);
-    if (last && -y > 3 + h * 5) return null;
-    if ((x === -w || x === w - 1) && (z === -w || z === w - 1) && i > 0) return null;
-    return last && -y > 3 + h * 3 ? C.blueD : h < 0.3 ? C.blueH : h > 0.8 ? C.blueD : C.blue;
-  })], 0.014, { jitter: 0.06, ao: 0.25 });
-}
-
 // ---------------------------------------------------------------- assembly
-export function createSecondary(scene, rig, mat) {
+/** def.chains() → [{ joint, anchor, rest, n, len, seg, ...chain options }] — the hero's cloth, hair and tassels. */
+export function createSecondary(scene, rig, mat, def) {
   const j = rig.joints;
   const chains = [];
   const add = (joint, o) => { const c = chain(scene, mat, joint, o); chains.push(c); return c; };
-  // heaviest → lightest
-  add(j.chest, { anchor: [0, 0.255, -0.16], rest: [0, -1, 0.15], n: 6, len: 0.17, stiff: 0.16, drag: 0.22, wind: 1.1, cone: 80, sway: 0.2,
-    seg: capeSeg, hit: ['chest', 'hips', 'thighL', 'thighR', 'kneeL', 'kneeR'] });
-  add(j.hips, { anchor: [0, -0.02, 0.19], rest: [0, -1, 0.12], n: 3, len: 0.12, stiff: 0.12, drag: 0.14, wind: 0.4, face: [0, 0, 1], cone: 70, sway: 0.08,
-    seg: apronSeg, hit: [['thighL', 0.02], ['thighR', 0.02], ['kneeL', 0.02], ['kneeR', 0.02]] });
-  add(j.head, { anchor: [0, 14 * HV, -5 * HV], rest: [0, -0.92, -0.4], n: 8, len: 0.07, stiff: 0.09, drag: 0.13, wind: 1.6, cone: 115, sway: 0.4,
-    seg: hairSeg, hit: ['head', ['chest', 0.035], ['hips', 0.03]] });
-  for (const sx of [-1, 1]) {
-    add(j.head, { anchor: [sx * 2.5 * HV, 10.5 * HV, -6.8 * HV], rest: [sx * 0.35, -0.5, -1], n: 5, len: 0.09, stiff: 0.03, drag: 0.06, wind: 2.4, cone: 105, sway: 0.6,
-      seg: ribbonSeg, hit: ['head', ['chest', 0.02]] });
-  }
-  // blue tassel: three bushy strands hanging from under the dragon collar
-  for (let k = 0; k < 5; k++) {
-    const a = k * 1.2566, ox = Math.cos(a) * 0.016, oy = Math.sin(a) * 0.016;
-    add(j.weapon, { anchor: [ox, oy, 1.43], rest: [ox * 12, oy * 4 - 1, -0.35], n: 3, len: 0.064, stiff: 0.05 + k * 0.004, drag: 0.12, wind: 0.8, cone: 130, sway: 0.15,
-      face: [1, 0, 0], seg: tasselSeg });
-  }
+  for (const o of def.chains()) add(j[o.joint], o);
 
   const cols = {};
   for (const k of ['head', 'chest', 'hips', 'thighL', 'thighR', 'kneeL', 'kneeR']) cols[k] = { c: new THREE.Vector3(), r: 0 };

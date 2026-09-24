@@ -14,7 +14,8 @@ import { createMusou } from './musou/musou.js';
 import { createMusouView } from './musou/view.js';
 import { createCamSim, createCameraRig } from './camera/camera.js';
 import { createVfx } from './vfx/vfx.js';
-import { createHud } from './ui/hud.js';
+import { createHud, paintPortrait } from './ui/hud.js';
+import { HERO, HEROES } from './heroes/index.js';
 import { createAudio } from './audio/audio.js';
 
 const params = new URLSearchParams(location.search);
@@ -78,6 +79,7 @@ function start() {
   game.crowd.reset(); game.combat.reset(); game.musou.reset(); game.cam.reset(0);
   heroView.reset();
   game.crowd.spawnArmy(Math.min(ENEMIES, game.crowd.grunts));
+  if (params.has('musou')) game.hero.musou = game.hero.musouMax;   // debug: start with a full gauge
   emit('scenario', { name: 'arena' });
 }
 
@@ -90,12 +92,27 @@ addEventListener('resize', () => {
 
 // ---- start / pause menu (index.html #menu): the sim waits while it is open
 const menu = document.getElementById('menu'), go = document.getElementById('go'), hudEl = document.getElementById('hud');
+// hero select: one card per officer; picking another reloads with ?hero=<id> (the model is built at boot)
+const pickHero = (id) => { if (id === HERO.id) return; const q = new URLSearchParams(location.search); q.set('hero', id); location.search = q; };
+document.getElementById('tagline').textContent = HERO.tagline;
+for (const h of HEROES) {
+  const b = document.createElement('button');
+  b.className = h.id === HERO.id ? 'on' : '';
+  b.innerHTML = `<canvas width="20" height="20"></canvas><span><b>${h.zh}</b><small>${h.weapon}</small></span>`;
+  paintPortrait(b.firstChild, h);
+  b.addEventListener('click', (e) => { e.stopPropagation(); pickHero(h.id); });
+  document.getElementById('heroes').appendChild(b);
+}
 let paused;
 const setPaused = (v) => { paused = v; menu.hidden = !v; hudEl.hidden = v; input.sample(); };   // sample(): drop keys pressed on the menu
 go.addEventListener('click', () => setPaused(false));
 addEventListener('keydown', (e) => {
   if (e.code === 'Escape') setPaused(!paused);
   else if (paused && (e.code === 'Enter' || e.code === 'NumpadEnter')) setPaused(false);
+  else if (paused && (e.code === 'ArrowLeft' || e.code === 'ArrowRight')) {
+    const i = HEROES.indexOf(HERO) + (e.code === 'ArrowLeft' ? -1 : 1);
+    pickHero(HEROES[(i + HEROES.length) % HEROES.length].id);
+  }
 });
 addEventListener('blur', () => setPaused(true));
 

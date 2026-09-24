@@ -1,4 +1,4 @@
-// Hero glue. Sim side: owns Zhao Yun's state and runs combo/locomotion/physics each fixed step, plus animation
+// Hero glue. Sim side: owns the hero's state and runs combo/locomotion/physics each fixed step, plus animation
 // bookkeeping (which clip, normalised time, blend-from) so the rendered pose is a pure function of sim state.
 // Render side: createHeroView builds rig + voxel model + secondary chains and poses them from the sim state.
 import * as THREE from 'three';
@@ -12,6 +12,7 @@ import { bufferInput, stepCombo } from './combo.js';
 import { stepLocomotion, stepPhysics, setState, LOCO } from './locomotion.js';
 import { ARENA_RADIUS, WALL_Z } from '../world/world.js';
 import { emit } from '../core/events.js';
+import { HERO } from '../heroes/index.js';
 
 /** Clip registry sampled by the hero. Other parts (musou) register their clips here. */
 export const CLIPS = { ...ATTACK_CLIPS, ...LOCO_CLIPS };
@@ -139,8 +140,8 @@ export function heroPose(h, out) {
 export function createHeroView(scene, hero) {
   const rig = createRig();
   scene.add(rig.root);
-  const model = createHeroModel(rig);
-  const secondary = createSecondary(scene, rig, model.material);
+  const model = createHeroModel(rig, HERO);
+  const secondary = createSecondary(scene, rig, model.material, HERO);
   const ghosts = createDodgeGhosts(scene, model);   // dodge afterimages + i-frame flash (locomotion-dodge)
   const pose = new Float32Array(POSE_SIZE);
   const pos = new THREE.Vector3();

@@ -12,6 +12,7 @@ import * as THREE from 'three';
 import { on } from '../core/events.js';
 import { vrng, hash01 } from '../core/rng.js';
 import { MUSOU, dragonAt, dragonArc } from './musou.js';
+import { HERO } from '../heroes/index.js';
 
 const _m = new THREE.Matrix4(), _l = new THREE.Matrix4(), _q = new THREE.Quaternion(), _s = new THREE.Vector3(), _p = new THREE.Vector3();
 const _x = new THREE.Vector3(), _y = new THREE.Vector3(), _z = new THREE.Vector3(), _v = new THREE.Vector3(), _c = new THREE.Color();
@@ -169,7 +170,7 @@ export function createMusouView(scene, game, camera) {
   document.head.appendChild(css);
   const cut = document.createElement('div');
   cut.className = 'mu-cut';
-  cut.innerHTML = '<div class="sub">常山 趙子龍</div><div class="big">無雙</div><div class="seal">龍膽</div>';
+  cut.innerHTML = `<div class="sub">${HERO.cut.sub}</div><div class="big">無雙</div><div class="seal">${HERO.cut.seal}</div>`;
   document.body.appendChild(cut);
   const [cutSub, cutBig, cutSeal] = cut.children;
   const setStyle = (el, k, v) => { if (el.style[k] !== v) el.style[k] = v; };

@@ -38,6 +38,10 @@ export const CAM = {
   kickMaxPx: 4,             // shake ceiling at 720p (bench: ≤ 4 px, finishers only)
   cutJump: 40,              // hero moved faster than this (m/s, ≥ 1 m) between two renders: teleport → hard cut (dodge 22)
 };
+// debug: ?zoom=0.5 halves the follow distance (model close-ups)
+const ZOOM = Number(new URLSearchParams(location.search).get('zoom')) || 1;
+CAM.dist *= ZOOM; CAM.height -= (1 - ZOOM) * 0.5;
+
 
 const wrap = (a) => Math.atan2(Math.sin(a), Math.cos(a));
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
