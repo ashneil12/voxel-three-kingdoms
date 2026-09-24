@@ -8,6 +8,7 @@ import { SUN_DIR, HAZE, installHaze, createSky } from './sky.js';
 import { buildTerrain } from './terrain.js';
 import { buildCastle } from './castle.js';
 import { buildDressing } from './dressing.js';
+import { STAGE } from '../stages/index.js';
 
 export const ARENA_RADIUS = 46;          // sim clamps hero/crowd inside this
 // castle wall face (sim clamps, minimap and the castle set): far enough back that its skyline (wall top, towers, sun
@@ -16,6 +17,12 @@ export const WALL_Z = 100;
 export const GATE_X = -10;
 // burning barricades/carts at the arena rim: [x, y, z, scale] (ground scorch + fire + wreck)
 const FIELD_FIRES = [[-40, 0, 24, 1.3], [38, 0, -24, 1.2], [-22, 0, -44, 1.4], [30, 0, 36, 1.1], [-47, 0, -8, 1.0], [50, 0, 10, 1.3]];
+// fire-attack stages ring the field with more blazes (evenly spread past the arena rim)
+for (let i = FIELD_FIRES.length; i < (STAGE.light.fires || 0); i++) {
+  const a = i * 2.39996, r = 44 + (i % 3) * 5;
+  FIELD_FIRES.push([Math.cos(a) * r, 0, Math.min(Math.sin(a) * r, 80), 1 + (i % 4) * 0.15]);
+}
+const L = STAGE.light, FIRE_K = L.fire ?? 1;
 // key light: from behind-left of the wall-facing view, higher than the visible sun so the ground reads (hard shadows
 // fall toward the camera, soldiers get a warm rim)
 const LIGHT_DIR = new THREE.Vector3(0.5, 0.58, 0.64).normalize();
@@ -28,9 +35,9 @@ export function createWorld(scene) {
   const sky = createSky();
   scene.add(sky);
 
-  const hemi = new THREE.HemisphereLight(0xaeaac6, 0x8e7a6e, 2.0);  // cool mauve sky fill (neutral enough that shaded brown stone stays brown, not rose), dust bounce
+  const hemi = new THREE.HemisphereLight(...(L.hemi || [0xaeaac6, 0x8e7a6e, 2.0]));  // cool mauve sky fill (neutral enough that shaded brown stone stays brown, not rose), dust bounce
   scene.add(hemi);
-  const sun = new THREE.DirectionalLight(0xffdcc0, 3.5);
+  const sun = new THREE.DirectionalLight(...(L.sun || [0xffdcc0, 3.5]));
   sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);
   const sc = sun.shadow.camera;
@@ -38,7 +45,7 @@ export function createWorld(scene) {
   sun.shadow.bias = -0.0006;
   sun.shadow.normalBias = 0.03;
   scene.add(sun, sun.target);
-  const rim = new THREE.DirectionalLight(0xffb07a, 1.2);            // warm back/rim light from the visible sun
+  const rim = new THREE.DirectionalLight(...(L.rim || [0xffb07a, 1.2]));            // warm back/rim light from the visible sun
   rim.position.copy(SUN_DIR).multiplyScalar(100);
   scene.add(rim);
 
@@ -65,7 +72,7 @@ export function createWorld(scene) {
       sky.material.uniforms.uTime.value = t;
       dressing.update(t);
       castle.update(t);
-      fireLights.forEach((l, i) => { l.intensity = 28 + Math.sin(t * (13 + i * 3.1) + i) * 5 + Math.sin(t * 7.3 + i * 2) * 4; });
+      fireLights.forEach((l, i) => { l.intensity = FIRE_K * (28 + Math.sin(t * (13 + i * 3.1) + i) * 5 + Math.sin(t * 7.3 + i * 2) * 4); });
     },
   };
 }

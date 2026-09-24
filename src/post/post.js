@@ -10,6 +10,7 @@
 //                     vignette, grain, 2 px ordered dither + palette quantisation (retro).
 // post=0 renders straight to the canvas. Render-only: reads camera/focus, never touches sim state.
 import * as THREE from 'three';
+import { STAGE } from '../stages/index.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
 
@@ -56,7 +57,7 @@ export const LOOKS = {
     bloom: 0.25, edge: 0.7, vignette: 0.1,
   },
 };
-const lookName = new URLSearchParams(location.search).get('look');
+const lookName = new URLSearchParams(location.search).get('look') || STAGE.look;
 if (lookName && LOOKS[lookName]) Object.assign(P, LOOKS[lookName]);
 const uName = (k) => 'u' + k[0].toUpperCase() + k.slice(1);
 const pUniforms = () => Object.fromEntries(Object.entries(P).map(([k, v]) => [uName(k), { value: Array.isArray(v) ? new THREE.Vector3(...v) : v }]));

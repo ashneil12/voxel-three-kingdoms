@@ -4,33 +4,36 @@
 // The haze colour exists twice — GLSL (fog + sky) and JS (hazeColor, used to pre-bake the unfogged mountains) —
 // keep them in sync.
 import * as THREE from 'three';
+import { STAGE } from '../stages/index.js';
+
+const S = STAGE.sky;   // per-stage overrides of the golden-hour palette below
 
 // visible sun: 18° left of the wall-facing view, in the gap between the castle's corner tower and the watchtowers;
 // 2.9° up so the disc sits inside the gameplay frame (its top edge is ≈ 5° above level) instead of above it
-export const SUN_ELEV = 0.05, SUN_AZ = 0.314;
+export const SUN_ELEV = S.sunElev ?? 0.05, SUN_AZ = S.sunAz ?? 0.314;
 export const SUN_DIR = new THREE.Vector3(Math.sin(SUN_AZ) * Math.cos(SUN_ELEV), Math.sin(SUN_ELEV), Math.cos(SUN_AZ) * Math.cos(SUN_ELEV));
 
 const lin = (hex) => new THREE.Color(hex);                          // sRGB hex → linear working colour
 const v3 = (c, k = 1) => `vec3(${(c.r * k).toFixed(4)}, ${(c.g * k).toFixed(4)}, ${(c.b * k).toFixed(4)})`;
 
-export const HAZE = lin(0x9e8c98);        // mauve haze away from the sun (fogColor)
-const HAZE_WARM = lin(0xbc9379);          // peach haze toward the sun (the post grade lifts it to the concept's #f3cdae glow)
-const GLOW = lin(0xf6d2a8);               // forward-scatter glow around the sun
-const SKY_MID = lin(0xa98f9c), SKY_TOP = lin(0x5d5a78);
+export const HAZE = lin(S.haze ?? 0x9e8c98);        // mauve haze away from the sun (fogColor)
+const HAZE_WARM = lin(S.hazeWarm ?? 0xbc9379);          // peach haze toward the sun (the post grade lifts it to the concept's #f3cdae glow)
+const GLOW = lin(S.glow ?? 0xf6d2a8);               // forward-scatter glow around the sun
+const SKY_MID = lin(S.skyMid ?? 0xa98f9c), SKY_TOP = lin(S.skyTop ?? 0x5d5a78);
 // golden horizon band (sky only, not the fog): the gameplay frame shows just the lowest ≈ 2-5° of sky, so the sunset
 // lives there — saturated gold toward the sun, amber-rose away from it — and distant silhouettes, fogged toward the
 // darker HAZE colours, read against it
-const HZN_SUN = lin(0xffc070), HZN_AWAY = lin(0xd89a80);
-const CLOUD_ROSE = lin(0xc6a3a2), CLOUD_SHADE = lin(0x7e6e80), CLOUD_LIT = lin(0xffe2c0);
+const HZN_SUN = lin(S.hznSun ?? 0xffc070), HZN_AWAY = lin(S.hznAway ?? 0xd89a80);
+const CLOUD_ROSE = lin(S.cloudRose ?? 0xc6a3a2), CLOUD_SHADE = lin(S.cloudShade ?? 0x7e6e80), CLOUD_LIT = lin(S.cloudLit ?? 0xffe2c0);
 // ground dust: a pale layer hugging the plain (scale height DUST[2] m) that thickens from DUST[0] m out over DUST[1] m up
 // to DUST[3] — the backlit dust the concept's fight stands in: dark cobbles at the hero's feet, a glowing mid-ground,
 // soldiers' legs fading into it with distance. Walls and towers rise out of it (it is gone by ≈ 3 m up).
-const DUST = [12.0, 40.0, 1.0, 0.16], DUST_LIT = lin(0xd8b08a), DUST_SHADE = lin(0x6f6a82);
+const DUST = [12.0, 40.0, 1.0, S.dust ?? 0.16], DUST_LIT = lin(S.dustLit ?? 0xd8b08a), DUST_SHADE = lin(S.dustShade ?? 0x6f6a82);
 // aerial perspective in chroma: from AP[0] m to AP[1] m colours lose up to AP[2] of their saturation toward the haze hue
 // (cool mauve away from the sun, peach toward it) before they lose value — distant troops, the camp and mountains
 // recede into the concept's mauve while their silhouettes stay. AP_COOL is bluer than the mauve it should land on:
 // post.js's split tone warms every highlight (B × 0.75), so the scene colour has to carry the cool
-const AP = [15.0, 110.0, 0.75], AP_COOL = lin(0x8a8cb0);
+const AP = [15.0, 110.0, 0.75], AP_COOL = lin(S.apCool ?? 0x8a8cb0);
 // geometry fades toward the haze at FOG_K of the sky's own horizon brightness: distant walls, towers and troops stay
 // darker than the sunset behind them (the concept's backlit silhouettes) instead of dissolving into it
 const FOG_K = 0.62;
@@ -135,7 +138,7 @@ export function createSky() {
         // sun: wide warm scatter, a tight halo and a small hot core (in frame now: a big HDR disc blooms and the DoF
         // smears it over the watchtowers, which must stay silhouettes)
         c += ${v3(GLOW)} * (pow(s, 60.0) * 0.1 + pow(s, 1400.0) * 0.8);
-        c = mix(c, vec3(4.2, 3.8, 3.0), smoothstep(0.99968, 0.99976, s));
+        c = mix(c, vec3(${(S.sunCore || [4.2, 3.8, 3.0]).map((v) => v.toFixed(2)).join(', ')}), smoothstep(0.99968, 0.99976, s));
         gl_FragColor = vec4(c, 1.0);
       }`,
   });

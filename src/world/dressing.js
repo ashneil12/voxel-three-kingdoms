@@ -2,6 +2,7 @@
 // Wei camp ring (palisade, tents, barricades). Everything animates as a pure function of render time → capture-
 // deterministic; nothing touches sim state.
 import * as THREE from 'three';
+import { STAGE } from '../stages/index.js';
 import { boxesGeometry, shade } from '../core/voxel.js';
 import { makeRng } from '../core/rng.js';
 import { figureGeometry } from './castle.js';
@@ -214,9 +215,9 @@ export function buildDressing(scene, { wallZ, gateX, castle, fieldFires }) {
   // sunlight through the cloth: emissive = the banner's own texture, so 魏/蜀 read even when backlit
   const cm = (map, alpha = true) => new THREE.MeshStandardMaterial({ map, emissiveMap: map, emissive: 0xffffff, emissiveIntensity: 0.22, side: THREE.DoubleSide, alphaTest: alpha ? 0.5 : 0, roughness: 0.92, flatShading: true });
   const mats = {
-    wei: cm(bannerTexture('魏', { bg: '#7d2a1f', fg: '#1a0d0a', border: '#4a1712', seed: 3 })),
-    shu: cm(bannerTexture('蜀', { bg: '#c7a574', fg: '#2a120a', border: '#8e2a1c', w: 192, h: 256, seed: 5 })),
-    shuFlag: cm(bannerTexture('蜀', { bg: '#b89668', fg: '#2a120a', border: '#9a2e1e', w: 128, h: 96, tatter: false, seed: 6 }), false),
+    wei: cm(bannerTexture(STAGE.enemy.ch, { bg: '#7d2a1f', fg: '#1a0d0a', border: '#4a1712', seed: 3 })),
+    shu: cm(bannerTexture(STAGE.ally.ch, { bg: '#c7a574', fg: '#2a120a', border: '#8e2a1c', w: 192, h: 256, seed: 5 })),
+    shuFlag: cm(bannerTexture(STAGE.ally.ch, { bg: '#b89668', fg: '#2a120a', border: '#9a2e1e', w: 128, h: 96, tatter: false, seed: 6 }), false),
     red: cm(bannerTexture('', { bg: '#a3321f', fg: '#000', border: '#6a1c12', w: 64, h: 128, seed: 7 })),
   };
   const addCloth = (mat, w, h, kind, x, y, z, yaw) => {

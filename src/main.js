@@ -16,6 +16,7 @@ import { createCamSim, createCameraRig } from './camera/camera.js';
 import { createVfx } from './vfx/vfx.js';
 import { createHud, paintPortrait } from './ui/hud.js';
 import { HERO, HEROES } from './heroes/index.js';
+import { STAGE, STAGES } from './stages/index.js';
 import { createAudio } from './audio/audio.js';
 
 const params = new URLSearchParams(location.search);
@@ -93,16 +94,20 @@ addEventListener('resize', () => {
 // ---- start / pause menu (index.html #menu): the sim waits while it is open
 const menu = document.getElementById('menu'), go = document.getElementById('go'), hudEl = document.getElementById('hud');
 // hero select: one card per officer; picking another reloads with ?hero=<id> (the model is built at boot)
-const pickHero = (id) => { if (id === HERO.id) return; const q = new URLSearchParams(location.search); q.set('hero', id); location.search = q; };
+// … and one per battle (?stage=<id>; the sky is compiled at boot too)
+const pick = (key, id, cur) => { if (id === cur) return; const q = new URLSearchParams(location.search); q.set(key, id); location.search = q; };
+const pickHero = (id) => pick('hero', id, HERO.id), pickStage = (id) => pick('stage', id, STAGE.id);
 document.getElementById('tagline').textContent = HERO.tagline;
-for (const h of HEROES) {
+const card = (row, on, html, fn) => {
   const b = document.createElement('button');
-  b.className = h.id === HERO.id ? 'on' : '';
-  b.innerHTML = `<canvas width="20" height="20"></canvas><span><b>${h.zh}</b><small>${h.weapon}</small></span>`;
-  paintPortrait(b.firstChild, h);
-  b.addEventListener('click', (e) => { e.stopPropagation(); pickHero(h.id); });
-  document.getElementById('heroes').appendChild(b);
-}
+  b.className = on ? 'on' : '';
+  b.innerHTML = html;
+  b.addEventListener('click', (e) => { e.stopPropagation(); fn(); });
+  document.getElementById(row).appendChild(b);
+  return b;
+};
+for (const h of HEROES) paintPortrait(card('heroes', h === HERO, `<canvas width="20" height="20"></canvas><span><b>${h.zh}</b><small>${h.weapon}</small></span>`, () => pickHero(h.id)).firstChild, h);
+for (const s of STAGES) card('stages', s === STAGE, `<span><b>${s.zh}</b><small>${s.time} · ${s.enemy.army}</small></span>`, () => pickStage(s.id));
 let paused;
 const setPaused = (v) => { paused = v; menu.hidden = !v; hudEl.hidden = v; input.sample(); };   // sample(): drop keys pressed on the menu
 go.addEventListener('click', () => setPaused(false));
@@ -112,6 +117,9 @@ addEventListener('keydown', (e) => {
   else if (paused && (e.code === 'ArrowLeft' || e.code === 'ArrowRight')) {
     const i = HEROES.indexOf(HERO) + (e.code === 'ArrowLeft' ? -1 : 1);
     pickHero(HEROES[(i + HEROES.length) % HEROES.length].id);
+  } else if (paused && (e.code === 'ArrowUp' || e.code === 'ArrowDown')) {
+    const i = STAGES.indexOf(STAGE) + (e.code === 'ArrowUp' ? -1 : 1);
+    pickStage(STAGES[(i + STAGES.length) % STAGES.length].id);
   }
 });
 addEventListener('blur', () => setPaused(true));

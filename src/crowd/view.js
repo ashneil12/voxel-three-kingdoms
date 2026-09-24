@@ -8,6 +8,7 @@
 // pixel star for its last 14 sf (a feint keeps the white star). Guards next to a striker
 // (crowd.raiseF) brandish their weapons and shout with him. Officers carry a spinning ▼ marker. Never writes sim state.
 import * as THREE from 'three';
+import { STAGE } from '../stages/index.js';
 import { sculpt, shade, boxesGeometry } from '../core/voxel.js';
 import { ST, KIND, CROWD } from './crowd.js';
 import { patchHitMaterial, hitAttr, hitGlow, recoilPose } from '../combat/hitfx.js';   // hit-impact: victim flash/tint + recoil pose
@@ -24,6 +25,7 @@ const GRUNT = {
   skin: 0xd6a07a, skinD: 0xb07e5e, eye: 0x1a1210, brow: 0x2b1b14,
   helm: 0x4a4341, helmHi: 0x8a7d74, band: 0xd0321f, belt: 0x4d3322, buckle: 0xb89040, bracer: 0x3b2a20,
 };
+if (STAGE.enemy.band) Object.assign(GRUNT, { band: STAGE.enemy.band, cloth: STAGE.enemy.cloth });   // stage army colours
 const OFFICER = {
   ...GRUNT, armor: 0x2b3350, hi: 0x6a7aa0, lace: 0x141a2c, plate: 0x3e4a70, rivet: 0xe0b450, cloth: 0x4a1a2a,
   pants: 0x23263a, wrap: 0x3a3f5a, wrapD: 0x23263a, helm: 0x2a3150, helmHi: 0xe0b450, belt: 0x6a4a20, buckle: 0xf0c860,
@@ -168,7 +170,7 @@ function flagTexture() {
   g.fillStyle = '#1a0f0c';
   g.font = 'bold 44px "Xingkai SC","STXingkai","Kaiti SC","STKaiti","KaiTi","Songti SC",serif';
   g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.fillText('魏', 32, 46);
+  g.fillText(STAGE.enemy.ch, 32, 46);
   g.globalCompositeOperation = 'destination-out';                                    // swallow-tail bottom
   g.beginPath(); g.moveTo(14, 112); g.lineTo(32, 88); g.lineTo(50, 112); g.fill();
   const t = new THREE.CanvasTexture(c);

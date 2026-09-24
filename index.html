@@ -169,33 +169,36 @@
     color: #f4ead8; font-family: "Kaiti SC", "STKaiti", "KaiTi", "HudBrush", serif; user-select: none;
     background: linear-gradient(90deg, rgba(12,8,6,.92) 0, rgba(12,8,6,.78) 40%, rgba(12,8,6,.15) 75%, rgba(12,8,6,0)); }
   #menu[hidden] { display: none; }
-  #menu .t { font: 700 12rem/1 "Xingkai SC", "STXingkai", "HudBrush", serif; letter-spacing: 1rem; color: #f7f1e8;
+  #menu .t { font: 700 9.5rem/1 "Xingkai SC", "STXingkai", "HudBrush", serif; letter-spacing: 1rem; color: #f7f1e8;
     text-shadow: .4rem .5rem 0 rgba(0,0,0,.55), 0 0 3rem rgba(0,0,0,.5); }
   #menu .t i { display: inline-block; vertical-align: 3rem; margin-left: 1.2rem; font: 700 2.4rem/1.05 "Xingkai SC", "STXingkai", "HudBrush", serif;
     font-style: normal; writing-mode: vertical-rl; padding: .5rem .35rem; border-radius: .3rem; color: #f8e6d2; background: #b3261e; letter-spacing: 0;
     text-shadow: none; box-shadow: inset 0 0 0 .2rem #b3261e, inset 0 0 0 .35rem rgba(248,230,210,.75); }
   #menu .en { font: 500 1.8rem/1 "Avenir Next", "Helvetica Neue", sans-serif; letter-spacing: 1.1em; margin: .6rem 0 0 .6rem; opacity: .85; }
-  #menu .sub { font-size: 2.2rem; letter-spacing: .5rem; margin: 2rem 0 0 .4rem; color: #e8d9bf; }
-  #menu table { align-self: flex-start; margin: 3rem 0 0 .2rem; border-collapse: collapse; font: 500 1.7rem/1 "Avenir Next", "Helvetica Neue", sans-serif;
+  #menu .sub { font-size: 2rem; letter-spacing: .5rem; margin: 1.6rem 0 0 .4rem; color: #e8d9bf; }
+  #menu table { align-self: flex-start; margin: 2rem 0 0 .2rem; border-collapse: collapse; font: 500 1.7rem/1 "Avenir Next", "Helvetica Neue", sans-serif;
     border-left: .3rem solid #b3261e; background: linear-gradient(90deg, rgba(0,0,0,.35), rgba(0,0,0,0)); }
-  #menu td { padding: .75rem 1.6rem; white-space: nowrap; }
+  #menu td { padding: .45rem 1.6rem; white-space: nowrap; }
   #menu td:first-child { font: 700 2.2rem/1 "Kaiti SC", "STKaiti", "KaiTi", "HudBrush", serif; color: #f2c14e; }
   #menu td:first-child small { font: 500 1.3rem/1 "Avenir Next", "Helvetica Neue", sans-serif; letter-spacing: .15em; color: #cdbb9c; margin-left: .8rem; }
   #menu kbd { font: 600 1.5rem/1 "Avenir Next", "Helvetica Neue", sans-serif; padding: .3rem .6rem; margin-right: .3rem;
     border: .12rem solid rgba(239,227,207,.6); border-radius: .4rem; background: rgba(0,0,0,.45); }
-  #menu button { align-self: flex-start; margin: 3.4rem 0 0 .2rem; padding: 1.2rem 4rem; cursor: pointer; border: 0; border-radius: .4rem;
+  #menu button { align-self: flex-start; margin: 2.4rem 0 0 .2rem; padding: 1.2rem 4rem; cursor: pointer; border: 0; border-radius: .4rem;
     font: 700 3rem/1 "Xingkai SC", "STXingkai", "HudBrush", serif; letter-spacing: .6rem; color: #1a120d;
     background: linear-gradient(#ffe7a3, #f2c14e 55%, #c98a22); box-shadow: 0 0 0 .15rem #5a3a10, 0 .5rem 1.6rem rgba(0,0,0,.5); }
   #menu button:hover { filter: brightness(1.1); }
-  #menu .heroes { display: flex; gap: 1.4rem; margin: 2.6rem 0 0 .2rem; }
-  #menu .heroes button { margin: 0; padding: 1rem 1.4rem .9rem; display: flex; align-items: center; gap: 1.1rem; min-width: 17rem;
+  #menu .heroes { display: flex; flex-wrap: wrap; gap: 1rem; margin: 2rem 0 0 .2rem; max-width: 80vw; }
+  #menu .heroes button { margin: 0; padding: .7rem 1.2rem .6rem; display: flex; align-items: center; gap: .9rem; min-width: 0;
     background: rgba(0,0,0,.45); color: #f4ead8; box-shadow: 0 0 0 .12rem rgba(239,227,207,.28); letter-spacing: 0; }
-  #menu .heroes button canvas { width: 5.2rem; height: 5.2rem; image-rendering: pixelated; border-radius: 50%; background: #2a1c14;
+  #menu .heroes button canvas { width: 4.4rem; height: 4.4rem; image-rendering: pixelated; border-radius: 50%; background: #2a1c14;
     box-shadow: 0 0 0 .2rem rgba(214,184,130,.6); }
-  #menu .heroes button b { display: block; font: 700 3rem/1 "Xingkai SC", "STXingkai", "HudBrush", serif; letter-spacing: .3rem; text-align: left; }
+  #menu .heroes button b { display: block; font: 700 2.6rem/1 "Xingkai SC", "STXingkai", "HudBrush", serif; letter-spacing: .3rem; text-align: left; }
   #menu .heroes button small { display: block; margin: .5rem 0 0; font: 500 1.3rem/1 "Kaiti SC", "STKaiti", "KaiTi", "HudBrush", serif; letter-spacing: .2rem; opacity: .75; }
   #menu .heroes button.on { background: linear-gradient(rgba(179,38,30,.85), rgba(110,20,14,.85)); box-shadow: 0 0 0 .18rem #f2c14e, 0 .5rem 1.6rem rgba(0,0,0,.5); }
   #menu .heroes button.on small { opacity: .95; color: #ffe7a3; }
+  #menu .stages { margin-top: 1rem; }
+  #menu .stages button { min-width: 0; padding: .8rem 1.8rem .7rem; }
+  #menu .stages button b { font-size: 2.2rem; }
   #menu button small { font: 600 1.4rem/1 "Avenir Next", "Helvetica Neue", sans-serif; letter-spacing: .3em; margin-left: 1rem; }
   #menu .hint { margin: 1.4rem 0 0 .4rem; font: 500 1.35rem/1.5 "Avenir Next", "Helvetica Neue", sans-serif; letter-spacing: .08em; opacity: .7; }
 </style>
@@ -207,6 +210,7 @@
   <div class="t">體素三國<i>群英</i></div>
   <div class="en">VOXEL THREE KINGDOMS</div>
   <div class="heroes" id="heroes"></div>
+  <div class="heroes stages" id="stages"></div>
   <div class="sub" id="tagline"></div>
   <table>
     <tr><td>移動<small>MOVE</small></td><td><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / arrows</td></tr>
@@ -218,7 +222,7 @@
     <tr><td>視角<small>CAMERA</small></td><td><kbd>Q</kbd><kbd>E</kbd> / drag the mouse</td></tr>
   </table>
   <button id="go">出陣<small>START</small></button>
-  <div class="hint">← → 選將 pick a hero · Enter to start · Esc to pause · gamepad supported · best with keyboard, mouse and sound on</div>
+  <div class="hint">← → 選將 hero · ↑ ↓ 選戰場 battle · Enter to start · Esc to pause · gamepad supported · best with keyboard, mouse and sound on</div>
 </div>
 <script type="module" src="./src/main.js"></script>
 </body>
