@@ -9,7 +9,8 @@ import { vox, B, P, md, mirX, lamellar } from '../hero/model.js';
 import { hash01 } from '../core/rng.js';
 import { shade } from '../core/voxel.js';
 
-const HV = 0.0125;   // head voxel: a 13-voxel face (vs 9 on the base rig) so brows, eyes and nose can carry an expression
+const HV = 0.0135;   // head voxel: a 13-voxel face (vs 9 on the base rig) so brows, eyes and nose can carry an expression
+const BV = 0.0125;   // body voxel: half the base rig's, for muscle, plate engraving, hands and boots
 const C = {
   R: 0x2c6848, Rd: 0x1d4a33, Rl: 0x3c805a, emb: 0xb8954a, embD: 0x8a6e36,   // dark-green robe, gold embroidery
   T: 0x7a2e24, Td: 0x4e1d18,                                                // dark-red collar / lining
@@ -25,104 +26,128 @@ const C = {
 
 // robe cloth: fold streaks plus a sparse gold diamond-scroll embroidery
 const robe = (x, y, z) => {
-  const a = md(x * 2 + y + z, 10), b = md(x * 2 - y - z, 10);
-  if ((a === 0 || b === 0) && hash01(x, y, z) < 0.55) return hash01(z, x, y) < 0.3 ? C.embD : C.emb;
-  return md(x + z * 3, 7) === 0 ? C.Rd : md(x * 3 - y, 11) === 0 ? C.Rl : C.R;
+  const a = md(x * 2 + y + z, 18), b = md(x * 2 - y - z, 18);
+  if ((a === 0 || b === 0) && hash01(x, y, z) < 0.6) return hash01(z, x, y) < 0.3 ? C.embD : C.emb;
+  return md(x + z * 3, 11) === 0 ? C.Rd : md(x * 3 - y, 17) === 0 ? C.Rl : C.R;
 };
 const beardPaint = (x, y, z) => (md(x, 3) === 0 ? C.beardH : hash01(x, y, z) < 0.15 ? C.beardH : C.beard);   // vertical strands
 
-// ---------------------------------------------------------------- body parts (body voxels, 0.025 m)
+// ---------------------------------------------------------------- body parts (fine body voxels BV = 0.0125 m)
+// Every part is centred on its joint (x and z symmetric about 0); 1 base-rig voxel = 2 of these.
+const lap = (x, y) => x + 0.5 - (6 - (20 - y) * 0.8);                  // crossed collar: left of the neck → right flank
 function torso() {
   const P_ = {};
   P_.hips = [
-    B([-6, -5, -4], [6, 3, 4], C.U),
-    B([-7, -6, -5], [7, -1, 5], robe),                                // robe below the belt (panels are chains)
-    B([-7, -1, -5], [7, 3, 5], (x, y) => (y === -1 || y === 2 ? C.Ld : C.L)),   // wide leather belt
-    ...[-5, -2, 2, 5].map((x) => B([x - 1, 0, 5], [x + 1, 2, 6], C.A)),         // bronze plaques
-    B([-2, -1, 5], [3, 3, 6], C.Al), B([-1, 0, 6], [2, 2, 7], C.Ad),           // round buckle
+    B([-12, -10, -8], [12, 6, 8], C.U),
+    B([-14, -12, -10], [14, -2, 10], robe),                           // robe below the belt (the long panels are chains)
+    // wide leather belt: stitched edges, bronze plaques with studs, a round buckle with a tiger mask
+    B([-15, -2, -11], [15, 6, 11], (x, y, z) => (y === -2 || y === 5 ? C.Ld : md(x + z, 6) === 0 && (y === -1 || y === 4) ? C.Al : C.L)),
+    ...[-11, -5, 5, 11].flatMap((x) => [B([x - 2, 0, 11], [x + 2, 4, 12], C.A), P([x - 2, 0, 11], [x + 2, 1, 12], C.Ad), B([x - 1, 1, 12], [x + 1, 3, 13], C.Al)]),
+    B([-4, -2, 11], [4, 6, 13], C.A), B([-3, -1, 13], [3, 5, 14], C.Al),
+    P([-2, 2, 13], [-1, 3, 14], C.Ad), P([1, 2, 13], [2, 3, 14], C.Ad), P([-1, 0, 13], [1, 1, 14], C.Ad),
   ];
+  // waist: narrow, robe over the under-robe
   P_.spine = [
-    B([-5, -3, -4], [5, 8, 4], C.U),
-    B([-6, -2, -5], [6, 8, 5], robe),
+    B([-10, -6, -8], [10, 16, 8], C.U),
+    B([-12, -4, -10], [12, 16, 10], robe),
+    B([-12, -4, 10], [12, 16, 11], (x, y) => (Math.abs(lap(x, y + 16)) < 2.4 ? C.T : Math.abs(lap(x, y + 16)) < 3.4 ? C.emb : null)),
   ];
-  // chest: green robe, the dark-red crossed collar running from the left of the neck down to the right flank, the
-  // under-robe showing above it; dark leather scale on the right side under the pauldron
-  const lap = (x, y) => x + 0.5 - (3 - (10 - y) * 0.8);                 // signed distance to the collar line
+  // chest: broad V-taper (shoulders wider than the ribs), robe with the crossed collar and the under-robe above it,
+  // dark leather scale over the right breast and shoulder under the pauldron
   P_.chest = [
-    B([-7, -2, -5], [7, 9, 5], C.U),
-    B([-8, -2, -6], [8, 10, 6], robe),
-    ...lamellar([-8, 2, -6], [-3, 10, 6], { base: C.L, rowH: 2, pw: 3, lipX: false }),
-    B([-8, -2, 6], [8, 11, 7], (x, y) => {
+    B([-13, -4, -10], [13, 18, 10], C.U),
+    B([-14, -4, -11], [14, 8, 11], robe),
+    B([-16, 8, -12], [16, 20, 12], robe),
+    ...lamellar([-16, 4, -12], [-5, 20, 12], { base: C.L, rowH: 3, pw: 5, lipX: false }),
+    B([-16, -4, 12], [16, 21, 13], (x, y) => {
       const d = lap(x, y);
-      if (Math.abs(d) < 1.3) return C.T;
-      if (Math.abs(d) < 1.9) return C.emb;
-      return d < 0 && y > 6 && x > -4 ? C.Td : null;
+      if (Math.abs(d) < 2.4) return C.T;
+      if (Math.abs(d) < 3.4) return C.emb;
+      return d < 0 && y > 12 && x > -8 ? C.Td : null;
     }),
-    B([-4, 8, -4], [4, 11, 4], C.T),                                  // inner collar
-    B([-3, 8, -3], [3, 13, 3], -1),                                   // neck hole
-    // the long beard lies on the chest: face-wide under the chin, tapering to a point (tip continues as a chain)
-    B([-5, -2, 6], [6, 10, 8], (x, y, z) => (Math.abs(x + 0.5) < 1.4 + (y + 2) * 0.19 ? beardPaint(x, y, z) : null)),
+    B([-8, 16, -8], [8, 22, 8], C.T), B([-7, 17, -7], [7, 23, 7], C.Td),   // standing inner collar
+    B([-6, 16, -6], [6, 26, 6], -1),                                   // neck hole
+    // the long beard lies on the chest: face-wide under the chin, tapering to a point (the tip is a chain)
+    B([-9, -4, 12], [9, 21, 16], (x, y, z) => (Math.abs(x + 0.5) < 2.4 + (y + 4) * 0.25 && (z < 15 || Math.abs(x + 0.5) < 1.5 + (y + 4) * 0.15) ? beardPaint(x, y, z) : null)),
   ];
-  P_.neck = [B([-2, -1, -2], [2, 3, 2], C.skinD)];
+  P_.neck = [B([-4, -2, -4], [4, 6, 4], C.skinD), P([-4, 2, 3], [4, 6, 4], C.skin)];
   return P_;
 }
 
-function limbs(P_) {
-  // right arm bare (muscle, bronze armband) under the pauldron; left arm in a wide green sleeve
-  P_.upperArmR = [
-    B([-2, -12, -2], [2, 1, 2], (x, y) => (y < -8 ? C.skin : C.skinD)),
-    B([-2, -9, 1], [2, -3, 3], C.skin),                               // biceps
-    B([-3, -11, -3], [3, -9, 3], C.A), P([-3, -11, -3], [3, -10, 3], C.Ad),
+/** Bare, muscled upper arm: deltoid cap, biceps and triceps bulges, shaded groove, bronze armband near the elbow. */
+function bareUpperArm() {
+  const sk = (x, y, z) => (z > 2 && y < -6 && y > -18 ? C.skinH : x > 2 || z < -2 ? C.skinD : C.skin);
+  return [
+    B([-4, -24, -4], [4, 2, 4], sk),
+    B([-5, -4, -5], [5, 2, 5], sk),                                    // deltoid
+    B([-4, -18, 2], [4, -6, 6], sk),                                   // biceps
+    B([-4, -16, -6], [4, -6, -2], C.skinD),                            // triceps
+    P([-5, -6, -5], [5, -5, 6], C.skinD),                              // groove under the deltoid
+    B([-5, -22, -5], [5, -18, 5], C.A), P([-5, -22, -5], [5, -21, 5], C.Ad), P([-5, -19, -5], [5, -18, 5], C.Al),
   ];
-  P_.upperArmL = [
-    B([-3, -12, -3], [3, 1, 3], robe),
-    B([-4, -12, -4], [4, -10, 4], robe), P([-4, -12, -4], [4, -11, 4], C.T),   // flared sleeve end with red lining
+}
+function limbs(P_) {
+  P_.upperArmR = bareUpperArm();
+  P_.upperArmL = [                                                      // wide green sleeve, red lining at the flared end
+    B([-6, -24, -6], [6, 2, 6], robe),
+    B([-8, -24, -8], [8, -18, 8], robe), P([-8, -24, -8], [8, -22, 8], C.T), P([-8, -22, -8], [8, -21, 8], C.emb),
   ];
   for (const [s, sx] of [['R', -1], ['L', 1]]) {
-    // bronze bracers (engraved rows) over a dark-red wrap
+    // bronze bracer: engraved bands and a raised ridge, over a dark-red wrap; the bare arm shows the forearm above it
     P_['foreArm' + s] = [
-      B([-2, -11, -2], [3, 0, 3], C.Td),
-      B([-2, -10, -3], [3, -2, 4], (x, y, z) => (md(y, 3) === 0 ? C.Ad : md(x + z, 4) === 0 ? C.Al : C.A)),
-      P([-2, -2, -3], [3, -1, 4], C.Al), P([-2, -10, -3], [3, -9, 4], C.Al),
+      B([-4, -22, -4], [4, 0, 4], s === 'R' ? C.skinD : C.Td),
+      B([-5, -20, -5], [5, -4, 5], (x, y, z) => (md(y, 5) === 0 ? C.Ad : md(x - z + y, 7) === 0 ? C.Al : C.A)),
+      B([-6, -20, -6], [6, -18, 6], C.Al), B([-6, -6, -6], [6, -4, 6], C.Al),
+      B([-1, -18, 5], [1, -6, 6], C.Al),                               // ridge
     ];
-    P_['hand' + s] = [B([-2, -2, -2], [2, 2, 2], C.skin), P([-2, -2, 1], [2, -1, 2], C.skinD)];
-    // baggy green trousers; the right thigh carries a leather-and-bronze tasset on the outside
+    // hand: palm, knuckle row, thumb
+    P_['hand' + s] = [
+      B([-4, -4, -3], [4, 4, 3], C.skin),
+      P([-4, -4, 2], [4, -3, 3], C.skinD), P([-4, -1, 2], [4, 0, 3], C.skinD),
+      B([sx * 4 - (sx > 0 ? 0 : 2), -2, -2], [sx * 4 + (sx > 0 ? 2 : 0), 3, 2], C.skin),
+    ];
+    // baggy green trousers gathered above the boots; the right thigh carries a leather-and-bronze tasset outside
     P_['thigh' + s] = [
-      B([-3, -18, -3], [4, 1, 4], (x, y) => (md(y, 4) === 0 ? C.Rd : C.R)),
-      B([-4, -16, -4], [5, -10, 5], (x, y) => (md(y, 4) === 0 ? C.Rd : C.R)),   // bagging above the boot
-      ...(s === 'R' ? lamellar([-2, -9, -4], [5, 2, 5], { base: C.L, rowH: 2, trim: C.A, jag: true }).map((b) => mirX(b, sx, 1)) : []),
+      B([-7, -36, -7], [7, 2, 7], (x, y, z) => (md(y + (x + z) % 3, 7) === 0 ? C.Rd : C.R)),
+      B([-8, -34, -8], [8, -22, 8], (x, y, z) => (md(y + x, 6) === 0 ? C.Rd : md(x * 2 + z, 9) === 0 ? C.Rl : C.R)),
+      ...(s === 'R' ? lamellar([-4, -18, -9], [10, 4, 9], { base: C.L, rowH: 3, pw: 5, trim: C.A, jag: true }).map((b) => mirX(b, sx)) : []),
     ];
-    // tall dark boots with a folded cuff
+    // tall boots: fold creases, a turned-down cuff, bronze ankle band
     P_['shin' + s] = [
-      B([-2, -17, -2], [3, 0, 3], (x, y) => (md(y, 5) === 0 ? C.bootD : C.boot)),
-      B([-3, -4, -3], [4, 0, 4], C.bootD),
-      B([-3, 0, -3], [4, 3, 4], C.R),
+      B([-5, -34, -5], [5, 0, 5], (x, y) => (md(y + (x & 1), 7) === 0 ? C.bootD : C.boot)),
+      B([-6, -8, -6], [6, 0, 6], (x, y) => (y === -8 ? C.bootD : C.boot)),
+      P([-6, -3, -6], [6, -2, 6], C.bootD),
+      B([-6, -32, -6], [6, -30, 6], C.A),
+      B([-6, 0, -6], [6, 6, 6], C.R),                                  // trouser cuff bunched over the boot top
     ];
     P_['foot' + s] = [
-      B([-3, -3, -2], [3, 1, 6], C.boot),
-      B([-2, -2, 6], [2, 0, 8], C.boot), B([-1, -1, 8], [1, 1, 9], C.boot), B([-1, 0, 9], [1, 2, 10], C.bootD),   // upturned toe
-      P([-3, -3, -2], [3, -2, 10], C.sole),
+      B([-6, -6, -4], [6, 2, 12], C.boot),
+      B([-4, -4, 12], [4, 0, 16], C.boot), B([-3, -3, 16], [3, 1, 18], C.boot), B([-2, -1, 18], [2, 3, 20], C.bootD), B([-1, 2, 19], [1, 4, 21], C.bootD),   // upturned toe
+      P([-6, -6, -4], [6, -5, 21], C.sole),
+      P([-6, 1, -4], [6, 2, 12], C.bootD),
     ];
   }
   return P_;
 }
 
 /** One big bronze dragon-head pauldron, right shoulder only: engraved plate tiers, the dragon's head on the outside
- *  facing forward (snout, jaw, gold eye), a horn swept back. */
+ *  facing forward (snout, fangs, gold eye), mane ridges and horns swept back. */
 function pauldronBoxes(sx) {
   if (sx > 0) return [];
-  const eng = (base) => (x, y, z) => (md(x + z, 4) === 0 ? C.Ad : md(y + z, 5) === 0 ? C.Al : base);
+  const eng = (base) => (x, y, z) => (md(x + z, 5) === 0 ? C.Ad : md(y * 2 + z, 9) === 0 ? C.Al : base);
   const b = [
-    ...lamellar([-4, 3, -5], [3, 7, 5], { base: C.A, rowH: 2 }),
-    ...lamellar([-2, -1, -6], [4, 3, 6], { base: C.A, rowH: 2 }),
-    ...lamellar([-1, -5, -6], [5, -1, 6], { base: C.A, rowH: 2, trim: C.L, jag: true }),
-    B([4, 0, -4], [7, 6, 3], eng(C.A)),                               // dragon head
-    B([5, 1, 3], [7, 4, 7], eng(C.A)),                                // snout
-    B([5, -1, 3], [7, 1, 6], C.Ad),                                   // lower jaw
-    B([7, 2, 5], [8, 3, 7], C.Al),                                    // nostril ridge
-    P([7, 4, 1], [8, 5, 3], C.gold),                                  // eye
-    B([4, 5, -5], [6, 7, 2], C.Ad),                                   // brow / mane ridge
-    B([5, 6, -6], [6, 9, -3], C.Al), B([5, 8, -8], [6, 10, -5], C.Al), // horn swept back
+    ...lamellar([-8, 6, -10], [6, 14, 10], { base: C.A, rowH: 3, pw: 5 }),
+    ...lamellar([-4, -2, -12], [8, 6, 12], { base: C.A, rowH: 3, pw: 5 }),
+    ...lamellar([-2, -10, -12], [10, -2, 12], { base: C.A, rowH: 3, pw: 5, trim: C.L, jag: true }),
+    B([8, 0, -8], [14, 12, 6], eng(C.A)),                              // head
+    B([10, 3, 6], [14, 9, 14], eng(C.A)),                              // snout
+    B([10, -1, 6], [14, 2, 12], C.Ad),                                 // lower jaw
+    ...[7, 9, 11].map((z) => B([12, 2, z], [14, 3, z + 1], C.edge)),   // fangs
+    B([13, 8, 11], [15, 10, 14], C.Al),                                // nostril ridge
+    B([14, 8, 1], [15, 11, 5], C.gold), P([14, 9, 2], [15, 10, 4], C.eye),   // eye
+    B([8, 10, -11], [12, 14, 5], C.Ad),                                // brow / mane
+    ...[-10, -6, -2].map((z) => B([9, 13, z - 1], [11, 16, z + 1], C.Al)),
+    B([10, 12, -12], [12, 17, -6], C.Al), B([10, 15, -16], [12, 20, -11], C.Al), B([10, 19, -18], [12, 22, -15], C.Ad),   // horn
   ];
   return b.map((bx) => mirX(bx, sx));
 }
@@ -213,9 +238,9 @@ function weaponGeo() {
 
 // ---------------------------------------------------------------- spring-chain segments (local -Y along the chain)
 function beardSeg(i, n) {
-  const w = Math.max(1, Math.round(2 - i * 0.5)), tip = i === n - 1;
-  return vox([B([-w, tip ? -6 : -4, -1], [w, 0, 1], (x, y, z) => (tip && y < -2 && Math.abs(x + 0.5) > (y + 7) * 0.4 ? null : beardPaint(x, y, z)))],
-    0.025, { off: [0, 0, -0.5], jitter: 0.06, ao: 0.3 });
+  const w = Math.max(1, Math.round(4 - i * 1.2)), tip = i === n - 1;
+  return vox([B([-w, tip ? -12 : -8, -2], [w, 0, 1], (x, y, z) => (tip && y < -4 && Math.abs(x + 0.5) > (y + 13) * 0.4 ? null : beardPaint(x, y, z)))],
+    BV, { off: [0, 0, -0.5], jitter: 0.06, ao: 0.3 });
 }
 function hairSeg(i, n) {
   // a broad sheet of long hair, strands separating toward the ends
@@ -237,9 +262,9 @@ function panelSeg(w) {
   return (i, n) => {
     const last = i === n - 1;
     return vox([
-      B([-w, -6, 0], [w, 0, 1], (x, y) => (last && y <= -5 ? (y === -6 && md(x, 2) ? null : C.emb) : x === -w || x === w - 1 ? C.emb : robe(x, y + i * 6, 3))),
-      B([-w + 1, -6, -1], [w - 1, 0, 0], C.Td),
-    ], 0.025, { off: [0, 0, -0.5], jitter: 0.04, ao: 0.2 });
+      B([-w, -12, 0], [w, 0, 1], (x, y) => (last && y <= -9 ? (y === -12 && md(x, 2) ? null : y === -10 ? C.embD : C.emb) : x <= -w + 1 || x >= w - 2 ? C.emb : robe(x, y + i * 12, 3))),
+      B([-w + 1, -12, -1], [w - 1, 0, 0], C.Td),
+    ], BV, { off: [0, 0, -0.5], jitter: 0.04, ao: 0.2 });
   };
 }
 
@@ -278,14 +303,14 @@ export default {
     musou: ['吾乃河東關雲長也！', 'I am Guan Yunchang of Hedong!'],
   },
   face: FACE, pal: PAL,
-  build: () => ({ parts: limbs(torso()), head: head(), hv: HV, pauldrons: pauldronBoxes, weapon: weaponGeo() }),
+  build: () => ({ parts: limbs(torso()), head: head(), hv: HV, bv: BV, pauldrons: pauldronBoxes, weapon: weaponGeo() }),
   chains() {
     const out = [];
     // robe panels, back and front, down to the shins (no shoulder cape)
     out.push({ joint: 'hips', anchor: [0, -0.1, -0.15], rest: [0, -1, -0.12], n: 5, len: 0.13, stiff: 0.14, drag: 0.2, wind: 0.9, cone: 75, sway: 0.15,
-      seg: panelSeg(8), hit: ['hips', ['thighL', 0.02], ['thighR', 0.02], ['kneeL', 0.03], ['kneeR', 0.03]] });
+      seg: panelSeg(16), hit: ['hips', ['thighL', 0.02], ['thighR', 0.02], ['kneeL', 0.03], ['kneeR', 0.03]] });
     out.push({ joint: 'hips', anchor: [0, -0.12, 0.17], rest: [0, -1, 0.1], n: 5, len: 0.12, stiff: 0.13, drag: 0.18, wind: 0.5, face: [0, 0, 1], cone: 70, sway: 0.1,
-      seg: panelSeg(6), hit: [['thighL', 0.03], ['thighR', 0.03], ['kneeL', 0.03], ['kneeR', 0.03]] });
+      seg: panelSeg(12), hit: [['thighL', 0.03], ['thighR', 0.03], ['kneeL', 0.03], ['kneeR', 0.03]] });
     out.push({ joint: 'chest', anchor: [0, -0.05, 0.185], rest: [0, -1, 0.2], n: 3, len: 0.05, stiff: 0.22, drag: 0.2, wind: 0.4, face: [0, 0, 1], cone: 50, sway: 0.05,
       seg: beardSeg, hit: [['hips', 0.06]] });
     // long hair and the hood's tail falling over the back

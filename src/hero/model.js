@@ -154,9 +154,11 @@ export function createHeroModel(rig, def) {
     meshes[name] = mesh;
     return mesh;
   };
+  // bv: body voxel size (default V). Fine-voxel heroes author every part centred on the joint (no odd-width offset).
+  const bv = built.bv || V;
   for (const [joint, boxes] of Object.entries(built.parts)) {
-    const odd = /foreArm|thigh|shin/.test(joint);                    // odd-width parts: centre them
-    add(rig.joints[joint], vox(boxes, V, { off: odd ? [-0.5, 0, -0.5] : [0, 0, 0] }), joint);
+    const odd = !built.bv && /foreArm|thigh|shin/.test(joint);       // odd-width parts: centre them
+    add(rig.joints[joint], vox(boxes, bv, { off: odd ? [-0.5, 0, -0.5] : [0, 0, 0], jitter: built.bv ? 0.035 : 0.05 }), joint);
   }
   add(rig.joints.head, vox(built.head, built.hv || HV, { off: [-0.5, 0, 0], jitter: 0.04 }), 'head');   // hv: finer head voxels for detailed faces
   // pauldrons ride on a helper under each shoulder; secondary.js turns it halfway with the upper arm
@@ -166,7 +168,7 @@ export function createHeroModel(rig, def) {
     rig.joints['shoulder' + s].add(pd);
     rig.joints['pauldron' + s] = pd;
     const boxes = built.pauldrons(sx);
-    if (boxes.length) add(pd, vox(boxes, V), 'pauldron' + s);           // [] = no pauldron on that side (asymmetric armour)
+    if (boxes.length) add(pd, vox(boxes, bv), 'pauldron' + s);           // [] = no pauldron on that side (asymmetric armour)
   }
   built.weapon.forEach((w, i) => add(rig.joints.weapon, w.geo, 'weapon' + i, typeof w.mat === 'string' ? mats[w.mat] : w.mat || mat));
   return { meshes, material: mat };
