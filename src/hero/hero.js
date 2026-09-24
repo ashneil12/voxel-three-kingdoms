@@ -153,6 +153,7 @@ export function createHeroView(scene, hero) {
       rig.apply(pose, pos.set(hero.x, hero.y, hero.z), hero.yaw);
       rig.root.scale.setScalar(HERO_SCALE); rig.root.updateMatrixWorld(true);   // after IK: grow the posed body about the ground point
       applyRoll(rig, hero.anim);                 // dive roll: whole-body pitch about the tucked ball (locomotion-dodge)
+      if (HERO.update) HERO.update(model, hero, dt);   // per-hero render hook (e.g. Zhuge Liang's wind blade)
       ghosts.update(hero, rig, dt);
       secondary.update(dt);
     },
