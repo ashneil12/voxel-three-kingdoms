@@ -29,7 +29,35 @@ const P = {
   nearBlur: 26, farBlur: 0.6, bandNear: 1.4, bandFar: 5,          // DoF: CoC in half-res px, bands in metres
   bloom: 0.6, bloomRadius: 0.1, bloomThreshold: 1.5, bloomKnee: 0.5, bloomCool: 1.5, hdrClamp: 2.5,
   sharpen: 0.35, streak: 0.05, rowNoise: 0.018, ca: 1.3, grain: 0.03, levels: 40, dither: 0.8, vignette: 0.18, bottom: 0.25,
+  // art-direction extras (0 = off): edge = ink outline from view-distance breaks, mono = wash to paper tone (reds kept),
+  // paper = paper tint, pixel = screen pixel size for the chunky retro look
+  edge: 0, mono: 0, paper: [1, 1, 1], pixel: 1,
 };
+// Look presets (?look=name): overrides of P. 'dusk' is the default golden-hour concept look.
+export const LOOKS = {
+  dusk: {},
+  ink: {   // 水墨: paper-toned wash, black ink outlines, only red survives
+    edge: 0.9, mono: 0.92, paper: [0.96, 0.92, 0.84], sat: 1.0, grain: 0.05, levels: 64, dither: 0.3, streak: 0, ca: 0,
+    shadowTint: [1, 1, 1], highTint: [1, 1, 1], vignette: 0.35, bottom: 0.1, bloom: 0.3, exposure: 1.35,
+  },
+  night: {  // 夜战火攻: moonlit blue shade, fire-orange light
+    exposure: 0.95, sat: 1.1, shadowTint: [0.62, 0.78, 1.35], highTint: [1.35, 0.92, 0.55], tintLo: 0.03, tintHi: 0.5,
+    hazeCool: [0.03, 0.05, 0.12], hazeWarm: [0.2, 0.08, 0.04], sunGlow: [0.5, 0.2, 0.1], skyGain: 0.22, farGain: 0.3,
+    bloom: 1.0, bloomThreshold: 1.1, vignette: 0.3,
+  },
+  bright: { // 明快卡通: clean daylight, saturated, no film artefacts
+    exposure: 1.45, tmContrast: 2.6, sat: 1.45, shadowTint: [0.97, 1.0, 1.08], highTint: [1.04, 1.02, 0.96],
+    hazeCool: [0.22, 0.28, 0.36], hazeWarm: [0.32, 0.3, 0.26], sunGlow: [0.5, 0.45, 0.35], skyGain: 0.8,
+    grain: 0, rowNoise: 0, ca: 0, streak: 0, dither: 0, levels: 255, vignette: 0.05, bottom: 0.05, nearBlur: 8, farBlur: 0.2,
+    edge: 0.35,
+  },
+  retro: {  // 复古像素: 16-bit chunky pixels, few colour levels
+    pixel: 3, levels: 20, dither: 0.35, grain: 0, rowNoise: 0, ca: 0, streak: 0, sat: 1.3, nearBlur: 0, farBlur: 0,
+    bloom: 0.25, edge: 0.7, vignette: 0.1,
+  },
+};
+const lookName = new URLSearchParams(location.search).get('look');
+if (lookName && LOOKS[lookName]) Object.assign(P, LOOKS[lookName]);
 const uName = (k) => 'u' + k[0].toUpperCase() + k.slice(1);
 const pUniforms = () => Object.fromEntries(Object.entries(P).map(([k, v]) => [uName(k), { value: Array.isArray(v) ? new THREE.Vector3(...v) : v }]));
 const syncP = (u) => { for (const k in P) { const x = u[uName(k)]; if (Array.isArray(P[k])) x.value.set(...P[k]); else x.value = P[k]; } };
@@ -103,7 +131,8 @@ const DofShader = /* glsl */`
 const FinalShader = /* glsl */`
   uniform sampler2D tSharp, tDof, tBloom; uniform vec2 uRes; uniform float uTime, uFlash;
   uniform float uExposure, uTmContrast, uTmShoulder, uTmB, uTmC, uKnee, uHotDesat, uSat, uLift, uTintLo, uTintHi, uSharpen, uStreak, uRowNoise, uCa, uGrain, uLevels, uDither, uVignette, uBottom;
-  uniform vec3 uShadowTint, uHighTint;
+  uniform float uEdge, uMono, uPixel;
+  uniform vec3 uShadowTint, uHighTint, uPaper;
   varying vec2 vUv;
   ${COC}
   float bayer4(vec2 p) {
@@ -124,16 +153,28 @@ const FinalShader = /* glsl */`
     float k = max(smoothstep(0.3, 1.3, coc(s.a)), b.a);
     return mix(sharp, b.rgb, k) + texture2D(tBloom, uv).rgb;
   }
+  // ink outline: relative jump in view distance (tSharp alpha) to any 4-neighbour at pixel scale
+  float edgeAt(vec2 uv) {
+    vec2 t = max(uPixel, 1.0) / uRes;
+    float c = texture2D(tSharp, uv).a, e = 0.0;
+    for (int i = 0; i < 4; i++) {
+      vec2 o = i == 0 ? vec2(t.x, 0.0) : i == 1 ? vec2(-t.x, 0.0) : i == 2 ? vec2(0.0, t.y) : vec2(0.0, -t.y);
+      float n = texture2D(tSharp, uv + o).a;
+      e = max(e, (n - c) / max(c, 0.5));   // only the near side of a break draws the line
+    }
+    return smoothstep(0.06, 0.2, e) * (1.0 - smoothstep(25.0, 60.0, c));
+  }
   void main() {
-    vec2 d = vUv - 0.5;
+    vec2 uv = uPixel > 1.0 ? (floor(vUv * uRes / uPixel) + 0.5) * uPixel / uRes : vUv;
+    vec2 d = uv - 0.5;
     // light lateral chromatic fringe toward the edges
     vec2 ca = vec2(uCa * dot(d, d) * 4.0 / uRes.x, 0.0);
-    vec3 c = vec3(scene(vUv + ca).r, scene(vUv).g, scene(vUv - ca).b);
+    vec3 c = vec3(scene(uv + ca).r, scene(uv).g, scene(uv - ca).b);
     // faint horizontal streaks: highlights smear sideways (tape / anamorphic feel), plus low row-to-row jitter
     vec3 st = vec3(0.0);
     for (int i = 1; i <= 6; i++) {
       float o = (float(i * i) + 1.0) * 2.0 / uRes.x, w = 1.0 / float(i);
-      st += (max(texture2D(tDof, vUv + vec2(o, 0.0)).rgb - 1.0, 0.0) + max(texture2D(tDof, vUv - vec2(o, 0.0)).rgb - 1.0, 0.0)) * w;
+      st += (max(texture2D(tDof, uv + vec2(o, 0.0)).rgb - 1.0, 0.0) + max(texture2D(tDof, uv - vec2(o, 0.0)).rgb - 1.0, 0.0)) * w;
     }
     c += st * uStreak * vec3(1.0, 0.86, 0.7);
     c *= 1.0 + (hash(vec2(floor(gl_FragCoord.y * 0.5), floor(uTime * 12.0))) - 0.5) * uRowNoise;
@@ -157,12 +198,19 @@ const FinalShader = /* glsl */`
     c = mix(c, vec3(pk2), 1.0 - 1.0 / (uHotDesat * max(pk - pk2, 0.0) + 1.0));   // only the hottest cores bleach
     c = uLift * vec3(1.0, 0.8, 0.75) + min(c, 1.0) * (1.0 - uLift);
     c = sRGBTransferOETF(vec4(max(c, 0.0), 1.0)).rgb;
+    // wash: everything but strong reds goes to paper tone by lightness; ink outline on top
+    if (uMono > 0.0) {
+      float Lp = dot(c, vec3(0.299, 0.587, 0.114));
+      float red = smoothstep(0.12, 0.35, c.r - max(c.g, c.b));
+      c = mix(c, uPaper * smoothstep(0.03, 0.85, Lp), uMono * (1.0 - red));
+    }
+    if (uEdge > 0.0) c *= 1.0 - uEdge * edgeAt(uv);
     // lens: soft vignette + darker foreground band (concept: bottom third darker than the top)
     c *= (1.0 - uVignette * smoothstep(0.35, 0.95, length(d * vec2(1.6, 1.0)))) * (1.0 - uBottom * (1.0 - smoothstep(0.0, 0.42, vUv.y)));
     c = mix(c, vec3(1.0, 0.97, 0.9), uFlash);
     // grain on the screen grid (fine); dither + quantise on a 2 px grid (retro)
     c += (hash(gl_FragCoord.xy + fract(uTime * 7.31) * 97.0) - 0.5) * uGrain;
-    c += bayer4(floor(gl_FragCoord.xy * 0.5)) * uDither / uLevels;
+    c += bayer4(floor(gl_FragCoord.xy / max(2.0, uPixel))) * uDither / uLevels;
     c = floor(c * uLevels + 0.5) / uLevels;
     gl_FragColor = vec4(clamp(c, 0.0, 1.0), 1.0);
   }`;
