@@ -158,14 +158,15 @@ export function createHeroModel(rig, def) {
     const odd = /foreArm|thigh|shin/.test(joint);                    // odd-width parts: centre them
     add(rig.joints[joint], vox(boxes, V, { off: odd ? [-0.5, 0, -0.5] : [0, 0, 0] }), joint);
   }
-  add(rig.joints.head, vox(built.head, HV, { off: [-0.5, 0, 0], jitter: 0.04 }), 'head');
+  add(rig.joints.head, vox(built.head, built.hv || HV, { off: [-0.5, 0, 0], jitter: 0.04 }), 'head');   // hv: finer head voxels for detailed faces
   // pauldrons ride on a helper under each shoulder; secondary.js turns it halfway with the upper arm
   if (built.pauldrons) for (const [s, sx] of [['R', -1], ['L', 1]]) {
     const pd = new THREE.Object3D();
     pd.name = 'pauldron' + s;
     rig.joints['shoulder' + s].add(pd);
     rig.joints['pauldron' + s] = pd;
-    add(pd, vox(built.pauldrons(sx), V), 'pauldron' + s);
+    const boxes = built.pauldrons(sx);
+    if (boxes.length) add(pd, vox(boxes, V), 'pauldron' + s);           // [] = no pauldron on that side (asymmetric armour)
   }
   built.weapon.forEach((w, i) => add(rig.joints.weapon, w.geo, 'weapon' + i, typeof w.mat === 'string' ? mats[w.mat] : w.mat || mat));
   return { meshes, material: mat };
