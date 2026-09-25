@@ -40,7 +40,7 @@ export const CAM = {
 };
 // debug: ?zoom=0.5 halves the follow distance (model close-ups)
 const ZOOM = Number(new URLSearchParams(location.search).get('zoom')) || 1;
-CAM.dist *= ZOOM; CAM.height -= (1 - ZOOM) * 0.5;
+CAM.dist *= ZOOM; CAM.height -= (1 - ZOOM) * 0.5 - (Number(new URLSearchParams(location.search).get('aimy')) || 0);   // ?aimy=0.4 raises the aim
 
 
 const wrap = (a) => Math.atan2(Math.sin(a), Math.cos(a));
