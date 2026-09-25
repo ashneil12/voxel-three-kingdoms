@@ -13,6 +13,7 @@ import { stepLocomotion, stepPhysics, setState, LOCO } from './locomotion.js';
 import { ARENA_RADIUS, WALL_Z } from '../world/world.js';
 import { emit } from '../core/events.js';
 import { HERO } from '../heroes/index.js';
+import { fanOverlay } from './anims/fan.js';
 
 /** Clip registry sampled by the hero. Other parts (musou) register their clips here. */
 export const CLIPS = { ...ATTACK_CLIPS, ...LOCO_CLIPS };
@@ -31,7 +32,8 @@ export function createHero(game) {
     anim: { id: 'idle', t: 0, k: 0, seq: -1, pid: null, pt: 0, pk: 0, blendF: 1, blendN: 1, from: new Float32Array(POSE_SIZE), yaw: 0,
       lean: 0,     // lean: run bank (locomotion)
       fx: 0, fz: 0, px: 0, pz: 0,     // spear-anim: root at the transition / last step (feet stay planted through a blend)
-      mf: null, mt: 0 },              // spear-anim: move whose baked feet apply (MOVE_FEET) and its move time, as shown
+      mf: null, mt: 0,                // spear-anim: move whose baked feet apply (MOVE_FEET) and its move time, as shown
+      om: null, ot: 0 },              // weapon overlay (fan heroes): move id and move frame, as shown
   };
 
   h.reset = ({ x = 0, z = 0, yaw = 0 } = {}) => {
@@ -39,7 +41,7 @@ export function createHero(game) {
       moveT: 0, moveSeq: 0, grounded: true, airAttack: false, iframes: 0, speed: 0, runT: 0, runPhase: 0, combo: 0, comboT: 0,
       kos: 0, buf: null, bufT: 0, dodgeBuf: 0, jumpBuf: 0, musouBuf: 0, musouClip: null, musouT: 0,
       airN: 0, moveAir: false, dodgeSeq: 0 });
-    Object.assign(h.anim, { id: 'idle', t: 0, k: 0, seq: -1, pid: null, pt: 0, pk: 0, blendF: 1, blendN: 1, yaw, lean: 0, fx: x, fz: z, px: x, pz: z, mf: null, mt: 0 });
+    Object.assign(h.anim, { id: 'idle', t: 0, k: 0, seq: -1, pid: null, pt: 0, pk: 0, blendF: 1, blendN: 1, yaw, lean: 0, fx: x, fz: z, px: x, pz: z, mf: null, mt: 0, om: null, ot: 0 });
   };
 
   /** Called by combat when an enemy strike connects. Any attack move armours against grunts; officers need `armor`. */
@@ -111,6 +113,7 @@ function updateAnim(h) {
   } else if (a.blendF < a.blendN) a.blendF++;
   a.t = t; a.k = k; a.yaw = h.yaw; a.px = h.x; a.pz = h.z;
   a.mf = h.state === 'attack' && MOVE_FEET[h.move] ? h.move : null; a.mt = h.moveT;
+  a.om = h.state === 'attack' ? h.move : null; a.ot = h.moveT;
 }
 
 // ---------------------------------------------------------------- pose (pure)
@@ -125,6 +128,7 @@ export function heroPose(h, out) {
   sampleAnim(a.id, a.t, a.k, out, a.lean);
   // spear-anim: a move that borrows another move's clip (moves.js `anim`) gets feet baked for its own root motion
   if (a.mf) MOVE_FEET[a.mf](a.mt / MOVES[a.mf].frames, out);
+  if (HERO.anim === 'fan') fanOverlay(a, out);            // one-handed fan upper body (anims/fan.js)
   if (a.blendF < a.blendN) {
     const u = a.blendF / a.blendN;
     // spear-anim: feet step from where they stood (root travel since the transition undone in the hero frame; a teleport → 0)

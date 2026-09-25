@@ -260,6 +260,7 @@ export default {
   },
   face: FACE, pal: PAL,
   style: STYLE,
+  anim: 'fan',                                              // one-handed fan upper body (hero/anims/fan.js)
   build: () => ({ parts: limbs(torso()), head: head(), hv: HV, bv: FV, pauldrons: null, weapon: weaponGeo() }),
   /** Render hook: the wind blade shows while he attacks (fast in, slow out), flickering a little. */
   update(model, h, dt) {
