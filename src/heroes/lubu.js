@@ -7,6 +7,7 @@
 import { vox, B, P, md, mirX, lamellar } from '../hero/model.js';
 import { hash01 } from '../core/rng.js';
 import { shade } from '../core/voxel.js';
+import * as MOVESET from './lubu.moves.js';
 import { FV, glove, bracer, symH } from './parts.js';
 
 const HV = 0.0135;
@@ -218,21 +219,14 @@ function tasselSeg(i, n) {
   })], 0.014, { jitter: 0.06, ao: 0.25 });
 }
 
-// ---------------------------------------------------------------- fighting style (hero/styles.js)
-// 天下無雙: fast AND strong — the widest reach and arcs, the hardest hits, hyper armour on every move, a faster and
-// wider C4 whirlwind and C6 eruption. Signature: the dash thrust sends a crimson crescent tearing through the ranks.
+// ---------------------------------------------------------------- fighting style
+// His own moveset (lubu.moves.js); STYLE keeps the look: crimson crescents, the red dragon, the edge lead and grip of
+// the halberd, the charge-hold glow.
 const STYLE = {
   edgeLead: true, grip: 0.55, charge: [2.2, 0.5, 0.3],
-  tempo: 0.94, reach: 1.3, arc: 25, dmg: 1.5, force: 1.35, armor: 'all',
   fx: { proj: [2.2, 0.35, 0.25], core: [2.4, 1.2, 0.8], beam: [2.2, 0.5, 0.3] },
   dragon: { body: [0.55, 0.03, 0.04], scale: [0.85, 0.08, 0.08], belly: [1.0, 0.5, 0.4], fin: [1.5, 0.35, 0.25], whisker: [1.5, 0.5, 0.4] },
   rays: [1.3, 0.4, 0.3],
-  moves(M) {
-    M.c4.hits[0].range *= 1.15; M.c4.hits[0].every = Math.max(6, M.c4.hits[0].every - 3);
-    M.c6.hits.at(-1).range *= 1.2;
-    const fd = M.dash.hits.at(-1).f[0];
-    M.dash.hits.push({ f: [fd, fd], every: 99, proj: { speed: 20, life: 22, r: 1.7, kind: 'crescent' }, dmg: 22, kb: 'blow', force: 12, lift: 4, hitstop: 0 });
-  },
 };
 
 // ---------------------------------------------------------------- HUD portrait (20×20 pixels)
@@ -271,6 +265,7 @@ export default {
   },
   face: FACE, pal: PAL,
   style: STYLE,
+  moveset: MOVESET,
   build: () => ({ parts: limbs(torso()), head: head(), hv: HV, bv: FV, pauldrons: pauldronBoxes, weapon: weaponGeo() }),
   chains() {
     const out = [];
