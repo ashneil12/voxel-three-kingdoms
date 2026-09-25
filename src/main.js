@@ -70,6 +70,7 @@ function previewStep() {
   const h = game.hero, m = MOVES[PREVIEW];
   Object.assign(h, { x: 0, y: 0, z: 0, yaw: 0, grounded: true });
   if (m) Object.assign(h, { state: 'attack', move: PREVIEW, moveT: Math.round(window.previewT * m.frames), moveSeq: 1 });
+  else if (PREVIEW === 'idle') Object.assign(h, { state: 'idle', move: null, stateT: Math.round(window.previewT * 149) });
   else Object.assign(h, { state: 'musou', move: null, musouClip: PREVIEW, musouT: window.previewT });
   updateAnim(h); h.anim.blendF = h.anim.blendN;
   game.frame++;
