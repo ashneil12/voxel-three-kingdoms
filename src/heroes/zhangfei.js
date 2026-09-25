@@ -217,6 +217,8 @@ function tasselSeg(i, n) {
 // His own moveset (zhangfei.moves.js); STYLE keeps the look: roar / projectile colours, the golden dragon, the
 // charge-hold glow.
 const STYLE = {
+  trail: { white: [0.98, 0.88, 0.66], blue: [0.9, 0.5, 0.08], hot: [1.6, 1.4, 1.0] },   // weapon trail (vfx.js)
+  weight: 1.4,                                                 // impact: camera kick scale (camera.js)
   charge: [2.2, 1.4, 0.4],
   fx: { roar: [2.2, 1.0, 0.35], proj: [2.0, 1.1, 0.4], core: [2.4, 1.8, 1.0] },
   dragon: { body: [0.6, 0.25, 0.03], scale: [0.9, 0.42, 0.06], belly: [1.0, 0.8, 0.4], fin: [1.4, 0.8, 0.3], whisker: [1.5, 0.9, 0.4] },
@@ -259,6 +261,7 @@ export default {
   },
   face: FACE, pal: PAL,
   style: STYLE,
+  voice: { pitch: 0.7, fk: 0.86, growl: 0.35, gain: 1.15 },   // the deepest, gruff roar
   moveset: MOVESET,
   build: () => ({ parts: limbs(torso()), head: head(), hv: HV, bv: FV, pauldrons: pauldronBoxes, weapon: weaponGeo() }),
   chains() {

@@ -8,6 +8,7 @@
 // (occlusion.js), event-driven micro-kicks only on heavy hits (none on normal hits) and Musou choreography.
 // Render smoothing uses sim time elapsed between renders and shake uses sim frames, so captures are deterministic.
 import * as THREE from 'three';
+import { HERO } from '../heroes/index.js';
 import { on } from '../core/events.js';
 import { ST } from '../crowd/crowd.js';
 import { FADE } from './occlusion.js';
@@ -166,7 +167,12 @@ export function createCameraRig(game, width, height) {
     kicks.push({ f: game.frame, px, dirX, dirY, len });
     if (kicks.length > 4) kicks.shift();
   };
-  on('hits', (e) => { if (e.heavy) kick(Math.min(3, 1.6 + e.count * 0.12), 0.25, 1, 6); });   // finishers only
+  // finishers kick; heavy-weapon heroes (style.weight > 1) also nudge the frame on every normal that connects
+  const WEIGHT = HERO.style?.weight || 1;
+  on('hits', (e) => {
+    if (e.heavy) kick(Math.min(4, (1.6 + e.count * 0.12) * WEIGHT), 0.25, 1, 6);
+    else if (WEIGHT > 1.05 && e.count) kick(Math.min(1.4, 0.5 * WEIGHT + e.count * 0.05), 0.4, 1, 3);
+  });
   on('hero:hurt', (e) => kick(e.armored ? 0.6 : 1.5, 1, 0.3, e.armored ? 4 : 6));
   on('land', (e) => e.hard && kick(2, 0, 1, 6));
   on('musou:burst', () => kick(4, 0.3, 1, 10));

@@ -31,7 +31,7 @@ const kindOf = (w) => (w.heavy ? 'heavy' : w.shape === 'circle' ? 'spin' : w.sha
 const KIAI = {
   n1: [['ha', 'hah']], n2: [['sei', 'hah']], n3: [['toh', 'tah']], n4: [['hyah']], n5: [['sei', 'ha'], ['tah']], n6: [['seiya']],
   c1: [['hyah', 'haa']], c2: [['tah', 'toh']], c3: [['hah'], ['seiya']], c4: [['uora']], c5: [['haa']], c6: [['uora'], ['seiya']],
-  dash: [['hyah']], jatk: [['ha', 'sei']], jc: [['haa']],
+  dash: [['hyah']], jatk: [['ha', 'sei']], ja2: [['hah', 'toh']], ja3: [['hyah']], jc: [['haa']],
 };
 const VOICE_P = 0.8;
 const VOX = 0.72;                 // voice bus: ≈ 6 dB under the sfx stem, so kiai and shouts never mask the impacts

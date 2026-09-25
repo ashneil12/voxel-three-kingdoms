@@ -31,8 +31,8 @@ export function moves() {
       hits: [{ f: [14, 24], sweep: 1, sweepN: 10, shape: 'circle', range: 2.8, dmg: 12, kb: 'push', force: 6, hitstop: 3 },
         BL(20, { count: 8, spread: 360, speed: 18, life: 24, r: 1.2 }, { dmg: 14, kb: 'blow', force: 8, lift: 4 })] },
 
-    c1: { frames: 76, cancel: 68, dodgeCancel: 48, steer: 14, lunge: [[30, 36, -0.5]], armor: true,
-      hits: [{ f: [36, 42], every: 3, shape: 'line', len: 13, width: 2.2, dmg: 12, kb: 'blow', force: 10, lift: 4, hitstop: 3, heavy: true, beam: true }] },
+    c1: { frames: 70, cancel: 62, dodgeCancel: 42, steer: 14, lunge: [[24, 30, -0.5]], armor: true,
+      hits: [{ f: [30, 36], every: 3, shape: 'line', len: 13, width: 2.2, dmg: 12, kb: 'blow', force: 10, lift: 4, hitstop: 3, heavy: true, beam: true }] },
     c2: { frames: 64, cancel: 56, dodgeCancel: 36, steer: 10, armor: true,
       hits: [{ f: [20, 34], every: 5, shape: 'circle', range: 3.8, dmg: 10, kb: 'launch', force: 2, lift: 9, hitstop: 3, heavy: true, pillars: 7 }] },
     c3: { frames: 90, cancel: 82, dodgeCancel: 66, steer: 12, lunge: [[12, 54, -2.2]], armor: true,
@@ -129,8 +129,8 @@ export function clips(A, M) {
   // C1 the palm opens, the fan thrust out: a long beam
   { const [s, e] = hit('c1'), F = M.c1.frames, c = M.c1.cancel;
     out.c1 = clipF('c1', [[0, ST],
-      [14, { ...calm(0, 0.9, -4), ...fan(F_.raise, UP) }, 'out'],
-      [26, { ...calm(-30, 0.84, 0), ...fan(F_.aim, PALM), fL: [0.24, 0.08, 0.5, 0, 12], fR: [-0.24, 0.08, -0.36, 0, -40] }, 'io'],
+      [11, { ...calm(0, 0.9, -4), ...fan(F_.raise, UP) }, 'out'],
+      [22, { ...calm(-30, 0.84, 0), ...fan(F_.aim, PALM), fL: [0.24, 0.08, 0.5, 0, 12], fR: [-0.24, 0.08, -0.36, 0, -40] }, 'io'],
       [s, { ...calm(-20, 0.8, 8), hips: [0, 0.8, 0.14], ...fan(F_.cast, PALM) }, 'snap'],
       [e + 6, { ...calm(-20, 0.82, 8), hips: [0, 0.82, 0.12], ...fan([-0.14, 1.38, 0.52, 0, 8, 90], PALM) }, 'io'],
       [c, { ...calm(-18, 0.86, 4), ...fan(F_.cast, PALM) }, 'io'], [F, ST]]); }

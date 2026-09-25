@@ -133,6 +133,9 @@ const TRAIL_VS = /* glsl */`
 // Passes: uEdge 0 = veil + speed lines, 1 = core + fringe + rim (colour, no depth), 2 (DEPTH_PASS: its own program,
 // so the colour passes keep early depth) = depth only where the core draws, at the ribbon's real distance clamped into the DoF focus band, so the post keeps the arc sharp even over the
 // sky; bodies really in front of that depth keep theirs.
+// weapon trail colours: the hero's style.trail (Guan Yu green, Zhang Fei gold, Lü Bu crimson, …), else white-blue
+const TRAIL = { white: [0.74, 0.84, 0.95], blue: [0.12, 0.36, 1.0], hot: [1.3, 1.42, 1.55], ...(HERO.style?.trail || {}) };
+const V3 = (a) => `vec3(${a.map((x) => x.toFixed(3)).join(', ')})`;
 const TRAIL_FS = /* glsl */`
   uniform float uEdge; uniform vec3 uHeroA, uHeroB; uniform mat4 projectionMatrix;
   varying vec4 vT; varying float vNear; varying vec3 vView; varying float vVeil;
@@ -148,8 +151,8 @@ const TRAIL_FS = /* glsl */`
     float lq = floor(life * 6.0 + 0.999) / 6.0;                    // stepped fade along the ribbon
     float r1 = h1(band * 1.7 + 3.0), r2 = h1(band * 3.1 + 11.0);
     float head = smoothstep(0.7, 1.0, life);
-    vec3 white = mix(vec3(0.74, 0.84, 0.95), vec3(0.55, 0.9, 0.9), hue);
-    vec3 blue = mix(vec3(0.12, 0.36, 1.0), vec3(0.02, 0.7, 0.85), hue);
+    vec3 white = mix(${V3(TRAIL.white)}, vec3(0.55, 0.9, 0.9), hue);
+    vec3 blue = mix(${V3(TRAIL.blue)}, vec3(0.02, 0.7, 0.85), hue);
     float rimLo = 12.5 - graze;                                    // flat spin: the rim takes 2 bands
     vec4 o;
     if (uEdge > 0.5) {
@@ -159,7 +162,7 @@ const TRAIL_FS = /* glsl */`
       float fringe = step(coreLo - 1.0, band) * (1.0 - step(coreLo, band)) * step(0.4, life);
       float rim = step(rimLo, band) * step(age, 0.8) * pow(life, 0.5);
       float aC = core * mix(0.5, 0.4, graze) * (0.55 + 0.45 * head) * (0.8 + 0.2 * r1) * vVeil;   // r4: flat disc translucent (DW8 C4 mid-grey), bright rim
-      vec3 hot = mix(vec3(1.3, 1.42, 1.55), vec3(1.05, 1.55, 1.5), hue);
+      vec3 hot = mix(${V3(TRAIL.hot)}, vec3(1.05, 1.55, 1.5), hue);
       o = vec4(white * aC + blue * fringe * 0.5 * vVeil + hot * rim * (0.75 + 0.35 * head), aC + fringe * 0.4 * vVeil + rim) * g;
       #ifdef DEPTH_PASS
         if (o.a < 0.3) discard;

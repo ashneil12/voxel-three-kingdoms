@@ -4,6 +4,7 @@
 // (bake ≈ 0.9 s at boot; combat sounds are ready after ≈ 0.1 s) — and played back by
 // audio.js with random rate / gain / pan, so 50+ hits per second stay cheap and never repeat back to back.
 // Audio variation uses Math.random: it must never touch the sim or visual RNG.
+import { HERO } from '../heroes/index.js';
 const SR = 48000;
 const rnd = (a, b) => a + (b - a) * Math.random();
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -159,7 +160,7 @@ function voice(oc, dst, o) {
   return end;
 }
 
-// Zhao Yun's kiai lines (seconds from the cue; the vowel peak lands ≈ 50-70 ms in, on the first trail frame)
+// the hero's kiai lines (Zhao Yun's; other heroes' voices recolour them — see buildBank) (seconds from the cue; the vowel peak lands ≈ 50-70 ms in, on the first trail frame)
 const LINES = {
   ha: { f0: [[0, 220], [0.06, 268], [0.14, 250], [0.24, 185]], vow: [[0, 'A'], [0.07, 'a'], [0.24, 'a']],
     amp: [[0, 0], [0.035, 0.08], [0.065, 1], [0.15, 0.75], [0.25, 0]], asp: [[0, 0], [0.012, 0.9], [0.05, 0.5], [0.085, 0]], growl: 0.15 },
@@ -350,7 +351,10 @@ function riff(oc, dst) {
 /** Bake the bank into B progressively (combat sounds first, loops last): B.name = AudioBuffer | AudioBuffer[]. */
 export async function buildBank(B = {}) {
   const n = (k, f) => Promise.all(Array.from({ length: k }, f));
-  const vox = (spec, k) => bake(spec.amp.at(-1)[0] + 0.1, (oc, d) => voice(oc, d, { ...spec, k }));
+  // the hero's own voice (hero def `voice`: pitch, formant scale, extra growl, loudness) colours every kiai line
+  const HV = HERO.voice || {};
+  const vox = (spec, k, own = true) => bake(spec.amp.at(-1)[0] + 0.1, (oc, d) => voice(oc, d, own
+    ? { ...spec, k: k * (HV.pitch || 1), fk: HV.fk || 1, growl: Math.max(0, (spec.growl || 0) + (HV.growl || 0)), gain: HV.gain || 1 } : { ...spec, k }));
   // combat-critical first
   const put = (keys, ps) => Promise.all(ps).then((v) => keys.forEach((k, i) => { B[k] = v[i]; }));
   await put(['slash', 'thrust', 'spin', 'heavy', 'hit', 'hitHeavy', 'crunch', 'clank', 'crowd', 'mass'], [

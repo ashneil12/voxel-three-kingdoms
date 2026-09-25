@@ -223,6 +223,8 @@ function tasselSeg(i, n) {
 // His own moveset (lubu.moves.js); STYLE keeps the look: crimson crescents, the red dragon, the edge lead and grip of
 // the halberd, the charge-hold glow.
 const STYLE = {
+  trail: { white: [0.98, 0.72, 0.68], blue: [0.9, 0.08, 0.06], hot: [1.6, 1.15, 1.05] },   // weapon trail (vfx.js)
+  weight: 1.2,                                                 // impact: camera kick scale (camera.js)
   edgeLead: true, grip: 0.55, charge: [2.2, 0.5, 0.3],
   fx: { proj: [2.2, 0.35, 0.25], core: [2.4, 1.2, 0.8], beam: [2.2, 0.5, 0.3] },
   dragon: { body: [0.55, 0.03, 0.04], scale: [0.85, 0.08, 0.08], belly: [1.0, 0.5, 0.4], fin: [1.5, 0.35, 0.25], whisker: [1.5, 0.5, 0.4] },
@@ -265,6 +267,7 @@ export default {
   },
   face: FACE, pal: PAL,
   style: STYLE,
+  voice: { pitch: 0.84, fk: 0.92, growl: 0.2, gain: 1.1 },   // low, imperious
   moveset: MOVESET,
   build: () => ({ parts: limbs(torso()), head: head(), hv: HV, bv: FV, pauldrons: pauldronBoxes, weapon: weaponGeo() }),
   chains() {

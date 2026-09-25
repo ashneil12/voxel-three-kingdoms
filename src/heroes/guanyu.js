@@ -273,6 +273,8 @@ function panelSeg(w) {
 // His own moveset (guanyu.moves.js); STYLE keeps the look: projectile / beam colours, the green dragon, the edge lead
 // and wide grip of the glaive (hero.js), the charge-hold glow (vfx/charge.js).
 const STYLE = {
+  trail: { white: [0.72, 0.95, 0.78], blue: [0.05, 0.7, 0.25], hot: [1.2, 1.6, 1.25] },   // weapon trail (vfx.js)
+  weight: 1.3,                                                 // impact: camera kick scale (camera.js)
   edgeLead: true, grip: 0.62, charge: [0.4, 1.9, 0.7],
   fx: { proj: [0.25, 1.7, 0.6], core: [1.1, 2.2, 1.3], beam: [0.35, 1.8, 0.7] },
   dragon: { body: [0.03, 0.42, 0.14], scale: [0.06, 0.68, 0.24], belly: [0.5, 0.9, 0.55], fin: [0.5, 1.3, 0.6], whisker: [0.7, 1.5, 0.8] },
@@ -315,6 +317,7 @@ export default {
   },
   face: FACE, pal: PAL,
   style: STYLE,
+  voice: { pitch: 0.8, fk: 0.9, growl: 0.12, gain: 1.05 },   // deep, resonant (audio/bank.js)
   moveset: MOVESET,
   build: () => ({ parts: limbs(torso()), head: head(), hv: HV, bv: BV, pauldrons: pauldronBoxes, weapon: weaponGeo() }),
   chains() {

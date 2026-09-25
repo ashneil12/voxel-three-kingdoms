@@ -198,6 +198,8 @@ function hairSeg(i, n) {
 // ---------------------------------------------------------------- fighting style
 // His own moveset (zhugeliang.moves.js); STYLE keeps the look: wind-blade and beam colours, the ice-white dragon.
 const STYLE = {
+  trail: { white: [0.86, 0.95, 0.98], blue: [0.3, 0.8, 0.95], hot: [1.45, 1.6, 1.65] },   // weapon trail (vfx.js)
+  weight: 0.8,                                                 // impact: camera kick scale (camera.js)
   fx: { proj: [0.5, 1.6, 2.2], core: [1.6, 2.2, 2.5], beam: [0.6, 1.6, 2.6] },
   dragon: { body: [0.35, 0.5, 0.55], scale: [0.6, 0.85, 0.9], belly: [0.9, 1.0, 1.0], fin: [0.9, 1.3, 1.3], whisker: [1.0, 1.3, 1.4] },
   rays: [0.8, 1.2, 1.3],
@@ -240,6 +242,7 @@ export default {
   },
   face: FACE, pal: PAL,
   style: STYLE,
+  voice: { pitch: 0.98, fk: 1.02, growl: -0.12, gain: 0.85 },   // calm, clear
   moveset: MOVESET,
   anim: 'fan',                                              // one-handed fan upper body (hero/anims/fan.js)
   build: () => ({ parts: limbs(torso()), head: head(), hv: HV, bv: FV, pauldrons: null, weapon: weaponGeo() }),
