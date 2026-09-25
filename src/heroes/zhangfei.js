@@ -8,6 +8,7 @@
 import { vox, B, P, md, mirX, lamellar } from '../hero/model.js';
 import { hash01 } from '../core/rng.js';
 import { shade } from '../core/voxel.js';
+import * as MOVESET from './zhangfei.moves.js';
 import { FV, glove, bareUpperArm, bracer, bootFoot, symH } from './parts.js';
 
 const HV = 0.0135;
@@ -212,21 +213,14 @@ function tasselSeg(i, n) {
   })], 0.014, { jitter: 0.06, ao: 0.25 });
 }
 
-// ---------------------------------------------------------------- fighting style (hero/styles.js)
-// 蠻力: raw power — the heaviest knockback and launches, hyper armour from N3 on, a bigger N6 quake. Signature:
-// 當陽一喝 — C1 opens with a roar that blasts back everything within 7 m before the launcher.
+// ---------------------------------------------------------------- fighting style
+// His own moveset (zhangfei.moves.js); STYLE keeps the look: roar / projectile colours, the golden dragon, the
+// charge-hold glow.
 const STYLE = {
   charge: [2.2, 1.4, 0.4],
-  tempo: 1.08, reach: 1.05, dmg: 1.35, force: 1.4, armor: 'heavy',
   fx: { roar: [2.2, 1.0, 0.35], proj: [2.0, 1.1, 0.4], core: [2.4, 1.8, 1.0] },
   dragon: { body: [0.6, 0.25, 0.03], scale: [0.9, 0.42, 0.06], belly: [1.0, 0.8, 0.4], fin: [1.4, 0.8, 0.3], whisker: [1.5, 0.9, 0.4] },
   rays: [1.3, 0.8, 0.35],
-  moves(M) {
-    const f0 = M.c1.hits[0].f[0];
-    M.c1.hits.push({ f: [f0 - 10, f0 - 10], every: 99, shape: 'circle', range: 7, dmg: 8, kb: 'push', force: 10, lift: 2, hitstop: 5, heavy: true, roar: true });
-    M.n6.hits[0].range *= 1.35;
-    M.jc.hits[0].range *= 1.3;
-  },
 };
 
 // ---------------------------------------------------------------- HUD portrait (20×20 pixels)
@@ -265,6 +259,7 @@ export default {
   },
   face: FACE, pal: PAL,
   style: STYLE,
+  moveset: MOVESET,
   build: () => ({ parts: limbs(torso()), head: head(), hv: HV, bv: FV, pauldrons: pauldronBoxes, weapon: weaponGeo() }),
   chains() {
     const out = [];
