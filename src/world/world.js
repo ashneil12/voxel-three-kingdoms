@@ -9,6 +9,7 @@ import { buildTerrain } from './terrain.js';
 import { buildCastle } from './castle.js';
 import { buildDressing } from './dressing.js';
 import { STAGE } from '../stages/index.js';
+import { buildSetpiece, blocked } from './setpieces.js';
 
 export const ARENA_RADIUS = 46;          // sim clamps hero/crowd inside this
 // castle wall face (sim clamps, minimap and the castle set): far enough back that its skyline (wall top, towers, sun
@@ -20,7 +21,8 @@ const FIELD_FIRES = [[-40, 0, 24, 1.3], [38, 0, -24, 1.2], [-22, 0, -44, 1.4], [
 // fire-attack stages ring the field with more blazes (evenly spread past the arena rim)
 for (let i = FIELD_FIRES.length; i < (STAGE.light.fires || 0); i++) {
   const a = i * 2.39996, r = 44 + (i % 3) * 5;
-  FIELD_FIRES.push([Math.cos(a) * r, 0, Math.min(Math.sin(a) * r, 80), 1 + (i % 4) * 0.15]);
+  const x = Math.cos(a) * r, z = Math.sin(a) * r;
+  if (!blocked(x, z)) FIELD_FIRES.push([x, 0, Math.min(z, 80), 1 + (i % 4) * 0.15]);
 }
 const L = STAGE.light, FIRE_K = L.fire ?? 1;
 // key light: from behind-left of the wall-facing view, higher than the visible sun so the ground reads (hard shadows
@@ -51,7 +53,8 @@ export function createWorld(scene) {
 
   buildTerrain(scene, GATE_X, FIELD_FIRES);
   const castle = buildCastle(scene, { wallZ: WALL_Z, gateX: GATE_X });
-  const dressing = buildDressing(scene, { wallZ: WALL_Z, gateX: GATE_X, castle, fieldFires: FIELD_FIRES });
+  const setpiece = buildSetpiece(scene);                            // 赤壁 river + fleet, 虎牢關 rock walls (setpieces.js)
+  const dressing = buildDressing(scene, { wallZ: WALL_Z, gateX: GATE_X, castle, fieldFires: FIELD_FIRES, extraFires: setpiece.fires, blocked });
 
   // fire glow on the gate and on the two nearest field fires
   const fireLights = [[GATE_X - 6.5, 2.2, WALL_Z - 3.5], [GATE_X + 7, 2.2, WALL_Z - 3.5], [-40, 2, 24]].map(([x, y, z]) => {
@@ -71,6 +74,7 @@ export function createWorld(scene) {
       sun.position.copy(LIGHT_DIR).multiplyScalar(70).add(tmp);
       sky.material.uniforms.uTime.value = t;
       dressing.update(t);
+      setpiece.update(t);
       castle.update(t);
       fireLights.forEach((l, i) => { l.intensity = FIRE_K * (28 + Math.sin(t * (13 + i * 3.1) + i) * 5 + Math.sin(t * 7.3 + i * 2) * 4); });
     },

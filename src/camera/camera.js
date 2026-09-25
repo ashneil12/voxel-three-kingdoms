@@ -38,6 +38,7 @@ export const CAM = {
   kickMaxPx: 4,             // shake ceiling at 720p (bench: ≤ 4 px, finishers only)
   cutJump: 40,              // hero moved faster than this (m/s, ≥ 1 m) between two renders: teleport → hard cut (dodge 22)
 };
+const VIEW = new URLSearchParams(location.search).get('view')?.split(',').map(Number);
 // debug: ?zoom=0.5 halves the follow distance (model close-ups)
 const ZOOM = Number(new URLSearchParams(location.search).get('zoom')) || 1;
 CAM.dist *= ZOOM; CAM.height -= (1 - ZOOM) * 0.5 - (Number(new URLSearchParams(location.search).get('aimy')) || 0);   // ?aimy=0.4 raises the aim
@@ -254,6 +255,7 @@ export function createCameraRig(game, width, height) {
       }
       camera.position.copy(pos);
       camera.lookAt(api.focus);
+      if (VIEW) { camera.position.set(VIEW[0], VIEW[1], VIEW[2]); camera.lookAt(VIEW[3], VIEW[4], VIEW[5]); }   // debug: ?view=x,y,z,tx,ty,tz
       // occluder fade corridor: camera → hero on the ground
       FADE.uA.value.set(pos.x, pos.z); FADE.uB.value.set(h.x, h.z);
       // micro-kicks: damped one-rebound thump, rotation in screen space, ≤ kickMaxPx

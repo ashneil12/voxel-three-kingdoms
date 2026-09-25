@@ -209,7 +209,7 @@ function camp(b, r, gateX) {
   }
 }
 
-export function buildDressing(scene, { wallZ, gateX, castle, fieldFires }) {
+export function buildDressing(scene, { wallZ, gateX, castle, fieldFires, extraFires = [], blocked = () => false }) {
   const r = makeRng(44);
   const poles = [], cloths = [];
   // sunlight through the cloth: emissive = the banner's own texture, so 魏/蜀 read even when backlit
@@ -228,6 +228,7 @@ export function buildDressing(scene, { wallZ, gateX, castle, fieldFires }) {
   };
   /** Wei standard: pole + crossbar, cloth hangs from the bar; faces the arena centre. */
   const standard = (x, z, s = 1, mat = mats.wei, P = 8.5 * s) => {
+    if (blocked(x, z)) return;                                         // not in the river / inside the rock walls
     const W = 2.3 * s, Hc = 4.3 * s;
     const yaw = Math.atan2(-x, -z) + r.range(-0.35, 0.35);                 // cloth plane faces the centre
     const cx = Math.cos(yaw), cz = -Math.sin(yaw);
@@ -274,6 +275,7 @@ export function buildDressing(scene, { wallZ, gateX, castle, fieldFires }) {
     const cols = r.int(8, 16), rows = r.int(5, 10);
     for (let i = 0; i < cols; i++) for (let j = 0; j < rows; j++) {
       const lx = (i - cols / 2) * 1.3 + r.range(-0.2, 0.2), lz = (j - rows / 2) * 1.4 + r.range(-0.2, 0.2);
+      if (blocked(cx + lx * Math.cos(face) + lz * Math.sin(face), cz - lx * Math.sin(face) + lz * Math.cos(face))) continue;
       troops.push({ x: cx + lx * Math.cos(face) + lz * Math.sin(face), z: cz - lx * Math.sin(face) + lz * Math.cos(face), yaw: face + r.range(-0.2, 0.2), ph: r.range(0, 6.28) });
     }
     if (r.chance(0.6)) standard(cx, cz, r.range(1.0, 1.3));
@@ -342,7 +344,7 @@ export function buildDressing(scene, { wallZ, gateX, castle, fieldFires }) {
   scene.add(poleMesh);
 
   // fires: castle braziers/burning gate + field fires at the arena rim (burning barricades/carts)
-  const fireSpots = [...castle.fires, ...fieldFires];
+  const fireSpots = [...castle.fires, ...fieldFires, ...extraFires];
   const logs = [];
   for (const [x, y, z, s] of fireSpots) {
     logs.push({ s: [1.8 * s, 0.32 * s, 0.32 * s], p: [x, y + 0.16 * s, z], r: [0, 0.5, 0], c: 0x241510 }, { s: [1.8 * s, 0.32 * s, 0.32 * s], p: [x, y + 0.36 * s, z], r: [0, -0.7, 0], c: 0x2e1c10 });

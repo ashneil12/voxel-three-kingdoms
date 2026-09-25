@@ -59,6 +59,7 @@ export const LOOKS = {
 };
 const lookName = new URLSearchParams(location.search).get('look') || STAGE.look;
 if (lookName && LOOKS[lookName]) Object.assign(P, LOOKS[lookName]);
+if (!new URLSearchParams(location.search).get('look') && STAGE.post) Object.assign(P, STAGE.post);   // per-stage tweaks of its look
 const uName = (k) => 'u' + k[0].toUpperCase() + k.slice(1);
 const pUniforms = () => Object.fromEntries(Object.entries(P).map(([k, v]) => [uName(k), { value: Array.isArray(v) ? new THREE.Vector3(...v) : v }]));
 const syncP = (u) => { for (const k in P) { const x = u[uName(k)]; if (Array.isArray(P[k])) x.value.set(...P[k]); else x.value = P[k]; } };
