@@ -10,7 +10,7 @@ import { noise2 } from './terrain.js';
 import { STAGE } from '../stages/index.js';
 
 export const SET = STAGE.set || null;
-export const RIVER = { z0: 54, z1: 95 };
+export const RIVER = { z0: 49, z1: 95 };   // the near bank just past the arena rim (46 m), in the default view
 const lit = () => new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0, flatShading: true });
 
 /** Rock wall edge |x| on side s (+1 / −1) at depth z: wide open over the arena, closing on the gate past z 40. */
@@ -42,8 +42,8 @@ function waterMesh() {
       .replace('#include <begin_vertex>', 'vec3 transformed = vec3(position.x, position.y + wa * 0.12, position.z);\nvWPos = wp0;');
     sh.fragmentShader = 'uniform float uTime;\nvarying vec3 vWPos;\n' + sh.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
       // firelight glinting on the ripples: sparse bright ridges, warm
-      float gl = pow(max(0.0, sin(vWPos.x * 1.3 + uTime * 1.7) * sin(vWPos.z * 2.1 - uTime * 1.2 + sin(vWPos.x * 0.2))), 10.0);
-      totalEmissiveRadiance += vec3(1.0, 0.42, 0.12) * gl * 0.35 + vec3(0.02, 0.05, 0.09);`);
+      float gl = pow(max(0.0, sin(vWPos.x * 1.3 + uTime * 1.7) * sin(vWPos.z * 2.1 - uTime * 1.2 + sin(vWPos.x * 0.2))), 8.0);
+      totalEmissiveRadiance += vec3(1.0, 0.42, 0.12) * gl * 0.9 + vec3(0.03, 0.07, 0.13);`);
   };
   const m = new THREE.Mesh(geo, mat);
   m.position.set(0, 0.16, (RIVER.z0 + RIVER.z1) / 2);
@@ -88,7 +88,7 @@ function buildRiver(scene) {
   // the chained fleet: two staggered lines, iron chains between neighbours; most of the near line burns
   const hulls = [];
   for (let i = 0; i < 9; i++) {
-    const x = -130 + i * 30 + r.range(-3, 3), z = i & 1 ? 82 : 68, yaw = r.range(-0.08, 0.08), s = r.range(0.95, 1.1);   // broadside (hull along x)
+    const x = -130 + i * 30 + r.range(-3, 3), z = i & 1 ? 80 : 62, yaw = r.range(-0.08, 0.08), s = r.range(0.95, 1.1);   // broadside (hull along x)
     fires.push(...ship(b, r, x, z, yaw, s, r.chance(z < 75 ? 0.75 : 0.5)));
     hulls.push([x, z]);
   }

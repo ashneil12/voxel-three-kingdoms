@@ -216,6 +216,7 @@ function tasselSeg(i, n) {
 // 蠻力: raw power — the heaviest knockback and launches, hyper armour from N3 on, a bigger N6 quake. Signature:
 // 當陽一喝 — C1 opens with a roar that blasts back everything within 7 m before the launcher.
 const STYLE = {
+  charge: [2.2, 1.4, 0.4],
   tempo: 1.08, reach: 1.05, dmg: 1.35, force: 1.4, armor: 'heavy',
   fx: { roar: [2.2, 1.0, 0.35], proj: [2.0, 1.1, 0.4], core: [2.4, 1.8, 1.0] },
   dragon: { body: [0.6, 0.25, 0.03], scale: [0.9, 0.42, 0.06], belly: [1.0, 0.8, 0.4], fin: [1.4, 0.8, 0.3], whisker: [1.5, 0.9, 0.4] },

@@ -19,7 +19,10 @@
 // Reaction states (HURT..GETUP) are driven by src/combat; this module owns the rest.
 import { rng } from '../core/rng.js';
 import { emit } from '../core/events.js';
-import { WALL_Z } from '../world/world.js';
+import { WALL_Z as WALL } from '../world/world.js';
+import { SET, RIVER } from '../world/setpieces.js';
+// far limit of the field: the castle wall, or the near bank where a river crosses the field (赤壁)
+const WALL_Z = SET === 'river' ? RIVER.z0 + 2 : WALL;
 
 export const ST = { OFF: 0, IDLE: 1, ADVANCE: 2, GUARD: 3, ATTACK: 4, HURT: 5, KNOCK: 6, AIR: 7, DOWN: 8, GETUP: 9, DEAD: 10 };
 export const isReacting = (s) => s >= ST.HURT && s <= ST.GETUP;

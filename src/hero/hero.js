@@ -4,7 +4,8 @@
 import * as THREE from 'three';
 import { ATTACK_CLIPS, MOVE_FEET } from './anims/attacks.js';
 import { LOCO_CLIPS, runPose, rollPose, applyRoll, createDodgeGhosts } from './anims/locomotion.js';
-import { createRig, sampleClip, blendStep, turnPose, POSE_SIZE, DIM, HERO_SCALE } from './rig.js';
+import { createRig, sampleClip, blendStep, turnPose, POSE_SIZE, DIM, HERO_SCALE, CH } from './rig.js';
+const CH_GRIPL = CH.gripL;
 import { createHeroModel } from './model.js';
 import { createSecondary } from './secondary.js';
 import { MOVES, moveClip } from './moves.js';
@@ -149,19 +150,49 @@ export function createHeroView(scene, hero) {
   const ghosts = createDodgeGhosts(scene, model);   // dodge afterimages + i-frame flash (locomotion-dodge)
   const pose = new Float32Array(POSE_SIZE);
   const pos = new THREE.Vector3();
+  // edge lead (style.edgeLead, heavy blades): the shared clips are spear clips, so a glaive or halberd would often cut
+  // with the flat or the back. Each frame the weapon is rolled about its shaft so the edge (local +Y) turns toward the
+  // blade's motion; the roll eases in, holds through pauses and relaxes back in stance. Render-only — hit shapes and
+  // trails do not depend on the roll.
+  const lead = HERO.style?.edgeLead, grip = HERO.style?.grip;
+  const tipP = new THREE.Vector3(), tipN = new THREE.Vector3(), vel = new THREE.Vector3(), wq = new THREE.Quaternion();
+  let roll = 0, hasTip = false;
+  function edgeLead(dt) {
+    const w = rig.joints.weapon;
+    w.rotation.z += roll; w.updateMatrixWorld(true);
+    w.localToWorld(tipN.set(0, 0, DIM.spearTip));
+    if (hasTip && dt > 0) {
+      vel.subVectors(tipN, tipP).applyQuaternion(w.getWorldQuaternion(wq).invert());   // tip motion in weapon space
+      const sp = Math.hypot(vel.x, vel.y) / dt, swinging = hero.state === 'attack' || hero.state === 'musou';
+      if (swinging && sp > 2.5) {
+        let d = Math.atan2(-vel.x, vel.y);                              // extra roll that turns +Y onto the motion
+        d = Math.atan2(Math.sin(d), Math.cos(d));
+        const k = Math.min(1, dt * 18 * Math.min(1, sp / 8));
+        w.rotation.z += d * k; roll += d * k;
+      } else if (!swinging) { const k = Math.min(1, dt * 4); w.rotation.z -= roll * k; roll -= roll * k; }
+      roll = Math.atan2(Math.sin(roll), Math.cos(roll));
+      w.updateMatrixWorld(true);
+      w.localToWorld(tipN.set(0, 0, DIM.spearTip));
+    }
+    tipP.copy(tipN); hasTip = true;
+  }
   return {
     rig, model, pose, secondary,
     update(dt) {
       heroPose(hero, pose);
+      if (grip) pose[CH_GRIPL] = Math.max(pose[CH_GRIPL], grip);   // heavy blades: hands wide apart on the shaft
       rig.root.scale.set(1, 1, 1);               // locomotion-dodge r3: applyRoll's squash & stretch is per frame; IK needs scale 1
       rig.apply(pose, pos.set(hero.x, hero.y, hero.z), hero.yaw);
       rig.root.scale.setScalar(HERO_SCALE); rig.root.updateMatrixWorld(true);   // after IK: grow the posed body about the ground point
       applyRoll(rig, hero.anim);                 // dive roll: whole-body pitch about the tucked ball (locomotion-dodge)
+      if (lead) edgeLead(dt);
       if (HERO.update) HERO.update(model, hero, dt);   // per-hero render hook (e.g. Zhuge Liang's wind blade)
       ghosts.update(hero, rig, dt);
       secondary.update(dt);
     },
-    reset() { secondary.reset(); },
+    reset() { secondary.reset(); roll = 0; hasTip = false; },
+    /** World position of the middle of the blade as rendered. */
+    bladeCentre(out) { return rig.joints.weapon.localToWorld(out.set(0, 0, (DIM.spearHead + DIM.spearTip) / 2)); },
     /** World position of the spear tip as rendered. */
     spearTip(out) { return rig.joints.weapon.localToWorld(out.set(0, 0, DIM.spearTip)); },
   };

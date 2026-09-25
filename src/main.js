@@ -15,6 +15,7 @@ import { createMusouView } from './musou/view.js';
 import { createCamSim, createCameraRig } from './camera/camera.js';
 import { createVfx } from './vfx/vfx.js';
 import { createSignatureFx } from './vfx/signature.js';
+import { createChargeFx } from './vfx/charge.js';
 import { createHud, paintPortrait } from './ui/hud.js';
 import { HERO, HEROES } from './heroes/index.js';
 import { STAGE, STAGES } from './stages/index.js';
@@ -51,6 +52,7 @@ const crowdView = createCrowdView(scene, game);
 const camRig = createCameraRig(game, vw, vh);
 const vfx = createVfx(scene, game, world);
 const sigFx = createSignatureFx(scene, game, vfx, camRig.camera);   // per-hero projectiles, beams, roar (render-only)
+const chargeFx = HERO.anim === 'fan' ? null : createChargeFx(scene, game, camRig.camera, heroView);   // charge-hold glow at the blade
 const bossView = game.boss ? createBossView(scene, game, vfx, { bossIntro: bossCfg.intro }) : null;
 const musouView = createMusouView(scene, game, camRig.camera);   // musou part: grade, dragon, cut-in (render-only)
 // hud part: camera passed so officer name/HP tags can be projected over their heads (read-only)
@@ -77,6 +79,7 @@ function render() {
   crowdView.update(dt);
   vfx.update(dt);
   sigFx.update(dt);
+  if (chargeFx) chargeFx.update(dt);
   if (bossView) bossView.update(dt);
   camRig.update(dt);
   world.update(dt, camRig.focus);

@@ -272,6 +272,7 @@ function panelSeg(w) {
 // 重刀: slower and heavier than the spear — longer reach, wider arcs, harder hits, hyper armour from N3 on. Signature:
 // 青龍斬 — the C1 launcher and the N6 slam send green crescent waves down the field.
 const STYLE = {
+  edgeLead: true, grip: 0.62, charge: [0.4, 1.9, 0.7],
   tempo: 1.12, reach: 1.2, arc: 20, dmg: 1.3, force: 1.25, armor: 'heavy',
   fx: { proj: [0.25, 1.7, 0.6], core: [1.1, 2.2, 1.3], beam: [0.35, 1.8, 0.7] },
   dragon: { body: [0.03, 0.42, 0.14], scale: [0.06, 0.68, 0.24], belly: [0.5, 0.9, 0.55], fin: [0.5, 1.3, 0.6], whisker: [0.7, 1.5, 0.8] },

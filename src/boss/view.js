@@ -7,6 +7,7 @@ import { createRig, POSE_SIZE, HERO_SCALE, blendPose } from '../hero/rig.js';
 import { createHeroModel } from '../hero/model.js';
 import { createSecondary } from '../hero/secondary.js';
 import { sampleAnim } from '../hero/hero.js';
+import { fadeOccluder } from '../camera/occlusion.js';
 
 const SCALE = HERO_SCALE * 1.2;
 
@@ -16,6 +17,9 @@ export function createBossView(scene, game, vfx, stage) {
   scene.add(rig.root);
   const model = createHeroModel(rig, b.def);
   const secondary = createSecondary(scene, rig, model.material, b.def);
+  // standing between the lens and the hero he gets the crowd's see-through window (camera/occlusion.js), so the big
+  // boss never hides the player
+  for (const m of new Set(Object.values(model.meshes).map((x) => x.material))) fadeOccluder(m);
   const show = (v) => { rig.root.visible = v; for (const c of secondary.chains) for (const m of c.meshes) m.visible = v; };
   show(false);
   const pose = new Float32Array(POSE_SIZE), prev = new Float32Array(POSE_SIZE), from = new Float32Array(POSE_SIZE);
@@ -55,7 +59,7 @@ export function createBossView(scene, game, vfx, stage) {
   // ---- DOM: HP bar and banners
   const css = document.createElement('style');
   css.textContent = `
-    .boss-bar { position: fixed; left: 50%; top: 13vh; width: 40vw; transform: translateX(-50%); pointer-events: none; z-index: 3; opacity: 0;
+    .boss-bar { position: fixed; left: 41vw; top: 3vh; width: 38vw;   /* between the target bar and the minimap, clear of the dialogue */ pointer-events: none; z-index: 3; opacity: 0;
       transition: opacity .6s; font-family: "Xingkai SC", "STXingkai", "HudBrush", serif; color: #f7ecd8; text-shadow: 0 .2vh .4vh #000; }
     .boss-bar .nm { font-size: 4.2vh; letter-spacing: .6vh; display: flex; align-items: center; gap: 1.2vh; }
     .boss-bar .nm i { font: 700 1.9vh/1 "Kaiti SC", "STKaiti", serif; font-style: normal; background: #b3261e; padding: .5vh .6vh; border-radius: .4vh; writing-mode: vertical-rl; }

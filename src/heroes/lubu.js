@@ -222,6 +222,7 @@ function tasselSeg(i, n) {
 // 天下無雙: fast AND strong — the widest reach and arcs, the hardest hits, hyper armour on every move, a faster and
 // wider C4 whirlwind and C6 eruption. Signature: the dash thrust sends a crimson crescent tearing through the ranks.
 const STYLE = {
+  edgeLead: true, grip: 0.55, charge: [2.2, 0.5, 0.3],
   tempo: 0.94, reach: 1.3, arc: 25, dmg: 1.5, force: 1.35, armor: 'all',
   fx: { proj: [2.2, 0.35, 0.25], core: [2.4, 1.2, 0.8], beam: [2.2, 0.5, 0.3] },
   dragon: { body: [0.55, 0.03, 0.04], scale: [0.85, 0.08, 0.08], belly: [1.0, 0.5, 0.4], fin: [1.5, 0.35, 0.25], whisker: [1.5, 0.5, 0.4] },
