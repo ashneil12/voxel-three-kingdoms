@@ -70,6 +70,16 @@ export function createSignatureFx(scene, game, vfx, camera) {
       fx.ring(x + fxx * len * 0.5, z + fzz * len * 0.5, len * 0.35, 0.3, rgb(FX.beam, 0.8));
       fx.flash(0.08);
     }
+    if (hit.rain) {                                        // pillars of light striking round the target area
+      const R = hit.range || 5, n = hit.rain;
+      for (let i = 0; i < n; i++) {
+        const a = e.yaw + (i / n - 0.5) * 2.2, d = R * (0.35 + 0.6 * ((i * 0.618) % 1));
+        const x = h.x + Math.sin(a) * d, z = h.z + Math.cos(a) * d;
+        fx.columns(x, z, 1, 0, 9, 1.2, 0.45, rgb(FX.beam), 0);
+        fx.ring(x, z, 1.4, 0.35, rgb(FX.beam)); fx.star(x, 0.4, z, 1.2, 0.2, rgb(FX.core));
+      }
+      fx.dustRing(h.x, h.z, 20, 0.6, R * 1.4, 0.6, 0.5); fx.flash(0.12);
+    }
     if (hit.roar) {                                        // 當陽一喝: rolling shock rings, a dust wall pushed outward
       const R = hit.range || 7;
       fx.ring(h.x, h.z, R * 0.55, 0.35, rgb(FX.roar));
@@ -98,8 +108,8 @@ export function createSignatureFx(scene, game, vfx, camera) {
       fx.dustRing(x, z, 26, 0.8, r * 1.6, 0.7, 0.6); fx.flash(0.14);
     } else if (e.kind === 'beams') {                        // radial light beams from the hero
       const n = Math.round(r);
-      for (let i = 0; i < n; i++) { const a = e.yaw + (i / n) * 6.283; shaft(x, 1.2, z, a, 10, 0.9); }
-      fx.star(x, 1.3, z, 2.4, 0.3, rgb(k)); fx.ring(x, z, 6, 0.5, rgb(FX.beam)); fx.flash(0.14);
+      for (let i = 0; i < n; i++) { const a = e.yaw + (i / n) * 6.283; shaft(x, 1.2, z, a, 10, 0.55); }
+      fx.star(x, 1.3, z, 1.6, 0.25, rgb(k, 0.8)); fx.ring(x, z, 6, 0.5, rgb(FX.beam));
     } else if (e.kind === 'rain') {                         // a column of light striking the ground
       fx.columns(x, z, 1, 0, 9, 1.4, 0.4, rgb(FX.beam), 0);
       fx.ring(x, z, r, 0.35, rgb(FX.beam)); fx.dustRing(x, z, 10, 0.4, r * 1.6, 0.5, 0.5); fx.star(x, 0.4, z, 1.4, 0.2, rgb(k));

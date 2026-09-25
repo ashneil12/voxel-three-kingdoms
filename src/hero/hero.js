@@ -133,7 +133,8 @@ export function heroPose(h, out) {
   sampleAnim(a.id, a.t, a.k, out, a.lean);
   // spear-anim: a move that borrows another move's clip (moves.js `anim`) gets feet baked for its own root motion
   if (a.mf) MOVE_FEET[a.mf](a.mt / MOVES[a.mf].frames, out);
-  if (HERO.anim === 'fan') fanOverlay(a, out);            // one-handed fan upper body (anims/fan.js)
+  // one-handed fan upper body (anims/fan.js) — outside his own attack / musou clips, which author the fan themselves
+  if (HERO.anim === 'fan' && !(OWN && (a.om || OWN[a.id] || /^mu_/.test(a.id)))) fanOverlay(a, out);
   if (a.blendF < a.blendN) {
     const u = a.blendF / a.blendN;
     // spear-anim: feet step from where they stood (root travel since the transition undone in the hero frame; a teleport → 0)

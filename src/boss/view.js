@@ -7,6 +7,9 @@ import { createRig, POSE_SIZE, HERO_SCALE, blendPose } from '../hero/rig.js';
 import { createHeroModel } from '../hero/model.js';
 import { createSecondary } from '../hero/secondary.js';
 import { sampleAnim } from '../hero/hero.js';
+import { sampleClip } from '../hero/rig.js';
+import { makeAuthor } from '../hero/anims/author.js';
+import { finalizeMoves } from '../hero/moves.js';
 import { fadeOccluder } from '../camera/occlusion.js';
 
 const SCALE = HERO_SCALE * 1.2;
@@ -22,6 +25,8 @@ export function createBossView(scene, game, vfx, stage) {
   for (const m of new Set(Object.values(model.meshes).map((x) => x.material))) fadeOccluder(m);
   const show = (v) => { rig.root.visible = v; for (const c of secondary.chains) for (const m of c.meshes) m.visible = v; };
   show(false);
+  // his own attack clips, built on his own move table (not the player's)
+  const MS = b.def.moveset, BM = MS && finalizeMoves(MS.moves()), OWN = MS ? MS.clips(makeAuthor(BM, MS.entry || {}), BM) : null;
   const pose = new Float32Array(POSE_SIZE), prev = new Float32Array(POSE_SIZE), from = new Float32Array(POSE_SIZE);
   const pos = new THREE.Vector3();
   let seq = null, blend = 1;
@@ -111,7 +116,7 @@ export function createBossView(scene, game, vfx, stage) {
       if (!on) return;
       // pose: the boss's clip, cross-faded over 6 frames on every change of move
       const a = b.anim;
-      sampleAnim(a.id, a.t, a.id === 'run' ? 1 : 0, pose);
+      if (OWN && OWN[a.id]) sampleClip(OWN[a.id], a.t, pose); else sampleAnim(a.id, a.t, a.id === 'run' ? 1 : 0, pose);
       if (a.seq !== seq) { from.set(prev); blend = seq === null ? 1 : 0; seq = a.seq; }
       if (blend < 1) { blend = Math.min(1, blend + dt * 10); blendPose(from, pose, blend * blend * (3 - 2 * blend), pose); }
       prev.set(pose);

@@ -132,8 +132,9 @@ export function createBoss(game, def) {
     const an = b.anim;
     if (b.st === 'attack') {
       const A = b.atk, u = Math.min(1, b.stT / (A.w + A.a + A.r));
-      an.id = A.kind === 'sweep' ? 'c4' : A.kind === 'thrust' ? 'dash' : 'jc';
-      an.t = A.kind === 'thrust' ? 0.46 + u * 0.54 : u;                 // thrust: the dash clip's lunge thrust only
+      // his own moves: sweep = the tornado / whirlwind (c4), thrust = the piercing thrust (c3), leap = the plunge (c5)
+      an.id = A.kind === 'sweep' ? 'c4' : A.kind === 'thrust' ? 'c3' : 'c5';
+      an.t = A.kind === 'thrust' ? 0.14 + u * 0.6 : A.kind === 'leap' ? 0.1 + u * 0.6 : 0.1 + u * 0.8;
     } else if (b.st === 'stagger') { an.id = 'hurt'; an.t = Math.min(1, b.stT / BOSS.staggerF); }
     else if (b.st === 'dead') { an.id = 'hurt'; an.t = Math.min(1, b.stT / 40); }
     else if (b.st === 'enter' || (b.st === 'chase' && dist() > BOSS.range && b.pause <= 0)) {
