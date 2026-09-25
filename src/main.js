@@ -18,6 +18,8 @@ import { createSignatureFx } from './vfx/signature.js';
 import { createHud, paintPortrait } from './ui/hud.js';
 import { HERO, HEROES } from './heroes/index.js';
 import { STAGE, STAGES } from './stages/index.js';
+import { createBoss } from './boss/boss.js';
+import { createBossView } from './boss/view.js';
 import { createAudio } from './audio/audio.js';
 
 const params = new URLSearchParams(location.search);
@@ -37,6 +39,9 @@ game.hero = createHero(game);
 game.crowd = createCrowd(game, ENEMIES);
 game.combat = createCombat(game);
 game.musou = createMusou(game);
+// stage boss (虎牢關): Lü Bu — or Guan Yu when the player is Lü Bu
+const bossCfg = STAGE.boss && (STAGE.boss.id === HERO.id ? STAGE.boss.alt : STAGE.boss);
+game.boss = bossCfg ? createBoss(game, HEROES.find((h) => h.id === bossCfg.id)) : null;
 const input = createInput();
 if (params.has('debug')) Object.assign(window, { game, scene });   // debug: inspect sim state from the console
 
@@ -46,6 +51,7 @@ const crowdView = createCrowdView(scene, game);
 const camRig = createCameraRig(game, vw, vh);
 const vfx = createVfx(scene, game, world);
 const sigFx = createSignatureFx(scene, game, vfx, camRig.camera);   // per-hero projectiles, beams, roar (render-only)
+const bossView = game.boss ? createBossView(scene, game, vfx, { bossIntro: bossCfg.intro }) : null;
 const musouView = createMusouView(scene, game, camRig.camera);   // musou part: grade, dragon, cut-in (render-only)
 // hud part: camera passed so officer name/HP tags can be projected over their heads (read-only)
 const hud = createHud(document.getElementById('hud'), game, { camera: camRig.camera });
@@ -57,6 +63,7 @@ function step() {
   game.hero.step(inp);
   game.combat.step();
   game.crowd.step();
+  if (game.boss) game.boss.step();
   game.musou.step();
   game.frame++;
   vfx.afterStep();
@@ -70,6 +77,7 @@ function render() {
   crowdView.update(dt);
   vfx.update(dt);
   sigFx.update(dt);
+  if (bossView) bossView.update(dt);
   camRig.update(dt);
   world.update(dt, camRig.focus);
   musouView.update(dt);
@@ -82,6 +90,7 @@ function start() {
   rng.seed(1); vrng.seed(7936);
   game.hero.reset();
   game.crowd.reset(); game.combat.reset(); game.musou.reset(); game.cam.reset(0);
+  if (game.boss) game.boss.reset(), game.boss.st = 'off';
   heroView.reset();
   game.crowd.spawnArmy(Math.min(ENEMIES, game.crowd.grunts));
   if (params.has('musou')) game.hero.musou = game.hero.musouMax;   // debug: start with a full gauge

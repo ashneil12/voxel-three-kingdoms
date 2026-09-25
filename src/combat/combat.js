@@ -54,8 +54,12 @@ export function createCombat(game) {
   /** Is enemy i inside `hit` cast from (ox, oz) facing yaw? */
   function inShape(i, hit, ox, oz, yaw) {
     const c = game.crowd;
-    if (c.y[i] > (hit.yMax ?? COMBAT.yMaxDefault)) return false;
-    const dx = c.x[i] - ox, dz = c.z[i] - oz, r = COMBAT.enemyR;
+    return pointIn(c.x[i], c.y[i], c.z[i], COMBAT.enemyR, hit, ox, oz, yaw);
+  }
+  /** Is a body of radius r at (x, y, z) inside `hit` cast from (ox, oz) facing yaw? */
+  function pointIn(x, y, z, r, hit, ox, oz, yaw) {
+    if (y > (hit.yMax ?? COMBAT.yMaxDefault)) return false;
+    const dx = x - ox, dz = z - oz;
     const sn = Math.sin(yaw), cs = Math.cos(yaw);
     const lz = dx * sn + dz * cs, lx = dx * cs - dz * sn;          // forward, left
     if (hit.shape === 'line') {
@@ -97,6 +101,12 @@ export function createCombat(game) {
       c.lastHit[i] = key;
       if (applyHit(i, hit, ox, oz, yaw, moveId)) kos++;
       victims[count++] = i; sx += c.x[i]; sy += c.y[i]; sz += c.z[i];
+    }
+    // the boss (boss.js) is struck by the same windows; he counts toward the hit total but takes no crowd reaction
+    const B = game.boss;
+    if (B && B.alive() && (rehit || B.lastHit !== key) && pointIn(B.x, B.y, B.z, 0.75, hit, ox, oz, yaw)) {
+      B.lastHit = key; B.hurt(hit, ox, oz, moveId);
+      count++; sx += B.x; sy += B.y; sz += B.z;
     }
     if (count) {
       const hs = heroStop(hit, count, moveId, key), vs = MOVES[moveId] ? Math.min(Math.max(hs, hit.sweep ? 2 : 0), COMBAT.victimStopMax) : hs;
