@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { ATTACK_CLIPS, MOVE_FEET as SPEAR_FEET } from './anims/attacks.js';
 import { makeAuthor } from './anims/author.js';
 import { LOCO_CLIPS, runPose, rollPose, applyRoll, createDodgeGhosts } from './anims/locomotion.js';
-import { createRig, sampleClip, blendStep, turnPose, POSE_SIZE, DIM, HERO_SCALE, CH } from './rig.js';
+import { createRig, sampleClip, blendStep, turnPose, POSE_SIZE, DIM, HERO_SCALE, CH, P } from './rig.js';
 const CH_GRIPL = CH.gripL;
 import { createHeroModel } from './model.js';
 import { createSecondary } from './secondary.js';
@@ -20,7 +20,14 @@ import { fanOverlay } from './anims/fan.js';
 /** Clip registry sampled by the hero. Other parts (musou) register their clips here. */
 // a hero with his own moveset brings his own attack clips, authored on his own move table (heroes/*.moves.js)
 const OWN = HERO.moveset ? HERO.moveset.clips(makeAuthor(MOVES, HERO.moveset.entry || {}), MOVES) : null;
-export const CLIPS = { ...(OWN || ATTACK_CLIPS), ...LOCO_CLIPS };
+// his own clips may also replace the locomotion poses (idle, air, airFall, land, hurt): later keys win
+export const CLIPS = { ...LOCO_CLIPS, ...(OWN || ATTACK_CLIPS) };
+const LOCO_IDS = new Set(Object.keys(LOCO_CLIPS));
+// weapon carry while running / rolling (moveset.carry.run / .roll: weapon + arm channels over the shared procedural poses)
+const W0 = CH.spear, W1 = CH.spin;
+const mkCarry = (ms) => ms?.carry && Object.fromEntries(Object.entries(ms.carry).map(([k, spec]) => [k, P(spec)]));
+const CARRY = mkCarry(HERO.moveset);
+export function carryFor(def) { return mkCarry(def.moveset); }
 const MOVE_FEET = OWN ? {} : SPEAR_FEET;
 
 export function createHero(game) {
@@ -49,13 +56,22 @@ export function createHero(game) {
     Object.assign(h.anim, { id: 'idle', t: 0, k: 0, seq: -1, pid: null, pt: 0, pk: 0, blendF: 1, blendN: 1, yaw, lean: 0, fx: x, fz: z, px: x, pz: z, mf: null, mt: 0, om: null, ot: 0 });
   };
 
+  /** Heal (meat buns, ui/pickups.js). */
+  h.heal = (v) => { if (h.state !== 'dead') { h.hp = Math.min(h.hpMax, h.hp + v); emit('hero:heal', { v, hp: h.hp, x: h.x, z: h.z }); } };
+
   /** Called by combat when an enemy strike connects. Any attack move armours against grunts; officers need `armor`. */
   h.hurt = (dmg, fromX, fromZ, officer) => {
     if (h.iframes > 0 || h.state === 'musou' || h.state === 'dodge') return false;
-    h.hp = Math.max(1, h.hp - dmg);            // v0: the hero cannot die (demo keeps running)
+    if (h.state === 'dead') return false;
+    h.hp = Math.max(0, h.hp - dmg);
     h.musou = Math.min(h.musouMax, h.musou + dmg * 0.15);
-    const armored = !!h.move && (!officer || MOVES[h.move].armor);
+    const armored = h.hp > 0 && !!h.move && (!officer || MOVES[h.move].armor);
     emit('hero:hurt', { dmg, hp: h.hp, x: h.x, y: h.y + 1.2, z: h.z, armored });
+    if (h.hp <= 0) {                                         // 戰死: falls, the sim keeps running, main.js shows the result
+      h.move = null; setState(h, 'dead'); h.vx = h.vz = 0; h.combo = 0;
+      emit('hero:death', { x: h.x, z: h.z, kos: h.kos, frame: game.frame });
+      return true;
+    }
     if (armored) return true;
     const dx = h.x - fromX, dz = h.z - fromZ, l = Math.hypot(dx, dz) || 1;
     h.move = null; setState(h, 'hurt');
@@ -70,6 +86,7 @@ export function createHero(game) {
     if (inp.pressed.musou) h.musouBuf = 8;
     if (game.hitstop > 0) { game.hitstop--; return; }        // frozen by hitstop; presses stay buffered
     h.stateT++;
+    if (h.state === 'dead') { stepPhysics(h); updateAnim(h); return; }
     if (h.iframes > 0) h.iframes--;
     if (h.comboT > 0 && --h.comboT === 0) h.combo = 0;
     if (h.musouBuf > 0) h.musouBuf--;
@@ -99,6 +116,7 @@ function animDesc(h) {
     case 'jump': return [h.airN ? 'airFall' : 'air', Math.min(1, Math.max(0, 0.5 - h.vy / (2 * LOCO.jumpV))), 0, -1];
     case 'land': return ['land', h.stateT / LOCO.landFrames, 0, -1];
     case 'hurt': return ['hurt', h.stateT / LOCO.hurtFrames, 0, -1];
+    case 'dead': return ['hurt', Math.min(0.25, h.stateT / 40), 0, -3];
     default: return ['idle', (h.stateT % 150) / 150, 0, -1];
   }
 }
@@ -113,7 +131,7 @@ export function updateAnim(h) {
     heroPose(h, _F); a.from.set(_F); turnPose(a.from, a.yaw - h.yaw);   // spear-anim: feet keep their ground spots
     a.fx = a.px; a.fz = a.pz;
     a.pid = a.id; a.pt = a.t; a.pk = a.k;
-    a.blendN = (OWN || ATTACK_CLIPS)[id] ? 5 : id === 'dodge' ? 3 : id === 'run' ? 6 : 8;
+    a.blendN = (OWN || ATTACK_CLIPS)[id] && !LOCO_IDS.has(id) ? 5 : id === 'dodge' ? 3 : id === 'run' ? 6 : 8;
     a.blendF = 1; a.id = id; a.seq = seq;          // spear-anim: the first frame of a move already moves off the old pose
   } else if (a.blendF < a.blendN) a.blendF++;
   a.t = t; a.k = k; a.yaw = h.yaw; a.px = h.x; a.pz = h.z;
@@ -122,9 +140,9 @@ export function updateAnim(h) {
 }
 
 // ---------------------------------------------------------------- pose (pure)
-export function sampleAnim(id, t, k, out, lean = 0) {
-  if (id === 'run') return runPose(t, k, out, lean);
-  if (id === 'dodge') return rollPose(t, out);            // procedural dive roll (anims/locomotion.js)
+export function sampleAnim(id, t, k, out, lean = 0, carry = CARRY) {
+  if (id === 'run') { runPose(t, k, out, lean); if (carry?.run) for (let j = W0; j < W1; j++) out[j] = carry.run[j]; return out; }
+  if (id === 'dodge') { rollPose(t, out); if (carry?.roll) for (let j = W0; j < W1; j++) out[j] = carry.roll[j]; return out; }   // procedural dive roll
   return sampleClip(CLIPS[id] || CLIPS.idle, t, out);
 }
 /** Current pose of the hero (pure function of sim state). */
@@ -190,6 +208,10 @@ export function createHeroView(scene, hero) {
       rig.apply(pose, pos.set(hero.x, hero.y, hero.z), hero.yaw);
       rig.root.scale.setScalar(HERO_SCALE); rig.root.updateMatrixWorld(true);   // after IK: grow the posed body about the ground point
       applyRoll(rig, hero.anim);                 // dive roll: whole-body pitch about the tucked ball (locomotion-dodge)
+      if (hero.state === 'dead') {               // topple backwards over ≈ 0.6 s
+        const u = Math.min(1, hero.stateT / 36);
+        rig.root.rotation.x = -1.45 * u * u; rig.root.position.y += 0.12 * Math.sin(u * Math.PI); rig.root.updateMatrixWorld(true);
+      }
       if (lead) edgeLead(dt);
       if (HERO.update) HERO.update(model, hero, dt);   // per-hero render hook (e.g. Zhuge Liang's wind blade)
       ghosts.update(hero, rig, dt);

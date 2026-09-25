@@ -23,6 +23,8 @@ import { STAGE, STAGES } from './stages/index.js';
 import { createBoss } from './boss/boss.js';
 import { createBossView } from './boss/view.js';
 import { createAudio } from './audio/audio.js';
+import { createPickups } from './ui/pickups.js';
+import { on } from './core/events.js';
 
 const params = new URLSearchParams(location.search);
 const ENEMIES = Math.max(0, Math.min(2000, params.get('enemies') ? Number(params.get('enemies')) | 0 : 300));
@@ -45,6 +47,7 @@ game.musou = createMusou(game);
 const bossCfg = STAGE.boss && (STAGE.boss.id === HERO.id ? STAGE.boss.alt : STAGE.boss);
 game.boss = bossCfg ? createBoss(game, HEROES.find((h) => h.id === bossCfg.id)) : null;
 const input = createInput();
+const pickups = createPickups(game, scene);   // meat buns: heal on pickup (ui/pickups.js)
 if (params.has('debug')) Object.assign(window, { game, scene });   // debug: inspect sim state from the console
 
 // ---- render side
@@ -78,6 +81,7 @@ function step() {
   game.hero.step(inp);
   game.combat.step();
   game.crowd.step();
+  pickups.step();
   if (game.boss) game.boss.step();
   game.musou.step();
   game.frame++;
@@ -92,6 +96,7 @@ function render() {
   crowdView.update(dt);
   vfx.update(dt);
   sigFx.update(dt);
+  pickups.update();
   if (chargeFx) chargeFx.update(dt);
   if (bossView) bossView.update(dt);
   camRig.update(dt);
@@ -102,8 +107,43 @@ function render() {
   hud.update();
 }
 
+// ---- result card: 戰死 when the hero falls (restart / back to hero select), 勝利 when the stage boss is defeated
+const result = (() => {
+  const el = document.createElement('div');
+  el.id = 'result'; el.hidden = true;
+  el.innerHTML = '<div class="big"></div><div class="en"></div><div class="stats"></div><div class="btns"><button data-a="retry">再戰<small>RETRY · Enter</small></button><button data-a="menu">選將<small>HEROES · Esc</small></button><button data-a="go">繼續<small>CONTINUE</small></button></div>';
+  document.body.appendChild(el);
+  const [big, en, stats] = el.children, cont = el.querySelector('[data-a="go"]');
+  let maxCombo = 0, open = false, t0 = 0;
+  on('hit', () => { maxCombo = Math.max(maxCombo, game.hero.combo); });
+  on('scenario', () => { maxCombo = 0; });
+  const show = (win, delay) => setTimeout(() => {
+    if (open || (!win && game.hero.state !== 'dead')) return;
+    big.textContent = win ? '勝利' : '戰死'; en.textContent = win ? 'VICTORY' : 'FALLEN IN BATTLE';
+    el.classList.toggle('win', win); cont.hidden = !win;
+    const s = Math.round((game.frame - t0) / 60);
+    stats.innerHTML = `<span>擊破 <b>${game.hero.kos}</b></span><span>最大連擊 <b>${maxCombo}</b></span><span>時間 <b>${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}</b></span>`;
+    el.hidden = false; open = true; hudEl.hidden = true;
+  }, delay);
+  on('hero:death', () => show(false, 1800));
+  on('boss:defeat', () => show(true, 3200));
+  const act = (a) => {
+    if (!open) return;
+    if (a === 'retry') start();
+    else if (a === 'menu') { start(); setPaused(true); }
+    else { r.hide(); }
+  };
+  el.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { e.stopPropagation(); act(b.dataset.a); } });
+  const r = {
+    get open() { return open; }, act,
+    hide() { el.hidden = true; open = false; if (!paused) hudEl.hidden = false; t0 = game.frame; },
+  };
+  return r;
+})();
+
 function start() {
   rng.seed(1); vrng.seed(7936);
+  result.hide();
   game.hero.reset();
   game.crowd.reset(); game.combat.reset(); game.musou.reset(); game.cam.reset(0);
   if (game.boss) game.boss.reset(), game.boss.st = 'off';
@@ -141,6 +181,7 @@ let paused;
 const setPaused = (v) => { paused = v; menu.hidden = !v; hudEl.hidden = v; input.sample(); };   // sample(): drop keys pressed on the menu
 go.addEventListener('click', () => setPaused(false));
 addEventListener('keydown', (e) => {
+  if (result.open) { if (e.code === 'Enter' || e.code === 'NumpadEnter') result.act('retry'); else if (e.code === 'Escape') result.act('menu'); return; }
   if (e.code === 'Escape') setPaused(!paused);
   else if (paused && (e.code === 'Enter' || e.code === 'NumpadEnter')) setPaused(false);
   else if (paused && (e.code === 'ArrowLeft' || e.code === 'ArrowRight')) {

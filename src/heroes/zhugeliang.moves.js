@@ -9,6 +9,9 @@
 //   C3 (N2→) retreating barrage of blades · C4 (N3→) spin: rings of blades · C5 (N4→) pillars of light rain down
 //   dash: glides in, then a beam · jatk: a blade thrown down · jc: lands in a ring of blades
 import { P } from '../hero/rig.js';
+import { locoClips } from './loco.js';
+
+const AIRF = { fL: [0.16, 0.36, 0.2, -20, 10], fR: [-0.18, 0.3, -0.12, 20, -20] };   // air string legs
 
 const ONCE = 99;
 const BL = (f, o = {}, h = {}) => ({ f: [f, f], every: ONCE, proj: { speed: 22, life: 26, r: 1.2, ...o }, dmg: 12, kb: 'flinch', force: 3, hitstop: 0, ...h });
@@ -45,15 +48,20 @@ export function moves() {
     dash: { frames: 76, cancel: 68, dodgeCancel: 46, steer: 3, lunge: [[0, 36, 5.2, 'lin'], [36, 42, 0.6]],
       hits: [{ f: [8, 32], every: 12, proj: { speed: 22, life: 20, r: 1.0 }, dmg: 8, kb: 'flinch', force: 3, hitstop: 0 },
         { f: [42, 46], every: ONCE, shape: 'line', len: 10, width: 2, dmg: 20, kb: 'blow', force: 11, lift: 4, hitstop: 5, heavy: true, beam: true }] },
-    jatk: { frames: 24, air: true, hover: 2.8, next: 'jatk', charge: 'jc', cancel: 12, dodgeCancel: 99, steer: 3,
+    jatk: { frames: 24, air: true, hover: 2.8, next: 'ja2', charge: 'jc', cancel: 12, dodgeCancel: 99, steer: 3,
       hits: [{ f: [5, 8], every: ONCE, shape: 'arc', range: 2.6, ang: 160, dmg: 8, kb: 'flinch', force: 2, hitstop: 2, yMax: 4.5 }, BL(6, { y: 0.4, speed: 20, life: 18 })] },
+    ja2: { frames: 24, air: true, hover: 2.8, next: 'ja3', charge: 'jc', cancel: 12, dodgeCancel: 99, steer: 3,
+      hits: [{ f: [5, 8], every: ONCE, shape: 'arc', range: 2.6, ang: 160, dmg: 8, kb: 'flinch', force: 2, hitstop: 2, yMax: 4.5 }, BL(6, { y: 0.4, speed: 20, life: 18 })] },
+    ja3: { frames: 30, air: true, hover: 2.2, next: 'jatk', charge: 'jc', cancel: 18, dodgeCancel: 99, steer: 3,
+      hits: [{ f: [10, 12], every: ONCE, shape: 'line', len: 7, width: 1.8, dmg: 16, kb: 'blow', force: 8, lift: 3, hitstop: 4, heavy: true, beam: true, yMax: 5 },
+        BL(10, { count: 3, spread: 50, y: 0.3, speed: 20, life: 20 })] },
     jc: { frames: 56, air: true, hover: 3, landFrame: 34, hang: [6, 30], plunge: [30, -60], cancel: 50, dodgeCancel: 40, steer: 12, armor: true,
       hits: [{ f: [34, 37], every: ONCE, shape: 'circle', range: 4, dmg: 18, kb: 'launch', force: 4, lift: 8, hitstop: 6, heavy: true },
         BL(34, { count: 10, spread: 360, speed: 18, life: 22, r: 1.2, y: 0.8 }, { dmg: 12, kb: 'launch', force: 4, lift: 6 })] },
   };
 }
 
-export const entry = { n2: 'n1', n3: 'n2', n4: 'n3', n5: 'n4', n6: 'n5', c2: 'n1', c3: 'n2', c4: 'n3', c5: 'n4' };
+export const entry = { ja2: 'jatk', ja3: 'ja2', n2: 'n1', n3: 'n2', n4: 'n3', n5: 'n4', n6: 'n5', c2: 'n1', c3: 'n2', c4: 'n3', c5: 'n4' };
 
 // ---------------------------------------------------------------- poses (fan channels: spear = handle in the right hand)
 const OPEN = [-28, 0, 14, 88];                                      // left hand raised before the chest, palm open
@@ -191,6 +199,28 @@ export function clips(A, M) {
       [L, { ...calm(0, 0.7, 14), ...fan(F_.chop, PALM), fL: [0.26, 0.08, 0.36, 0, 20], fR: [-0.26, 0.08, -0.3, 0, -40] }, 'snap'],
       [c, { ...calm(0, 0.76, 10), ...fan(F_.chop, PALM), fL: [0.26, 0.08, 0.36, 0, 20], fR: [-0.26, 0.08, -0.3, 0, -40] }, 'io'], [F, ST]]); }
   void P;
+  // air string: jatk flick right → left · ja2 flick left → right · ja3 the fan thrust down, a beam and three blades
+  { const [s, e] = hit('ja2'), F = M.ja2.frames;
+    const air = { fL: [0.16, 0.36, 0.2, -20, 10], fR: [-0.18, 0.3, -0.12, 20, -20] };
+    out.ja2 = clipF('ja2', [[0, { ...calm(10, 0.95, 4), ...air, ...fan(F_.fwd) }],
+      [s - 2, { ...calm(30, 0.98, -4), ...air, ...fan(F_.cockL) }, 'out'],
+      [e, { ...calm(-20, 0.95, 12), ...air, ...fan([-0.34, 1.0, 0.36, -30, -40, 0]) }, 'snap'],
+      [F, { ...calm(-10, 0.95, 4), ...air, ...fan(F_.fwd) }]]); }
+  { const [s] = hit('ja3'), F = M.ja3.frames;
+    const air = { fL: [0.16, 0.36, 0.2, -20, 10], fR: [-0.18, 0.3, -0.12, 20, -20] };
+    out.ja3 = clipF('ja3', [[0, { ...calm(-10, 0.95, 4), ...air, ...fan(F_.fwd) }],
+      [s - 4, { ...calm(0, 1.0, -8), ...air, ...fan(F_.raise, UP) }, 'out'],
+      [s, { ...calm(0, 0.94, 16), ...air, ...fan([-0.14, 1.1, 0.46, 0, -30, 90], PALM) }, 'snap'],
+      [F, { ...calm(0, 0.95, 10), ...air, ...fan([-0.14, 1.12, 0.44, 0, -24, 90], PALM) }]]); }
+  { const L = locoClips({
+      idle: { ...calm(-18), ...fan([-0.3, 1.0, 0.18, -12, 70, 90]) },
+      takeoff: { ...calm(0, 0.98, -4), ...fan(F_.fwd) },
+      apex: { ...calm(0, 0.95, -6), ...fan(F_.raise, UP) },
+      fall: { ...calm(0, 0.95, -8), head: [14, 0, 0], ...fan(F_.side, PALM) },
+      land: { ...calm(0, 0.7, 12), ...fan(F_.chop, PALM), footL: [0.24, 0.08, 0.3, 0, 18], footR: [-0.24, 0.08, -0.26, 0, -36] },
+      hurt: { ...calm(-20, 0.84, -14), head: [-18, 0, 0], ...fan([-0.36, 1.2, -0.06, -60, 40, 0], [-30, 0, 70, 40]) },
+    });
+    out.air = L.air; out.airFall = L.airFall; out.land = L.land; out.hurt = L.hurt; }   // idle / run: the fan overlay
   return out;
 }
 

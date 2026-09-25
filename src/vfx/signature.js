@@ -117,6 +117,7 @@ export function createSignatureFx(scene, game, vfx, camera) {
       fx.ring(x, z, r, 0.6, rgb(c, 0.9)); fx.embers(x, 0.6, z, 30, 1.6, rgb(c)); fx.star(x, 1.4, z, 2, 0.4, rgb(k, 0.8));
     }
   });
+  on('pickup', (e) => { fx.ring(e.x, e.z, 1.6, 0.4, [0.6, 2.0, 0.8]); fx.star(e.x, 1.0, e.z, 1.4, 0.3, [1.0, 2.2, 1.2]); fx.embers(e.x, 0.4, e.z, 16, 0.6, [0.8, 2.0, 0.9]); });
   on('proj:launch', (e) => fx.star(e.x + Math.sin(e.yaw) * 0.8, e.y, e.z + Math.cos(e.yaw) * 0.8, 0.9, 0.14, rgb(FX.core)));
 
   let t = 0;

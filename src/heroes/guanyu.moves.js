@@ -9,6 +9,9 @@
 //   C5 (N4→) leap, spin in the air, plunge, then wrench the blade up out of the ground: rock eruption
 //   dash: blade dragged low behind at a run, ripped up at the end · jatk: air slash · jc: overhead plunge + crescent ring
 import { P } from '../hero/rig.js';
+import { locoClips } from './loco.js';
+
+const AIRF = { fL: [0.16, 0.36, 0.2, -20, 10], fR: [-0.18, 0.3, -0.12, 20, -20] };   // air string legs
 
 const ONCE = 99;
 export function moves() {
@@ -43,15 +46,21 @@ export function moves() {
     dash: { frames: 84, cancel: 76, dodgeCancel: 54, steer: 3, lunge: [[0, 44, 5.4, 'lin'], [44, 52, 1.4]],
       hits: [{ f: [10, 40], every: 10, shape: 'line', len: 2.6, width: 2.4, off: 0.2, dmg: 10, kb: 'push', force: 6, hitstop: 2 },
         { f: [48, 52], every: ONCE, shape: 'arc', range: 3.8, ang: 170, dmg: 24, kb: 'launch', force: 4, lift: 10, hitstop: 6, heavy: true }] },
-    jatk: { frames: 26, air: true, hover: 2.4, next: 'jatk', charge: 'jc', cancel: 14, dodgeCancel: 99, steer: 3,
+    jatk: { frames: 26, air: true, hover: 2.4, next: 'ja2', charge: 'jc', cancel: 14, dodgeCancel: 99, steer: 3,
       hits: [{ f: [6, 10], every: ONCE, shape: 'arc', range: 3.8, ang: 200, dmg: 14, kb: 'flinch', force: 3, hitstop: 2, yMax: 4.5 }] },
+    ja2: { frames: 24, air: true, hover: 2.4, next: 'ja3', charge: 'jc', cancel: 13, dodgeCancel: 99, steer: 3,
+      hits: [{ f: [5, 9], every: ONCE, shape: 'arc', range: 3.8, ang: 200, dmg: 14, kb: 'flinch', force: 3, hitstop: 2, yMax: 4.5 }] },
+    ja3: { frames: 30, air: true, hover: 1.4, next: 'jatk', charge: 'jc', cancel: 18, dodgeCancel: 99, steer: 3,
+      hits: [{ f: [9, 12], every: ONCE, shape: 'line', len: 4.2, width: 2.2, dmg: 22, kb: 'blow', force: 8, lift: 1, hitstop: 5, heavy: true, yMax: 5 },
+        { f: [9, 9], every: ONCE, proj: { speed: 16, life: 18, r: 1.6, kind: 'crescent', y: 0.6 }, dmg: 14, kb: 'blow', force: 8, lift: 3, hitstop: 0 }] },
     jc: { frames: 60, air: true, hover: 3, landFrame: 38, hang: [6, 34], plunge: [34, -80], cancel: 54, dodgeCancel: 42, steer: 12, armor: true,
       hits: [{ f: [38, 41], every: ONCE, shape: 'circle', range: 4.6, dmg: 26, kb: 'launch', force: 5, lift: 9, hitstop: 7, heavy: true },
         { f: [38, 38], every: ONCE, proj: { count: 6, spread: 360, speed: 14, life: 18, r: 1.5, kind: 'crescent' }, dmg: 14, kb: 'blow', force: 8, lift: 4, hitstop: 0 }] },
   };
 }
 
-export const entry = { n2: 'n1', n3: 'n2', n4: 'n3', n5: 'n4', c2: 'n1', c3: 'n2', c4: 'n3', c5: 'n4' };
+export const carry = { run: { spear: [-0.32, 0.9, -0.28, -172, -12, 0], gripR: 0, gripL: 0.5, lfree: 0, armL: [0, 0, 0, 0] } };
+export const entry = { ja2: 'jatk', ja3: 'ja2', n2: 'n1', n3: 'n2', n4: 'n3', n5: 'n4', c2: 'n1', c3: 'n2', c4: 'n3', c5: 'n4' };
 
 // ---------------------------------------------------------------- poses
 const G = 0.62;                                                     // left hand far up the shaft
@@ -237,6 +246,29 @@ export function clips(A, M) {
       [F, ST],
     ]); }
   void BUILT; void P;
+  // air string: jatk high right → low left · ja2 rising backhand low left → high right · ja3 overhead cleave down
+  { const [s, e] = hit('ja2'), F = M.ja2.frames;
+    out.ja2 = clipF('ja2', [
+      [0, { hips: [0, 0.95, 0], ...AIRF, spear: [0, 1.04, 0.26, 40, -24, 0], gripL: G }],
+      [s - 2, { hips: [0, 0.96, 0], hipsR: [8, 40, 0], chest: [10, 24, 0], head: [0, 0, 0], ...AIRF, spear: [0.1, 0.9, 0.2, 80, -40, 0], gripL: G }, 'out'],
+      [e, { hips: [0, 0.98, 0.04], hipsR: [-8, -40, 0], chest: [-12, -24, 0], head: [-6, 0, 0], ...AIRF, spear: [-0.3, 1.56, 0.1, -70, 55, 0], gripL: G }, 'in'],
+      [F, { hips: [0, 0.97, 0.02], hipsR: [-4, -20, 0], ...AIRF, spear: [-0.26, 1.46, 0.08, -50, 45, 0], gripL: G }]]); }
+  { const [s] = hit('ja3'), F = M.ja3.frames;
+    out.ja3 = clipF('ja3', [
+      [0, { hips: [0, 0.97, 0.02], ...AIRF, spear: [-0.26, 1.46, 0.08, -50, 45, 0], gripL: G }],
+      [s - 3, { ...RAISED, hips: [0, 1.0, 0], ...AIRF, spear: [-0.18, 1.84, -0.06, 0, 150, 0] }, 'out'],
+      [s + 1, { ...CLEAVE, hips: [0, 0.9, 0.16], ...AIRF, spear: [-0.12, 1.0, 0.5, 0, -50, 0] }, 'snap'],
+      [F, { ...CLEAVE, hips: [0, 0.92, 0.12], ...AIRF, spear: [-0.12, 1.04, 0.48, 0, -40, 0] }]]); }
+  Object.assign(out, locoClips({
+    idle: { hips: [0, 0.9, 0], hipsR: [0, -20, 0], spine: [2, -4, 0], chest: [-2, -6, 0], head: [-2, 6, 0],
+      footL: [0.18, 0.08, 0.24, 0, 10], footR: [-0.2, 0.08, -0.18, 0, -25], spear: [-0.34, 0.92, 0.1, 0, 84, 0], gripR: 0, gripL: 0.3, lfree: 1, armL: [-78, 22, 14, 128] },
+    breath: { hips: [0, 0.895, 0], chest: [0, -6, 0], armL: [-74, 22, 14, 124] },
+    takeoff: { hips: [0, 0.98, 0], hipsR: [-6, -10, 0], chest: [-6, 5, 0], head: [-6, 0, 0], spear: [-0.3, 1.1, -0.12, -150, 20, 0], gripL: 0.5 },
+    apex: { hips: [0, 0.95, 0], hipsR: [-6, -8, 0], chest: [-8, 0, 0], head: [0, 0, 0], spear: [-0.18, 1.6, -0.05, 0, 120, 0], gripL: 0.55 },
+    fall: { hips: [0, 0.95, 0], hipsR: [-8, 0, 0], chest: [-8, 0, 0], head: [10, 0, 0], spear: [-0.36, 1.3, 0.1, -100, 20, 0], gripL: 0.55 },
+    land: { hips: [0, 0.6, 0.08], hipsR: [28, -10, 0], spine: [12, 0, 0], chest: [10, 0, 0], head: [6, 0, 0], footL: [0.26, 0.08, 0.34, 0, 18], footR: [-0.26, 0.08, -0.24, 0, -35], spear: [-0.2, 0.92, 0.4, 0, -28, 0], gripL: 0.55 },
+    hurt: { hips: [0, 0.86, -0.12], hipsR: [-16, -30, 6], spine: [-12, 0, 0], chest: [-10, 0, 0], head: [-18, 0, 0], spear: [-0.3, 1.1, -0.1, -20, 60, 0], gripL: 0.4 },
+  }));
   return out;
 }
 

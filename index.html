@@ -202,6 +202,23 @@
   #menu .stages button b { font-size: 2.2rem; }
   #menu button small { font: 600 1.4rem/1 "Avenir Next", "Helvetica Neue", sans-serif; letter-spacing: .3em; margin-left: 1rem; }
   #menu .hint { margin: 1.4rem 0 0 .4rem; font: 500 1.35rem/1.5 "Avenir Next", "Helvetica Neue", sans-serif; letter-spacing: .08em; opacity: .7; }
+  /* result card (main.js): 戰死 / 勝利 */
+  #result { position: fixed; inset: 0; z-index: 6; display: flex; flex-direction: column; align-items: center; justify-content: center; user-select: none;
+    background: radial-gradient(ellipse at center, rgba(40,4,2,.55), rgba(6,2,2,.88)); color: #f4ead8; animation: resIn .6s ease-out; }
+  #result[hidden] { display: none; }
+  #result.win { background: radial-gradient(ellipse at center, rgba(60,40,6,.45), rgba(10,6,2,.85)); }
+  #result .big { font: 700 18vh/1 "Xingkai SC", "STXingkai", "HudBrush", serif; letter-spacing: 3vh; color: #e8402c; text-shadow: .6vh .8vh 0 rgba(0,0,0,.6), 0 0 5vh rgba(200,30,10,.6); }
+  #result.win .big { color: #f2c14e; text-shadow: .6vh .8vh 0 rgba(0,0,0,.6), 0 0 5vh rgba(240,190,70,.6); }
+  #result .en { font: 600 2.2vh/1 "Avenir Next", sans-serif; letter-spacing: 1em; margin-top: 1.5vh; opacity: .8; }
+  #result .stats { display: flex; gap: 5vh; margin-top: 5vh; font: 500 2.6vh/1 "Kaiti SC", "STKaiti", "HudBrush", serif; }
+  #result .stats b { font: 700 4vh/1 "Avenir Next", sans-serif; color: #ffe7a3; margin-left: .8vh; }
+  #result .btns { display: flex; gap: 2.5vh; margin-top: 6vh; }
+  #result button { cursor: pointer; border: 0; border-radius: .6vh; padding: 1.6vh 4vh; font: 700 3.4vh/1 "Xingkai SC", "STXingkai", "HudBrush", serif; letter-spacing: .6vh;
+    color: #1a120d; background: linear-gradient(#ffe7a3, #f2c14e 55%, #c98a22); box-shadow: 0 0 0 .2vh #5a3a10, 0 .6vh 1.8vh rgba(0,0,0,.5); }
+  #result button[data-a="menu"], #result button[data-a="go"] { background: rgba(0,0,0,.5); color: #f4ead8; box-shadow: 0 0 0 .15vh rgba(239,227,207,.4); }
+  #result button[hidden] { display: none; }
+  #result button small { display: block; margin-top: .8vh; font: 600 1.3vh/1 "Avenir Next", sans-serif; letter-spacing: .25em; }
+  @keyframes resIn { from { opacity: 0; } to { opacity: 1; } }
 </style>
 </head>
 <body>
