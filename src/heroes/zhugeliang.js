@@ -194,6 +194,35 @@ function hairSeg(i, n) {
   })], FV, { off: [0, 0, -0.5], jitter: 0.05, ao: 0.25 });
 }
 
+// ---------------------------------------------------------------- fighting style (hero/styles.js)
+// 羽扇: a ranged fighter — lighter, shorter melee, but every normal throws a wind blade, charges become light beams and
+// rings of blades (C1 / C2 launcher / dash thrust = beams; C3 flurry, C4 spin, C5 fan, C6 whirlwind, jump charge =
+// blade volleys).
+const STYLE = {
+  reach: 0.85, dmg: 0.8, force: 0.9,
+  fx: { proj: [0.5, 1.6, 2.2], core: [1.6, 2.2, 2.5], beam: [0.6, 1.6, 2.6] },
+  dragon: { body: [0.35, 0.5, 0.55], scale: [0.6, 0.85, 0.9], belly: [0.9, 1.0, 1.0], fin: [0.9, 1.3, 1.3], whisker: [1.0, 1.3, 1.4] },
+  rays: [0.8, 1.2, 1.3],
+  moves(M) {
+    const blade = (f, o = {}) => ({ f: [f, f], every: 99, proj: { speed: 22, life: 26, r: 1.1, ...o.proj }, dmg: o.dmg ?? 10, kb: o.kb ?? 'flinch',
+      force: o.force ?? 3, lift: o.lift, hitstop: 0 });
+    for (const k of ['n1', 'n2', 'n3', 'n4']) M[k].hits.push(blade(M[k].hits[0].f[0]));
+    M.n5.hits.push(blade(M.n5.hits[0].f[0]), blade(M.n5.hits[1].f[0]));
+    M.n6.hits.push(blade(M.n6.hits[0].f[0], { proj: { count: 5, spread: 80, speed: 20, life: 24, r: 1.2 }, dmg: 14, kb: 'blow', force: 8, lift: 4 }));
+    Object.assign(M.c1.hits[0], { shape: 'line', len: 11, width: 1.8, beam: true });
+    Object.assign(M.c2.hits[0], { len: 10, beam: true });
+    const fl = M.c3.hits[0];
+    M.c3.hits.push({ f: [...fl.f], every: 8, proj: { speed: 22, life: 22, r: 1.0 }, dmg: 7, kb: 'flinch', force: 2, hitstop: 0 });
+    const sp = M.c4.hits[0];
+    M.c4.hits.push({ f: [...sp.f], every: sp.every, proj: { count: 8, spread: 360, speed: 18, life: 20, r: 1.0 }, dmg: 8, kb: 'spin', force: 4, lift: 2, hitstop: 0 });
+    M.c5.hits.push(blade(M.c5.hits[1].f[0], { proj: { count: 7, spread: 120, speed: 20, life: 28, r: 1.3 }, dmg: 16, kb: 'launch', force: 4, lift: 8 }));
+    M.c6.hits.push({ f: [...M.c6.hits[0].f], every: 12, proj: { count: 6, spread: 360, speed: 16, life: 18, r: 1.0 }, dmg: 6, kb: 'flinch', force: 2, hitstop: 0 });
+    Object.assign(M.dash.hits.at(-1), { len: 9, beam: true });
+    M.jc.hits.push(blade(M.jc.hits[0].f[0], { proj: { count: 8, spread: 360, speed: 18, life: 22, r: 1.2, y: 0.8 }, dmg: 12, kb: 'launch', force: 4, lift: 6 }));
+    M.jatk.hits.push(blade(M.jatk.hits[0].f[0], { proj: { speed: 20, life: 18, r: 1.0, y: 0.5 } }));
+  },
+};
+
 // ---------------------------------------------------------------- HUD portrait (20×20 pixels)
 const FACE = [
   '......WWWWWWW.......',
@@ -222,7 +251,7 @@ const PAL = { W: '#d8d4ca', w: '#aea99e', A: '#b89648', G: '#3a7a4a', H: '#14121
 
 let glow = 0;
 export default {
-  id: 'zhugeliang', zh: '諸葛亮', en: 'ZHUGE LIANG', seal: '臥龍', weapon: '白羽扇',
+  id: 'zhugeliang', zh: '諸葛亮', en: 'ZHUGE LIANG', seal: '臥龍', weapon: '白羽扇', role: '羽扇 · 遠程',
   sub: '臥龍 · 運籌帷幄 · 決勝千里', copy: '羽扇一揮<br>萬軍灰飛', tagline: '羽扇綸巾，運籌帷幄之中',
   cut: { sub: '臥龍 諸葛孔明', seal: '臥龍' },
   lines: {
@@ -230,6 +259,7 @@ export default {
     musou: ['東風已至，破敵正在此時！', 'The east wind has come. Now we break them!'],
   },
   face: FACE, pal: PAL,
+  style: STYLE,
   build: () => ({ parts: limbs(torso()), head: head(), hv: HV, bv: FV, pauldrons: null, weapon: weaponGeo() }),
   /** Render hook: the wind blade shows while he attacks (fast in, slow out), flickering a little. */
   update(model, h, dt) {

@@ -14,6 +14,7 @@ import { createMusou } from './musou/musou.js';
 import { createMusouView } from './musou/view.js';
 import { createCamSim, createCameraRig } from './camera/camera.js';
 import { createVfx } from './vfx/vfx.js';
+import { createSignatureFx } from './vfx/signature.js';
 import { createHud, paintPortrait } from './ui/hud.js';
 import { HERO, HEROES } from './heroes/index.js';
 import { STAGE, STAGES } from './stages/index.js';
@@ -37,12 +38,14 @@ game.crowd = createCrowd(game, ENEMIES);
 game.combat = createCombat(game);
 game.musou = createMusou(game);
 const input = createInput();
+if (params.has('debug')) Object.assign(window, { game, scene });   // debug: inspect sim state from the console
 
 // ---- render side
 const heroView = createHeroView(scene, game.hero);
 const crowdView = createCrowdView(scene, game);
 const camRig = createCameraRig(game, vw, vh);
 const vfx = createVfx(scene, game, world);
+const sigFx = createSignatureFx(scene, game, vfx, camRig.camera);   // per-hero projectiles, beams, roar (render-only)
 const musouView = createMusouView(scene, game, camRig.camera);   // musou part: grade, dragon, cut-in (render-only)
 // hud part: camera passed so officer name/HP tags can be projected over their heads (read-only)
 const hud = createHud(document.getElementById('hud'), game, { camera: camRig.camera });
@@ -66,6 +69,7 @@ function render() {
   heroView.update(Math.min(dt, 0.1));
   crowdView.update(dt);
   vfx.update(dt);
+  sigFx.update(dt);
   camRig.update(dt);
   world.update(dt, camRig.focus);
   musouView.update(dt);
@@ -106,7 +110,7 @@ const card = (row, on, html, fn) => {
   document.getElementById(row).appendChild(b);
   return b;
 };
-for (const h of HEROES) paintPortrait(card('heroes', h === HERO, `<canvas width="20" height="20"></canvas><span><b>${h.zh}</b><small>${h.weapon}</small></span>`, () => pickHero(h.id)).firstChild, h);
+for (const h of HEROES) paintPortrait(card('heroes', h === HERO, `<canvas width="20" height="20"></canvas><span><b>${h.zh}</b><small>${h.weapon}</small><small>${h.role}</small></span>`, () => pickHero(h.id)).firstChild, h);
 for (const s of STAGES) card('stages', s === STAGE, `<span><b>${s.zh}</b><small>${s.time} · ${s.enemy.army}</small></span>`, () => pickStage(s.id));
 let paused;
 const setPaused = (v) => { paused = v; menu.hidden = !v; hudEl.hidden = v; input.sample(); };   // sample(): drop keys pressed on the menu

@@ -8,6 +8,7 @@
 //  attack:start  combo    {move, x,y,z, yaw, charge, tell}              a move begins (charge: C1–C6/jump charge;
 //                                                                        tell: frames until its first active frame)
 //  attack:swing  combat   {move, win, x,y,z, yaw, heavy}                a hitbox window opens (whoosh)
+//  proj:launch   combat   {move, win, count, x,y,z, yaw, kind}          a styles.js `proj` window throws projectiles
 //  hit           combat   {i, x,y,z, dx,dz, dmg, kb, move, combo, killed, officer, heavy}   one enemy hit
 //  hits          combat   {count, x,y,z, move, hitstop, heavy, kos}     aggregate of one hitbox tick (emitted after its `hit`s);
 //                                                                         hitstop = hero freeze actually applied (scaled by count)

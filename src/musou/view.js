@@ -60,6 +60,7 @@ const COL = {
   body: [0.03, 0.2, 0.75], scale: [0.06, 0.38, 1.05], belly: [0.4, 0.72, 0.92], fin: [0.42, 0.95, 1.3], eye: [3.0, 2.2, 0.5],
   horn: [1.4, 1.15, 0.6], white: [1.0, 1.12, 1.2], whisker: [0.6, 1.15, 1.55],
 };
+Object.assign(COL, HERO.style?.dragon || {});                 // per-hero dragon colour (green 青龍 for Guan Yu, …)
 function dragonParts() {
   const parts = [];            // { seg (-1 head), off, size, dir?, col, dyn? }
   const add = (seg, off, size, col, dir, dyn) => parts.push({ seg, off, size, col, dir, dyn });
@@ -100,7 +101,7 @@ export function createMusouView(scene, game, camera) {
 
   // ---- grade quads
   const addU = { uC: { value: new THREE.Vector2(0.5, 0.5) }, uRays: { value: 0 }, uTime: { value: 0 }, uAspect: { value: 16 / 9 }, uDepth: { value: -1 },
-    uCol: { value: new THREE.Color(0.42, 0.95, 1.25) } };
+    uCol: { value: new THREE.Color(...(HERO.style?.rays || [0.42, 0.95, 1.25])) } };
   const add = fullscreen(`
     uniform vec2 uC; uniform float uRays, uTime, uAspect; uniform vec3 uCol; varying vec2 vUv;
     void main() {
@@ -152,7 +153,7 @@ export function createMusouView(scene, game, camera) {
 
   // ---- burst light: the contact light fills the launched fan teal from the camera side (always in the scene at 0 so the
   // lit materials compile with it at boot instead of hitching mid-Musou)
-  const glow = new THREE.PointLight(0x9fefff, 0, 20, 1.4);
+  const glow = new THREE.PointLight(new THREE.Color(...(HERO.style?.rays || [0.62, 0.94, 1])), 0, 20, 1.4);
   scene.add(glow);
 
   // ---- calligraphy cut-in (DOM overlay, frame-driven)

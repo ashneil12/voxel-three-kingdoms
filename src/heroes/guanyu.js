@@ -268,6 +268,22 @@ function panelSeg(w) {
   };
 }
 
+// ---------------------------------------------------------------- fighting style (hero/styles.js)
+// 重刀: slower and heavier than the spear — longer reach, wider arcs, harder hits, hyper armour from N3 on. Signature:
+// 青龍斬 — the C1 launcher and the N6 slam send green crescent waves down the field.
+const STYLE = {
+  tempo: 1.12, reach: 1.2, arc: 20, dmg: 1.3, force: 1.25, armor: 'heavy',
+  fx: { proj: [0.25, 1.7, 0.6], core: [1.1, 2.2, 1.3], beam: [0.35, 1.8, 0.7] },
+  dragon: { body: [0.03, 0.42, 0.14], scale: [0.06, 0.68, 0.24], belly: [0.5, 0.9, 0.55], fin: [0.5, 1.3, 0.6], whisker: [0.7, 1.5, 0.8] },
+  rays: [0.5, 1.25, 0.6],
+  moves(M) {
+    const f1 = M.c1.hits[0].f[0], f6 = M.n6.hits[0].f[0];
+    M.c1.hits.push({ f: [f1, f1], every: 99, proj: { speed: 16, life: 34, r: 1.8, kind: 'crescent' }, dmg: 24, kb: 'launch', force: 3, lift: 9, hitstop: 2 });
+    M.n6.hits.push({ f: [f6, f6], every: 99, proj: { speed: 14, life: 22, r: 1.4, count: 3, spread: 50, kind: 'crescent' }, dmg: 18, kb: 'blow', force: 10, lift: 5, hitstop: 0 });
+    M.c4.hits[0].range *= 1.15;
+  },
+};
+
 // ---------------------------------------------------------------- HUD portrait (20×20 pixels)
 const FACE = [
   '.......AAAAAA.......',
@@ -295,7 +311,7 @@ const PAL = { A: '#8a7650', a: '#55462c', Y: '#c8a04a', G: '#2c6848', g: '#b8954
   s: '#94553c', h: '#d89678', B: '#0e0c10', E: '#100a0a', e: '#d8ccc0', r: '#a8664a', M: '#5a2420', T: '#7a2e24' };
 
 export default {
-  id: 'guanyu', zh: '關羽', en: 'GUAN YU', seal: '武聖', weapon: '青龍偃月刀',
+  id: 'guanyu', zh: '關羽', en: 'GUAN YU', seal: '武聖', weapon: '青龍偃月刀', role: '重刀 · 剛猛',
   sub: '青龍偃月 · 過關斬將 · 義薄雲天', copy: '青龍所指<br>萬軍辟易', tagline: '青龍偃月，萬軍之中取上將首級',
   cut: { sub: '河東 關雲長', seal: '武聖' },
   lines: {
@@ -303,6 +319,7 @@ export default {
     musou: ['吾乃河東關雲長也！', 'I am Guan Yunchang of Hedong!'],
   },
   face: FACE, pal: PAL,
+  style: STYLE,
   build: () => ({ parts: limbs(torso()), head: head(), hv: HV, bv: BV, pauldrons: pauldronBoxes, weapon: weaponGeo() }),
   chains() {
     const out = [];

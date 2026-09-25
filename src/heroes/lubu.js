@@ -218,6 +218,22 @@ function tasselSeg(i, n) {
   })], 0.014, { jitter: 0.06, ao: 0.25 });
 }
 
+// ---------------------------------------------------------------- fighting style (hero/styles.js)
+// 天下無雙: fast AND strong — the widest reach and arcs, the hardest hits, hyper armour on every move, a faster and
+// wider C4 whirlwind and C6 eruption. Signature: the dash thrust sends a crimson crescent tearing through the ranks.
+const STYLE = {
+  tempo: 0.94, reach: 1.3, arc: 25, dmg: 1.5, force: 1.35, armor: 'all',
+  fx: { proj: [2.2, 0.35, 0.25], core: [2.4, 1.2, 0.8], beam: [2.2, 0.5, 0.3] },
+  dragon: { body: [0.55, 0.03, 0.04], scale: [0.85, 0.08, 0.08], belly: [1.0, 0.5, 0.4], fin: [1.5, 0.35, 0.25], whisker: [1.5, 0.5, 0.4] },
+  rays: [1.3, 0.4, 0.3],
+  moves(M) {
+    M.c4.hits[0].range *= 1.15; M.c4.hits[0].every = Math.max(6, M.c4.hits[0].every - 3);
+    M.c6.hits.at(-1).range *= 1.2;
+    const fd = M.dash.hits.at(-1).f[0];
+    M.dash.hits.push({ f: [fd, fd], every: 99, proj: { speed: 20, life: 22, r: 1.7, kind: 'crescent' }, dmg: 22, kb: 'blow', force: 12, lift: 4, hitstop: 0 });
+  },
+};
+
 // ---------------------------------------------------------------- HUD portrait (20×20 pixels)
 const FACE = [
   '.ff..............ff.',
@@ -245,7 +261,7 @@ const PAL = { f: '#b02a22', A: '#8c6e36', r: '#d01818', H: '#121014', S: '#e2b28
   I: '#3a1a14', w: '#e0d6cc', M: '#a86a58', R: '#8a1e18', a: '#c8a458' };
 
 export default {
-  id: 'lubu', zh: '呂布', en: 'LÜ BU', seal: '飛將', weapon: '方天畫戟',
+  id: 'lubu', zh: '呂布', en: 'LÜ BU', seal: '飛將', weapon: '方天畫戟', role: '無雙 · 霸體',
   sub: '人中呂布 · 飛將無雙 · 天下莫敵', copy: '方天所向<br>天下無雙', tagline: '人中呂布，一戟橫掃千軍',
   cut: { sub: '五原 呂奉先', seal: '飛將' },
   lines: {
@@ -253,6 +269,7 @@ export default {
     musou: ['天下無雙，捨我其誰！', 'Peerless under heaven. Who else but me?'],
   },
   face: FACE, pal: PAL,
+  style: STYLE,
   build: () => ({ parts: limbs(torso()), head: head(), hv: HV, bv: FV, pauldrons: pauldronBoxes, weapon: weaponGeo() }),
   chains() {
     const out = [];

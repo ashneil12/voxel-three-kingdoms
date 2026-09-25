@@ -50,6 +50,9 @@
 // every: ONCE → the window resolves in a single tick on its first frame (each enemy once, one hitstop); the rest of the
 // window only keeps the spear trail open. Without it every frame that catches a newcomer re-triggers the full hitstop,
 // which stretched finishers by up to 4× their hitstop and knocked the string off the beat.
+import { applyStyle } from './styles.js';
+import { HERO } from '../heroes/index.js';
+
 const ONCE = 99;
 export const MOVES = {
   // N1 overhead diagonal chop: chamber 5, hold 1, strike 4, follow-through held → next hit on the beat
@@ -142,8 +145,9 @@ export const MOVES = {
 export const NEUTRAL = { attack: 'n1', charge: 'c1', dash: 'dash', air: 'jatk', airCharge: 'jc' };
 export const AIR_CHAIN_MAX = 10;  // swipes per jump (the rapid DW8 jump attack shows ~10 over 2.9 s; locomotion-dodge r2: 8 → 10)
 
+for (const [id, m] of Object.entries(MOVES)) { m.id = id; m.clip = m.clip || id; m.lunge = m.lunge || []; }
+applyStyle(MOVES, HERO.style);                              // per-hero tempo, reach, weight and signature moves (styles.js)
 for (const [id, m] of Object.entries(MOVES)) {
-  m.id = id; m.clip = m.clip || id; m.lunge = m.lunge || [];
   m.tell = m.hits.length ? m.hits[0].f[0] : 0;           // start → first active frame (charge tell length)
   if (m.anim) {                                             // fill carried-over clip ids and cut-segment indices
     let clip = m.clip, seg = 0;
@@ -166,8 +170,8 @@ export function moveClip(m, t) {
   return [k[2], k[1] + (n[1] - k[1]) * (t - k[0]) / (n[0] - k[0]), k[3]];
 }
 
-// Self-check (a failure shows up as a console error): holds, cuts and clip switches.
-if (!(moveClip(MOVES.n1, 7)[1] === 7 / MOVES.n1.frames && moveClip(MOVES.dash, 18).join() === 'n4,0.3,1' && moveClip(MOVES.dash, 15)[1] === 0.72
+// Self-check (a failure shows up as a console error): holds, cuts and clip switches (base tempo only).
+if (!HERO.style?.tempo && !(moveClip(MOVES.n1, 7)[1] === 7 / MOVES.n1.frames && moveClip(MOVES.dash, 18).join() === 'n4,0.3,1' && moveClip(MOVES.dash, 15)[1] === 0.72
   && moveClip(MOVES.dash, 43)[0] === 'dash' && moveClip(MOVES.c2, 25).join() === `c2,${24 / 112},0`
   && moveClip(MOVES.c2, 90)[1] === 104 / 112 && moveClip(MOVES.c5, 44)[1] === 44 / 80)) console.error('moves.js: anim timing self-check failed');
 // … and the △ branch comes after N1–N5's last active frame, never later than the beat.

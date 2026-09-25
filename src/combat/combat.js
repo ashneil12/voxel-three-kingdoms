@@ -11,6 +11,7 @@ import { MOVES } from '../hero/moves.js';
 import { ST } from '../crowd/crowd.js';
 import { emit } from '../core/events.js';
 import { hash01 } from '../core/rng.js';
+import { ARENA_RADIUS } from '../world/world.js';
 
 export const COMBAT = {
   enemyR: 0.4, yMaxDefault: 2.4, gravity: 24, groundFriction: 0.86, airDrag: 0.985,
@@ -48,7 +49,7 @@ export function createCombat(game) {
   let lastTick = -1;                                         // a move frame is resolved once, even across hitstop
   let heavyKey = null;                                       // window that already paid its heavy hitstop
   let sweepKey = null;                                       // combo-system r4: sweep window that already paid its hitstop
-  cb.reset = () => { lastTick = -1; heavyKey = null; sweepKey = null; };
+  cb.reset = () => { lastTick = -1; heavyKey = null; sweepKey = null; projs.length = 0; };
 
   /** Is enemy i inside `hit` cast from (ox, oz) facing yaw? */
   function inShape(i, hit, ox, oz, yaw) {
@@ -244,7 +245,33 @@ export function createCombat(game) {
         continue;
       }
       if (hit.every && rel % hit.every !== 0) continue;
+      if (hit.proj) { launch(hit, h, w); continue; }
       cb.strike(hit, h.x, h.z, h.yaw, h.moveSeq * 16 + w, !!hit.every, h.move);
+    }
+  }
+
+  // ---- projectiles (styles.js `proj` windows): wind blades, crescent waves. Sim state, stepped with the fixed loop and
+  // frozen by hitstop like the hero; each projectile has its own key, so it strikes every enemy on its path once.
+  const projs = cb.projs = [];                              // { x, z, y, yaw, v, life, age, r, hit, key, move, kind }
+  let projSeq = 0;
+  function launch(hit, h, w) {
+    const p = hit.proj, n = p.count || 1, spread = (p.spread || 0) * Math.PI / 180, kind = p.kind || (p.spread >= 360 ? 'ring' : 'wind');
+    const strikeHit = { ...hit, proj: undefined, shape: 'circle', range: p.r };
+    for (let k = 0; k < n; k++) {
+      const yaw = h.yaw + (n > 1 ? (spread >= 2 * Math.PI - 1e-3 ? (k / n) * spread : (k / (n - 1) - 0.5) * spread) : 0);
+      projs.push({ x: h.x + Math.sin(yaw) * 0.9, z: h.z + Math.cos(yaw) * 0.9, y: h.y + (p.y ?? 1.1), yaw, v: p.speed / 60, life: p.life,
+        age: 0, r: p.r, hit: strikeHit, key: 1e7 + (projSeq++ % 1e6), move: h.move, kind });
+    }
+    emit('proj:launch', { move: h.move, win: w, count: n, x: h.x, y: h.y + 1.1, z: h.z, yaw: h.yaw, kind });
+  }
+  function stepProjs() {
+    for (let i = projs.length - 1; i >= 0; i--) {
+      const p = projs[i];
+      p.x += Math.sin(p.yaw) * p.v; p.z += Math.cos(p.yaw) * p.v; p.age++;
+      // strike from a point behind the blade so knockback carries along its flight rather than out from its centre
+      const bx = p.x - Math.sin(p.yaw) * 1.5, bz = p.z - Math.cos(p.yaw) * 1.5;
+      cb.strike({ ...p.hit, range: p.r + 1.5, shape: 'arc', ang: 70, dir: 0 }, bx, bz, p.yaw, p.key, false, p.move);
+      if (p.age >= p.life || Math.hypot(p.x, p.z) > ARENA_RADIUS + 4) projs.splice(i, 1);
     }
   }
 
@@ -323,6 +350,7 @@ export function createCombat(game) {
 
   cb.step = () => {
     heroAttacks();
+    if (game.hitstop <= 0) stepProjs();
     reactions();
   };
   return cb;

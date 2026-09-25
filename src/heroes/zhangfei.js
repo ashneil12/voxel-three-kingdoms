@@ -212,6 +212,22 @@ function tasselSeg(i, n) {
   })], 0.014, { jitter: 0.06, ao: 0.25 });
 }
 
+// ---------------------------------------------------------------- fighting style (hero/styles.js)
+// 蠻力: raw power — the heaviest knockback and launches, hyper armour from N3 on, a bigger N6 quake. Signature:
+// 當陽一喝 — C1 opens with a roar that blasts back everything within 7 m before the launcher.
+const STYLE = {
+  tempo: 1.08, reach: 1.05, dmg: 1.35, force: 1.4, armor: 'heavy',
+  fx: { roar: [2.2, 1.0, 0.35], proj: [2.0, 1.1, 0.4], core: [2.4, 1.8, 1.0] },
+  dragon: { body: [0.6, 0.25, 0.03], scale: [0.9, 0.42, 0.06], belly: [1.0, 0.8, 0.4], fin: [1.4, 0.8, 0.3], whisker: [1.5, 0.9, 0.4] },
+  rays: [1.3, 0.8, 0.35],
+  moves(M) {
+    const f0 = M.c1.hits[0].f[0];
+    M.c1.hits.push({ f: [f0 - 10, f0 - 10], every: 99, shape: 'circle', range: 7, dmg: 8, kb: 'push', force: 10, lift: 2, hitstop: 5, heavy: true, roar: true });
+    M.n6.hits[0].range *= 1.35;
+    M.jc.hits[0].range *= 1.3;
+  },
+};
+
 // ---------------------------------------------------------------- HUD portrait (20×20 pixels)
 const FACE = [
   '.....GGGGGGGGG......',
@@ -239,7 +255,7 @@ const PAL = { G: '#3a6a40', g: '#4e8656', A: '#b0903e', Y: '#d4b464', H: '#14101
   W: '#e4dcd0', E: '#0e0a0c', M: '#5a2a20', T: '#e0d8c8', k: '#7e5a3a', D: '#8e9270', r: '#9a3228', R: '#9a3228' };
 
 export default {
-  id: 'zhangfei', zh: '張飛', en: 'ZHANG FEI', seal: '燕人', weapon: '丈八蛇矛',
+  id: 'zhangfei', zh: '張飛', en: 'ZHANG FEI', seal: '燕人', weapon: '丈八蛇矛', role: '蠻力 · 怒吼',
   sub: '燕人張翼德 · 當陽一喝 · 萬夫莫當', copy: '蛇矛一挺<br>喝斷長橋', tagline: '丈八蛇矛，當陽橋頭一聲喝退百萬兵',
   cut: { sub: '燕人 張翼德', seal: '萬夫' },
   lines: {
@@ -247,6 +263,7 @@ export default {
     musou: ['戰又不戰，退又不退，卻是何故！', 'You neither fight nor flee — what are you waiting for?!'],
   },
   face: FACE, pal: PAL,
+  style: STYLE,
   build: () => ({ parts: limbs(torso()), head: head(), hv: HV, bv: FV, pauldrons: pauldronBoxes, weapon: weaponGeo() }),
   chains() {
     const out = [];

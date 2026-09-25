@@ -717,7 +717,7 @@ export function createVfx(scene, game, world) {
     const h = game.hero;
     if (!m) return;
     if (!m.air && h.y < 0.3) dustPuff(h.x + Math.sin(e.yaw) * 0.4, h.z + Math.cos(e.yaw) * 0.4, e.heavy ? 4 : 2, 1.8, 0.34, 0.08, 0.4);
-    if (!hit || !e.heavy) return;
+    if (!hit || !e.heavy || hit.beam) return;             // beam windows draw their own shaft (vfx/signature.js)
     const fx = Math.sin(e.yaw), fz = Math.cos(e.yaw);
     const R = hit.range || hit.len || 4, charge = e.move[0] === 'c' || e.move === 'jc';   // light volumes = charge finishers only
     // integration r2: combo-system split C3 / C6 into slam + delayed ground wave; the wave window carries the moves.js
@@ -979,5 +979,7 @@ export function createVfx(scene, game, world) {
     else vfx.flash = Math.max(0, vfx.flash - dt * flashDecay);
     buildTrail();
   };
+  // effect helpers for the per-hero signature effects (vfx/signature.js)
+  vfx.fx = { ring, star, rayBurst, columns, dustRing, dustPuff, dustColumn, shards, embers, rocks, flash, beam: (...a) => beam(RAY, ...a) };
   return vfx;
 }

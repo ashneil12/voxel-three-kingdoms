@@ -241,7 +241,7 @@ const PAL = { K: '#221a18', k: '#3e302a', S: '#f0c6a4', s: '#d09a7c', h: '#fad8b
   w: '#e8e0d8', M: '#b06a58', T: '#2a6a68', t: '#1a4644', W: '#9aa0aa' };
 
 export default {
-  id: 'zhaoyun', zh: '趙雲', en: 'ZHAO YUN', seal: '常山', weapon: '龍膽亮銀槍',
+  id: 'zhaoyun', zh: '趙雲', en: 'ZHAO YUN', seal: '常山', weapon: '龍膽亮銀槍', role: '槍術 · 迅捷',
   sub: '常山龍膽 · 單騎無雙 · 義貫雲天', copy: '長槍所向<br>百軍皆破', tagline: '一杆長槍，獨闖魏軍三百',
   cut: { sub: '常山 趙子龍', seal: '龍膽' },
   lines: {
