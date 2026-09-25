@@ -261,7 +261,8 @@ export function createCameraRig(game, width, height) {
       }
       camera.position.copy(pos);
       camera.lookAt(api.focus);
-      if (VIEW) { camera.position.set(VIEW[0], VIEW[1], VIEW[2]); camera.lookAt(VIEW[3], VIEW[4], VIEW[5]); }   // debug: ?view=x,y,z,tx,ty,tz
+      const V = window.__view || VIEW;                    // debug: ?view=x,y,z,tx,ty,tz · recordings animate window.__view
+      if (V) { camera.position.set(V[0], V[1], V[2]); camera.lookAt(V[3], V[4], V[5]); if (V[6]) { camera.fov = V[6]; camera.updateProjectionMatrix(); } }
       // occluder fade corridor: camera → hero on the ground
       FADE.uA.value.set(pos.x, pos.z); FADE.uB.value.set(h.x, h.z);
       // micro-kicks: damped one-rebound thump, rotation in screen space, ≤ kickMaxPx

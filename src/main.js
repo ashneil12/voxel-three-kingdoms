@@ -48,7 +48,7 @@ const bossCfg = STAGE.boss && (STAGE.boss.id === HERO.id ? STAGE.boss.alt : STAG
 game.boss = bossCfg ? createBoss(game, HEROES.find((h) => h.id === bossCfg.id)) : null;
 const input = createInput();
 const pickups = createPickups(game, scene);   // meat buns: heal on pickup (ui/pickups.js)
-if (params.has('debug')) Object.assign(window, { game, scene });   // debug: inspect sim state from the console
+if (params.has('debug') || params.has('rec')) Object.assign(window, { game, scene });   // debug: inspect sim state from the console
 
 // ---- render side
 const heroView = createHeroView(scene, game.hero);
@@ -77,6 +77,7 @@ function previewStep() {
 }
 function step() {
   if (PREVIEW) { previewStep(); return; }
+  if (window.__onStep) window.__onStep(game.frame);          // recordings (?rec): scripted input keyed by sim frame
   const inp = input.sample();
   game.cam.step(game, inp);
   game.hero.step(inp);
