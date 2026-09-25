@@ -6,7 +6,8 @@ import { emit } from './core/events.js';
 import { createInput } from './core/input.js';
 import { createPost } from './post/post.js';
 import { createWorld } from './world/world.js';
-import { createHero, createHeroView } from './hero/hero.js';
+import { createHero, createHeroView, updateAnim } from './hero/hero.js';
+import { MOVES } from './hero/moves.js';
 import { createCrowd } from './crowd/crowd.js';
 import { createCrowdView } from './crowd/view.js';
 import { createCombat } from './combat/combat.js';
@@ -59,7 +60,19 @@ const musouView = createMusouView(scene, game, camRig.camera);   // musou part: 
 const hud = createHud(document.getElementById('hud'), game, { camera: camRig.camera });
 createAudio(game);
 
+// debug: ?preview=<move id | musou clip id> freezes the hero in that move at window.previewT (0..1) — pose sheets
+const PREVIEW = params.get('preview');
+if (PREVIEW) window.previewT = 0;
+function previewStep() {
+  const h = game.hero, m = MOVES[PREVIEW];
+  Object.assign(h, { x: 0, y: 0, z: 0, yaw: 0, grounded: true });
+  if (m) Object.assign(h, { state: 'attack', move: PREVIEW, moveT: Math.round(window.previewT * m.frames), moveSeq: 1 });
+  else Object.assign(h, { state: 'musou', move: null, musouClip: PREVIEW, musouT: window.previewT });
+  updateAnim(h); h.anim.blendF = h.anim.blendN;
+  game.frame++;
+}
 function step() {
+  if (PREVIEW) { previewStep(); return; }
   const inp = input.sample();
   game.cam.step(game, inp);
   game.hero.step(inp);
@@ -155,6 +168,7 @@ const frame = (now) => {
 };
 
 start();
-setPaused(true);
+setPaused(!PREVIEW);
+if (PREVIEW) document.getElementById('hud').hidden = true;
 render();
 requestAnimationFrame(frame);

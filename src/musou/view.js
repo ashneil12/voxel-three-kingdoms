@@ -11,7 +11,7 @@
 import * as THREE from 'three';
 import { on } from '../core/events.js';
 import { vrng, hash01 } from '../core/rng.js';
-import { MUSOU, dragonAt, dragonArc } from './musou.js';
+import { MUSOU, dragonAt, dragonArc, SCRIPT } from './musou.js';
 import { HERO } from '../heroes/index.js';
 
 const _m = new THREE.Matrix4(), _l = new THREE.Matrix4(), _q = new THREE.Quaternion(), _s = new THREE.Vector3(), _p = new THREE.Vector3();
@@ -421,7 +421,7 @@ export function createMusouView(scene, game, camera) {
       if (tv < 0) { hideAll(); return; }
       updateGrade(tv);
       updateFx(tv);
-      updateDragon(tv, dt);
+      if (!SCRIPT) updateDragon(tv, dt); else dragon.visible = false;   // scripted musous have no dragon
       updateCut(tv);
     },
   };

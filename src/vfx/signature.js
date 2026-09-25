@@ -43,7 +43,7 @@ export function createSignatureFx(scene, game, vfx, camera) {
 
   // beam shafts: a glowing box along the hit line (outer tint + white-hot core) that flares in and thins out
   const beamGeo = new THREE.BoxGeometry(1, 1, 1).translate(0, 0, 0.5);
-  const beams = Array.from({ length: 6 }, () => {
+  const beams = Array.from({ length: 12 }, () => {
     const mk = (c) => new THREE.Mesh(beamGeo, new THREE.MeshBasicMaterial({ color: new THREE.Color(...c), transparent: true,
       blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
     const g = new THREE.Group(), o = mk(FX.beam), c = mk(FX.core.map((v) => v * 1.4));
@@ -80,6 +80,31 @@ export function createSignatureFx(scene, game, vfx, camera) {
       fx.rayBurst(h.x, 1.6, h.z, 14, R * 0.8, rgb(FX.roar, 0.9), [-0.05, 0.25], 0.4, 0.5);
       fx.star(h.x, h.y + 1.7, h.z, 2.2, 0.3, rgb(FX.roar, 1.1));
       fx.flash(0.16);
+    }
+  });
+  // scripted musou effects (musou.js runScript / finFx)
+  on('musou:fx', (e) => {
+    const { x, z, r } = e, c = FX.proj, k = FX.core;
+    if (e.kind === 'roar') {
+      fx.ring(x, z, r * 0.5, 0.35, rgb(FX.roar)); fx.ring(x, z, r * 0.8, 0.5, rgb(FX.roar, 0.8)); fx.ring(x, z, r * 1.1, 0.7, rgb(FX.roar, 0.6));
+      fx.dustRing(x, z, 40, 0.6, r * 2, 0.8, 0.6); fx.rayBurst(x, 1.6, z, 16, r * 0.7, rgb(FX.roar, 0.9), [-0.05, 0.25], 0.45, 0.5);
+      fx.star(x, 1.8, z, 2.6, 0.35, rgb(FX.roar, 1.1)); fx.flash(0.18);
+    } else if (e.kind === 'slam') {
+      fx.ring(x, z, r, 0.5, rgb(c)); fx.ring(x, z, r * 0.6, 0.35, rgb(k));
+      fx.dustRing(x, z, 34, 0.6, r * 1.8, 0.75, 0.6); fx.dustColumn(x, z, 14, 0.6, 2.4, 3.2, [0.8, 1.2], 0.55);
+      fx.rocks(x, z, 20, 3, 0.14, 0.36, [5, 10], 4); fx.star(x, 0.6, z, 2.2, 0.25, rgb(k)); fx.flash(0.16);
+    } else if (e.kind === 'rocks') {
+      fx.rocks(x, z, 26, 3.4, 0.18, 0.44, [5.5, 11], 3.4); fx.dustColumn(x, z, 22, 1.2, 3.6, 4.6, [0.9, 1.3], 0.62);
+      fx.dustRing(x, z, 26, 0.8, r * 1.6, 0.7, 0.6); fx.flash(0.14);
+    } else if (e.kind === 'beams') {                        // radial light beams from the hero
+      const n = Math.round(r);
+      for (let i = 0; i < n; i++) { const a = e.yaw + (i / n) * 6.283; shaft(x, 1.2, z, a, 10, 0.9); }
+      fx.star(x, 1.3, z, 2.4, 0.3, rgb(k)); fx.ring(x, z, 6, 0.5, rgb(FX.beam)); fx.flash(0.14);
+    } else if (e.kind === 'rain') {                         // a column of light striking the ground
+      fx.columns(x, z, 1, 0, 9, 1.4, 0.4, rgb(FX.beam), 0);
+      fx.ring(x, z, r, 0.35, rgb(FX.beam)); fx.dustRing(x, z, 10, 0.4, r * 1.6, 0.5, 0.5); fx.star(x, 0.4, z, 1.4, 0.2, rgb(k));
+    } else if (e.kind === 'aura') {
+      fx.ring(x, z, r, 0.6, rgb(c, 0.9)); fx.embers(x, 0.6, z, 30, 1.6, rgb(c)); fx.star(x, 1.4, z, 2, 0.4, rgb(k, 0.8));
     }
   });
   on('proj:launch', (e) => fx.star(e.x + Math.sin(e.yaw) * 0.8, e.y, e.z + Math.cos(e.yaw) * 0.8, 0.9, 0.14, rgb(FX.core)));

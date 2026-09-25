@@ -15,7 +15,14 @@ import { CLIPS } from '../hero/hero.js';
 import { P, clip, spearAbout } from '../hero/rig.js';
 import { setState, stickDir, turnToward } from '../hero/locomotion.js';
 import { ST } from '../crowd/crowd.js';
+import { ARENA_RADIUS as ARENA_R } from '../world/world.js';
 import { SUN_DIR } from '../world/sky.js';
+import { HERO } from '../heroes/index.js';
+
+// A hero with his own musou (moveset.musou) keeps the shared beats — activation, cut-in, pull-back, CONTACT at 132, the
+// FINISHER ring wave at 176, control back at 200 — and scripts everything between: his own clips, travel, turns,
+// strikes, projectiles and effects (see runScript). Zhao Yun keeps the chase run and the azure dragon.
+export const SCRIPT = HERO.moveset?.musou || null;
 
 export const MUSOU = {
   closeup: 30, pullback: 88, chase: 100, contact: 132, finisher: 176, end: 200,
@@ -141,6 +148,11 @@ Object.assign(CLIPS, {
   ]),
 });
 
+if (SCRIPT) Object.assign(CLIPS, {
+  mu_act: clip([[0, P()], [0.35, P(SCRIPT.act), 'out'], [1, P(SCRIPT.act)]]),
+  mu_face: clip([[0, P(SCRIPT.face)], [0.5, P({ ...SCRIPT.face, chest: [(SCRIPT.face.chest || [0, 0, 0])[0] - 3, (SCRIPT.face.chest || [0, 0, 0])[1], 0] })], [1, P(SCRIPT.face)]]),
+  mu_charge: clip([[0, P(SCRIPT.face)], [1, P(SCRIPT.ready || {}), 'out']]),
+});
 const DT = 1 / 60;
 const S_OF = (t) => (t - MUSOU.contact) / 60;              // seconds after contact
 const easeOut = (u) => 1 - (1 - u) * (1 - u);
@@ -207,7 +219,7 @@ export function createMusou(game) {
     h.iframes = Math.max(h.iframes, 2);
     h.vx = h.vz = 0;
     h.musou = Math.max(0, startMusou - h.musouMax * M.cost * Math.min(1, t / M.contact));   // one segment drains by contact
-    if (t < M.contact) game.freeze = Math.max(game.freeze, 2);          // world holds still until contact
+    if (t < (SCRIPT ? M.chase : M.contact)) game.freeze = Math.max(game.freeze, 2);   // world holds still until contact (scripts: the pull-back)
     if (t <= M.aura.frames) {                                            // aura shove (eased), then hold
       const u = easeOut(t / M.aura.frames);
       for (const [i, fx, fz, tx, tz] of push) if (c.st[i] === ST.KNOCK) { c.x[i] = fx + (tx - fx) * u; c.z[i] = fz + (tz - fz) * u; }
@@ -215,6 +227,7 @@ export function createMusou(game) {
     if (t < M.closeup) { h.musouClip = 'mu_act'; h.musouT = t / M.closeup; return; }
     if (t < M.pullback) { h.musouClip = 'mu_face'; h.musouT = (t - M.closeup) / (M.pullback - M.closeup); return; }
     if (t < M.chase) { h.musouClip = 'mu_charge'; h.musouT = (t - M.pullback) / (M.chase - M.pullback); return; }
+    if (SCRIPT && t < M.finisher) { runScript(t, inp); return; }
     if (t < M.contact) {                                                 // chase run: sprint, steerable
       const [dx, dz, mag] = stickDir(inp, mu.yaw0);                    // stick is relative to the chase view (behind the rush)
       if (mag) turnToward(h, Math.atan2(dx, dz), M.chaseTurn * DT);
@@ -239,8 +252,8 @@ export function createMusou(game) {
     const s = S_OF(t);
     // hero drives forward behind the dragon (along the contact facing, so the dragon's path stays anchored)
     const d = M.rushDist * easeOut(Math.min(1, s / 0.6));
-    h.x = mu.ax + Math.sin(mu.ayaw) * d; h.z = mu.az + Math.cos(mu.ayaw) * d; h.yaw = mu.ayaw;
-    if (t < M.finisher) {
+    if (!SCRIPT) { h.x = mu.ax + Math.sin(mu.ayaw) * d; h.z = mu.az + Math.cos(mu.ayaw) * d; h.yaw = mu.ayaw; }
+    if (!SCRIPT && t < M.finisher) {
       h.musouClip = 'mu_rush'; h.musouT = (t - M.contact) / (M.finisher - M.contact);
       const k = t - M.contact;
       mu.toWorld(dragonAt(dragonArc(s), P3), W3);
@@ -254,8 +267,12 @@ export function createMusou(game) {
       }
       return;
     }
-    h.musouClip = 'mu_fin'; h.musouT = (t - M.finisher) / (M.end - M.finisher);
     const w = t - M.finisher;
+    if (SCRIPT) {                                                        // his own finisher clip and effects on the ring wave
+      const [id, a0, a1] = SCRIPT.fin;
+      h.musouClip = id; h.musouT = a0 + (a1 - a0) * (t - M.finisher) / (M.end - M.finisher);
+      if (w === 0) { scriptFx(SCRIPT.finFx || [], t, true); for (const hit of SCRIPT.finProj || []) game.combat.launch(hit); }
+    } else { h.musouClip = 'mu_fin'; h.musouT = (t - M.finisher) / (M.end - M.finisher); }
     if (w <= M.waveFrames) {                                             // FINISHER: ring wave, tiers of launched bodies
       const u = w / M.waveFrames;
       mu.waveR = M.waveR * (1 - (1 - u) * (1 - u) * (1 - u)) + 1;
@@ -277,6 +294,40 @@ export function createMusou(game) {
     }
   };
 
+  // ---- scripted musou (SCRIPT): seq [f0, f1, clip, t0, t1] · travel [f0, f1, m] · turn [f, deg] · hits [f, hit, fwd,
+  // every?, until?] (strike centred `fwd` m ahead; `every` re-strikes the window every n frames up to `until`) ·
+  // proj [f, projHit] · fx [f, kind, r?, fwd?] (musou:fx for vfx/signature.js)
+  function scriptFx(list, t, fin = false) {
+    const h = game.hero;
+    for (const [f, kind, r = 6, fwd = 0] of list) if (fin || f === t)
+      emit('musou:fx', { kind, r, x: h.x + Math.sin(h.yaw) * fwd, z: h.z + Math.cos(h.yaw) * fwd, y: h.y, yaw: h.yaw });
+  }
+  function runScript(t, inp) {
+    const h = game.hero, S = SCRIPT, M = MUSOU;
+    if (t === M.chase) mu.side = Math.abs(wrap(h.yaw + PAYOFF_YAW - SUN_AZ)) >= Math.abs(wrap(h.yaw - PAYOFF_YAW - SUN_AZ)) ? 1 : -1;
+    const seg = S.seq.find(([a, b]) => t >= a && t < b) || S.seq[S.seq.length - 1];
+    const [a, b, id, t0, t1] = seg;
+    h.musouClip = id; h.musouT = t0 + (t1 - t0) * Math.min(1, (t - a) / (b - a));
+    const [dx, dz, mag] = stickDir(inp, mu.yaw0);                      // the stick steers the travel a little
+    if (mag) turnToward(h, Math.atan2(dx, dz), 1.2 * DT);
+    for (const [f, deg] of S.turn || []) if (f === t) h.yaw += deg * Math.PI / 180;
+    for (const [f0, f1, m] of S.travel || []) if (t >= f0 && t < f1) { const v = m / (f1 - f0); h.x += Math.sin(h.yaw) * v; h.z += Math.cos(h.yaw) * v; }
+    const r = Math.hypot(h.x, h.z), R = ARENA_R;
+    if (r > R) { h.x *= R / r; h.z *= R / r; }
+    if (t === M.contact) {                                             // the view's payoff light anchors here
+      mu.ax = h.x; mu.az = h.z; mu.ayaw = h.yaw;
+      emit('musou:hit', { count: 0, x: h.x + Math.sin(h.yaw) * 2.5, y: 1.3, z: h.z + Math.cos(h.yaw) * 2.5, stage: 'contact', yaw: h.yaw, n: 0 });
+    }
+    S.hits.forEach(([f, hit, fwd = 0, every = 0, until = f], i) => {
+      if (t < f || t > until || (every ? (t - f) % every : t !== f)) return;
+      const x = h.x + Math.sin(h.yaw) * fwd, z = h.z + Math.cos(h.yaw) * fwd;
+      const n = hitAt(hit, x, z, h.yaw, -4000 - i * 64 - (every ? t % 60 : 0), !!every);
+      if (n) emit('musou:hit', { count: n, x, y: 1.2, z, stage: 'rush', yaw: h.yaw, n: t });
+    });
+    for (const [f, hit] of S.proj || []) if (f === t) game.combat.launch(hit);
+    scriptFx(S.fx || [], t);
+  }
+
   /**
    * Camera shot for the current musou frame (render side reads it; pure of sim state). id changes = hard cut.
    * yaw/dist/pitch/height as in the camera rig (target = hero + height, camera `dist` back along yaw at `pitch`),
@@ -297,6 +348,10 @@ export function createMusou(game) {
       const u = Math.min(1, (t - M.closeup) / (M.pullback - M.closeup)), v = Math.max(0, (t - M.pullback) / (M.chase - M.pullback));
       Object.assign(o, { id: 2, yaw: offSun(mu.yaw0 + Math.PI * 0.88), dist: ease(1.85, 1.6, u) + 1.8 * v * v, pitch: 0.16 + 0.12 * v, fov: 32 + 10 * v,
         height: 1.52 - 0.3 * v, side: -0.16 * (1 - v) });
+    } else if (SCRIPT && t < M.finisher - 10) {            // scripted action: a three-quarter follow shot off his shoulder
+      const u = smooth((t - M.chase) / 20);
+      Object.assign(o, { id: 5, yaw: offSun(h.yaw + mu.side * (0.2 + 0.55 * u)), dist: 3.2 + 3.6 * u, pitch: 0.1 + 0.08 * u, fov: 50 + 6 * u,
+        height: 1.05 + 0.25 * u, side: 0, shake: 0.5 });
     } else if (t < M.contact) {                            // low chase camera behind him (never into the sun)
       Object.assign(o, { id: 3, yaw: h.yaw, dist: 2.7, pitch: 0.08, fov: 54, height: 0.95 });
     } else if (t >= M.finisher - 10) {

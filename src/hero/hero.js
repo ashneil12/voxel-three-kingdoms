@@ -2,7 +2,8 @@
 // bookkeeping (which clip, normalised time, blend-from) so the rendered pose is a pure function of sim state.
 // Render side: createHeroView builds rig + voxel model + secondary chains and poses them from the sim state.
 import * as THREE from 'three';
-import { ATTACK_CLIPS, MOVE_FEET } from './anims/attacks.js';
+import { ATTACK_CLIPS, MOVE_FEET as SPEAR_FEET } from './anims/attacks.js';
+import { makeAuthor } from './anims/author.js';
 import { LOCO_CLIPS, runPose, rollPose, applyRoll, createDodgeGhosts } from './anims/locomotion.js';
 import { createRig, sampleClip, blendStep, turnPose, POSE_SIZE, DIM, HERO_SCALE, CH } from './rig.js';
 const CH_GRIPL = CH.gripL;
@@ -17,7 +18,10 @@ import { HERO } from '../heroes/index.js';
 import { fanOverlay } from './anims/fan.js';
 
 /** Clip registry sampled by the hero. Other parts (musou) register their clips here. */
-export const CLIPS = { ...ATTACK_CLIPS, ...LOCO_CLIPS };
+// a hero with his own moveset brings his own attack clips, authored on his own move table (heroes/*.moves.js)
+const OWN = HERO.moveset ? HERO.moveset.clips(makeAuthor(MOVES, HERO.moveset.entry || {}), MOVES) : null;
+export const CLIPS = { ...(OWN || ATTACK_CLIPS), ...LOCO_CLIPS };
+const MOVE_FEET = OWN ? {} : SPEAR_FEET;
 
 export function createHero(game) {
   const h = {
@@ -102,14 +106,14 @@ function animDesc(h) {
 // running, so chained moves never pop), re-expressed in the new facing: a yaw snap at move start (soft-lock / stick
 // steering) becomes a short turn through the spin channel instead of a one-frame body rotation.
 const _F = new Float32Array(POSE_SIZE);
-function updateAnim(h) {
+export function updateAnim(h) {
   const a = h.anim;
   const [id, t, k, seq] = animDesc(h);
   if (id !== a.id || seq !== a.seq) {
     heroPose(h, _F); a.from.set(_F); turnPose(a.from, a.yaw - h.yaw);   // spear-anim: feet keep their ground spots
     a.fx = a.px; a.fz = a.pz;
     a.pid = a.id; a.pt = a.t; a.pk = a.k;
-    a.blendN = ATTACK_CLIPS[id] ? 5 : id === 'dodge' ? 3 : id === 'run' ? 6 : 8;
+    a.blendN = (OWN || ATTACK_CLIPS)[id] ? 5 : id === 'dodge' ? 3 : id === 'run' ? 6 : 8;
     a.blendF = 1; a.id = id; a.seq = seq;          // spear-anim: the first frame of a move already moves off the old pose
   } else if (a.blendF < a.blendN) a.blendF++;
   a.t = t; a.k = k; a.yaw = h.yaw; a.px = h.x; a.pz = h.z;

@@ -16,6 +16,8 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { on } from '../core/events.js';
 import { vrng } from '../core/rng.js';
 import { MOVES } from '../hero/moves.js';
+import { HERO } from '../heroes/index.js';
+const SPEAR_SET = !HERO.moveset;                           // the C3 smoke arc and C5 shaft fan belong to Zhao Yun's spear set
 import { heroPose } from '../hero/hero.js';
 import { POSE_SIZE, spearWorld } from '../hero/rig.js';
 import { lensClear } from '../camera/occlusion.js';        // camera part (r3): debris never blocks the lens
@@ -739,7 +741,7 @@ export function createVfx(scene, game, world) {
       dustColumn(h.x, h.z, 12, 1.6, 3.2, 3.2, [0.8, 1.1], 0.55);
       rocks(h.x, h.z, 14, 2.8, 0.14, 0.34, [4, 8], 3.5);
       flash(0.12);
-    } else if (e.move === 'c5') {                           // fan of broad blue-white shafts ≈ 2.5 H from the ground, rock chips
+    } else if (e.move === 'c5' && SPEAR_SET) {                           // fan of broad blue-white shafts ≈ 2.5 H from the ground, rock chips
       columns(h.x, h.z, 9, 0.7, 5.2, 0.95, 0.3, SHAFT, 0.62, e.yaw, SHAFT_K);
       rayBurst(h.x, 0.15, h.z, 4, R * 0.9, FLASH_COOL, [0.8, 1.3], 0.3, 0.35);
       ring(h.x, h.z, R * 1.2, 0.4, [0.7, 1.2, 2.0]);
@@ -855,7 +857,7 @@ export function createVfx(scene, game, world) {
         }
         // C3: dark smoke arc grows over the hero from ≈ 12 sf before the slam, so the gold pillars flash out of a dark
         // beat (benchmark: dark arc f341-348, pillars f349)
-        if (h.move === 'c3' && C3_SLAM > 12) { const k = t - (C3_SLAM - 12); if (k >= 0 && k < 8) darkArc(h, k / 8, (k + 1) / 8); }
+        if (SPEAR_SET && h.move === 'c3' && C3_SLAM > 12) { const k = t - (C3_SLAM - 12); if (k >= 0 && k < 8) darkArc(h, k / 8, (k + 1) / 8); }
         // footfall dust while a lunge carries the hero along the ground (N4 run-in, dash, N6 hop-lunge…)
         if (!m.air && h.y < 0.2 && t % 4 === 0) for (const [f0, f1] of m.lunge) if (t >= f0 && t <= f1) { dustPuff(h.x, h.z, 2, 1.4, 0.3, 0.05, 0.4); break; }
       }

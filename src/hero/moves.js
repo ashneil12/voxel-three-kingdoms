@@ -54,7 +54,7 @@ import { applyStyle } from './styles.js';
 import { HERO } from '../heroes/index.js';
 
 const ONCE = 99;
-export const MOVES = {
+const SPEAR = {
   // N1 overhead diagonal chop: chamber 5, hold 1, strike 4, follow-through held → next hit on the beat
   n1: { frames: 35, next: 'n2', charge: 'c2', cancel: 23, branch: 11, dodgeCancel: 11, steer: 5, lunge: [[2, 9, 0.3]],
     hits: [{ f: [7, 10], every: ONCE, shape: 'arc', range: 2.5, ang: 110, dir: -20, dmg: 12, kb: 'flinch', force: 3, hitstop: 3 }] },
@@ -145,9 +145,11 @@ export const MOVES = {
 export const NEUTRAL = { attack: 'n1', charge: 'c1', dash: 'dash', air: 'jatk', airCharge: 'jc' };
 export const AIR_CHAIN_MAX = 10;  // swipes per jump (the rapid DW8 jump attack shows ~10 over 2.9 s; locomotion-dodge r2: 8 → 10)
 
-for (const [id, m] of Object.entries(MOVES)) { m.id = id; m.clip = m.clip || id; m.lunge = m.lunge || []; }
-applyStyle(MOVES, HERO.style);                              // per-hero tempo, reach, weight and signature moves (styles.js)
-for (const [id, m] of Object.entries(MOVES)) {
+/** Fill ids, clip ids, tells and anim cut segments of a move table (in place). `style` (styles.js) rescales it first. */
+export function finalizeMoves(M, style) {
+  for (const [id, m] of Object.entries(M)) { m.id = id; m.clip = m.clip || id; m.lunge = m.lunge || []; m.hits = m.hits || []; }
+  if (style) applyStyle(M, style);
+  for (const [id, m] of Object.entries(M)) {
   m.tell = m.hits.length ? m.hits[0].f[0] : 0;           // start → first active frame (charge tell length)
   if (m.anim) {                                             // fill carried-over clip ids and cut-segment indices
     let clip = m.clip, seg = 0;
@@ -157,7 +159,14 @@ for (const [id, m] of Object.entries(MOVES)) {
       clip = k[2] = k[2] || clip; k[3] = seg;
     });
   }
+  }
+  return M;
 }
+const clone = (o) => JSON.parse(JSON.stringify(o));
+/** Zhao Yun's spear set, as authored (anims/attacks.js is keyed to it). */
+export const BASE_MOVES = finalizeMoves(clone(SPEAR));
+/** The active hero's moveset: his own table (hero def `moveset.moves()`), else the spear set rescaled by his style. */
+export const MOVES = HERO.moveset ? finalizeMoves(HERO.moveset.moves()) : finalizeMoves(clone(SPEAR), HERO.style);
 
 /** Clip sample for move frame t → [clipId, normalised clip time, segment]. Pure, used by the hero's anim bookkeeping. */
 export function moveClip(m, t) {
@@ -171,8 +180,9 @@ export function moveClip(m, t) {
 }
 
 // Self-check (a failure shows up as a console error): holds, cuts and clip switches (base tempo only).
-if (!HERO.style?.tempo && !(moveClip(MOVES.n1, 7)[1] === 7 / MOVES.n1.frames && moveClip(MOVES.dash, 18).join() === 'n4,0.3,1' && moveClip(MOVES.dash, 15)[1] === 0.72
-  && moveClip(MOVES.dash, 43)[0] === 'dash' && moveClip(MOVES.c2, 25).join() === `c2,${24 / 112},0`
-  && moveClip(MOVES.c2, 90)[1] === 104 / 112 && moveClip(MOVES.c5, 44)[1] === 44 / 80)) console.error('moves.js: anim timing self-check failed');
+{ const B = BASE_MOVES;
+  if (!(moveClip(B.n1, 7)[1] === 7 / B.n1.frames && moveClip(B.dash, 18).join() === 'n4,0.3,1' && moveClip(B.dash, 15)[1] === 0.72
+  && moveClip(B.dash, 43)[0] === 'dash' && moveClip(B.c2, 25).join() === `c2,${24 / 112},0`
+  && moveClip(B.c2, 90)[1] === 104 / 112 && moveClip(B.c5, 44)[1] === 44 / 80)) console.error('moves.js: anim timing self-check failed'); }
 // … and the △ branch comes after N1–N5's last active frame, never later than the beat.
-if (!['n1', 'n2', 'n3', 'n4', 'n5'].every((k) => MOVES[k].branch > MOVES[k].hits.at(-1).f[1] && MOVES[k].branch <= MOVES[k].cancel)) console.error('moves.js: charge branch self-check failed');
+if (!Object.values(MOVES).every((m) => m.branch == null || (m.branch > m.hits.at(-1).f[1] && m.branch <= m.cancel))) console.error('moves.js: charge branch self-check failed');

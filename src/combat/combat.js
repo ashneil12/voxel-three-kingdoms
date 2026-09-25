@@ -264,15 +264,17 @@ export function createCombat(game) {
   // frozen by hitstop like the hero; each projectile has its own key, so it strikes every enemy on its path once.
   const projs = cb.projs = [];                              // { x, z, y, yaw, v, life, age, r, hit, key, move, kind }
   let projSeq = 0;
-  function launch(hit, h, w) {
+  /** Launch a `proj` window from the hero (used by musou scripts); move id recorded as `move`. */
+  cb.launch = (hit, move = 'musou') => launch(hit, game.hero, -1, move);
+  function launch(hit, h, w, move = h.move) {
     const p = hit.proj, n = p.count || 1, spread = (p.spread || 0) * Math.PI / 180, kind = p.kind || (p.spread >= 360 ? 'ring' : 'wind');
     const strikeHit = { ...hit, proj: undefined, shape: 'circle', range: p.r };
     for (let k = 0; k < n; k++) {
       const yaw = h.yaw + (n > 1 ? (spread >= 2 * Math.PI - 1e-3 ? (k / n) * spread : (k / (n - 1) - 0.5) * spread) : 0);
       projs.push({ x: h.x + Math.sin(yaw) * 0.9, z: h.z + Math.cos(yaw) * 0.9, y: h.y + (p.y ?? 1.1), yaw, v: p.speed / 60, life: p.life,
-        age: 0, r: p.r, hit: strikeHit, key: 1e7 + (projSeq++ % 1e6), move: h.move, kind });
+        age: 0, r: p.r, hit: strikeHit, key: 1e7 + (projSeq++ % 1e6), move, kind });
     }
-    emit('proj:launch', { move: h.move, win: w, count: n, x: h.x, y: h.y + 1.1, z: h.z, yaw: h.yaw, kind });
+    emit('proj:launch', { move, win: w, count: n, x: h.x, y: h.y + 1.1, z: h.z, yaw: h.yaw, kind });
   }
   function stepProjs() {
     for (let i = projs.length - 1; i >= 0; i--) {
