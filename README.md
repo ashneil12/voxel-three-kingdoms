@@ -8,6 +8,8 @@
 
 *A browser-playable voxel hack-and-slash set in the Three Kingdoms. Five officers, three battles, hundreds of soldiers. Plain ES modules, no build step.*
 
+**在线试玩 Play：<https://voxel-three-kingdoms.vercel.app>** · 作者 Author：[@sciencedegens](https://x.com/sciencedegens)
+
 ## 武将
 
 ![五名武将：赵云、关羽、张飞、诸葛亮、吕布](media/heroes.jpg)
