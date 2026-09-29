@@ -1,0 +1,43 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Rigged robot test</title>
+<script type="importmap">{"imports":{"three":"../../vendor/three/three.module.js","three/addons/":"../../vendor/three/addons/"}}</script>
+<style>body{margin:0;background:#d7d0c5;font:13px system-ui}canvas{display:block;width:100vw;height:100vh}#ui{position:fixed;top:8px;left:8px;background:#fffc;padding:8px;border-radius:6px}button{margin-right:4px}#log{white-space:pre;margin-top:6px}</style></head>
+<body><canvas id="c"></canvas><div id="ui"><div id="btns"></div><div id="log">loading…</div></div>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+const q = new URLSearchParams(location.search);
+const canvas = document.getElementById('c'), renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.toneMapping = THREE.ACESFilmicToneMapping;
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0xd7d0c5);
+const pm = new THREE.PMREMGenerator(renderer); scene.environment = pm.fromScene(new RoomEnvironment(), .04).texture; scene.environmentIntensity = .9;
+const sun = new THREE.DirectionalLight(0xfff0dd, 2.2); sun.position.set(-3, 5, 4); scene.add(sun);
+const cam = new THREE.PerspectiveCamera(32, 1, .05, 50); const ctl = new OrbitControls(cam, canvas);
+const view = q.get('view') || 'front34', az = { front: 0, front34: .6, right: 1.57, left: -1.57, back: 3.14 }[view] ?? .6;
+ctl.target.set(0, 0, 0); cam.position.set(Math.sin(az) * 2.6, .25, Math.cos(az) * 2.6); ctl.update();
+const gltf = await new GLTFLoader().loadAsync('../assets/output/robot_rigged.glb');
+const robot = gltf.scene; scene.add(robot);
+const box = new THREE.Box3().setFromObject(robot);
+const mixer = new THREE.AnimationMixer(robot), actions = {};
+for (const c of gltf.animations) actions[c.name] = mixer.clipAction(c);
+const names = Object.keys(actions);
+const log = document.getElementById('log');
+let current = null;
+function play(n) { if (current) current.stop(); current = actions[n]; current.reset().play(); }
+for (const n of names) { const b = document.createElement('button'); b.textContent = n; b.onclick = () => play(n); document.getElementById('btns').appendChild(b); }
+// verification data for automated checks
+const joints = ['robot_root', 'pelvis_joint', 'torso_joint', 'neck_joint', 'shoulder_R', 'elbow_R', 'wrist_R', 'hand_R', 'weapon_socket_R', 'spear', 'hip_L', 'knee_L', 'ankle_L', 'foot_L'];
+let meshes = 0, tris = 0, textures = new Set();
+robot.traverse(o => { if (o.isMesh) { meshes++; tris += (o.geometry.index?.count ?? o.geometry.attributes.position.count) / 3; if (o.material.map) textures.add(o.material.map.uuid); } });
+window.report = () => ({ animations: gltf.animations.map(a => `${a.name} ${a.duration.toFixed(2)}s ${a.tracks.length} tracks`), meshes, tris, textures: textures.size,
+  hierarchy: joints.map(j => [j, !!robot.getObjectByName(j)]), bbox: box.getSize(new THREE.Vector3()).toArray().map(v => +v.toFixed(3)),
+  spearParent: robot.getObjectByName('spear')?.parent?.name, handWorld: robot.getObjectByName('hand_R')?.getWorldPosition(new THREE.Vector3()).toArray().map(v => +v.toFixed(3)),
+  spearWorld: robot.getObjectByName('spear')?.getWorldPosition(new THREE.Vector3()).toArray().map(v => +v.toFixed(3)) });
+window.at = (clip, t) => { if (current) current.stop(); current = actions[clip]; current.reset().play(); current.paused = true; current.time = t; mixer.update(0); robot.updateMatrixWorld(true); renderer.render(scene, cam); return window.report(); };
+if (q.get('clip')) { window.at(q.get('clip'), Number(q.get('t') || 0)); } else play(names[0]);
+log.textContent = names.join(' · ') + `\n${meshes} meshes · ${Math.round(tris)} tris`;
+function resize() { const w = canvas.clientWidth, h = canvas.clientHeight; renderer.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); } addEventListener('resize', resize); resize();
+const clock = new THREE.Clock(); renderer.setAnimationLoop(() => { if (!q.get('clip')) mixer.update(clock.getDelta()); renderer.render(scene, cam); });
+window.ready = true;
+</script></body></html>

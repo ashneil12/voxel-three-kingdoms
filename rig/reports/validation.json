@@ -1,0 +1,38 @@
+{
+ "master": {
+  "tris": 376667,
+  "verts": 415490,
+  "materials": 1,
+  "images": 2
+ },
+ "asset": {
+  "objects": 49,
+  "meshes": 30,
+  "body_parts": 15,
+  "body_tris": 376560,
+  "materials": 6,
+  "images": 2
+ },
+ "dropped_crumb_tris": 107,
+ "scaled_objects": [],
+ "missing_hierarchy_nodes": [],
+ "spear_parent": "weapon_socket_R",
+ "textures_present": [
+  "Image_0",
+  "Image_1"
+ ],
+ "neutral_vs_master": {
+  "front": {
+   "pixels_differing_over_30": 4508,
+   "fraction": 0.00716
+  },
+  "front34": {
+   "pixels_differing_over_30": 3133,
+   "fraction": 0.00497
+  },
+  "back": {
+   "pixels_differing_over_30": 4151,
+   "fraction": 0.00659
+  }
+ }
+}
