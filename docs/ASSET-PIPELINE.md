@@ -22,11 +22,11 @@ node --test ../../tests/combat-core.test.mjs
 
 The build is offline and takes seconds once dependencies are installed. No Blender or paid generation service is needed for this preparation pass. `prepare-vanguard.mjs` also works when invoked by its path from the repository root. The runtime reads the build report and versions its asset URL by the output SHA automatically. The verification script checks actual file bytes and hash against that report. Do not overwrite the untouched source.
 
-Current measured generated armour output: **47,327 triangles / 22,091,804 bytes**, from **376,667 source triangles / 31,497,856 source bytes**. Original 2048px atlases are retained: downsampling tightly packed UV charts without rebaking gutters harmed the paint. Authored replacement parts, lance, cores, shadows and afterimages add rendering cost; this figure is not total scene geometry. A lower-detail mobile LOD and compressed/rebaked texture delivery remain future work. Mobile performance has not been accepted.
+Current measured generated armour output: **128,717 triangles / 22,480,520 bytes**, from **376,667 source triangles / 31,497,856 source bytes**. Original 2048px atlases are retained: downsampling tightly packed UV charts without rebaking gutters harmed the paint. Authored replacement parts, lance, cores, shadows and afterimages add rendering cost; this figure is not total scene geometry. A lower-detail mobile LOD and compressed/rebaked texture delivery remain future work. Mobile performance has not been accepted.
 
 ## Motion and lifecycle checks
 
-`verify-vanguard.mjs` loads the actual prepared GLB, validates indices/finite attributes and a 65k armour budget, attaches the named parts to the actual rig, samples 2,323 locomotion/attack poses, checks finite bounded transforms, checks pose-independent attachment and afterimage disposal. It does not judge seam aesthetics or collision balance.
+`verify-vanguard.mjs` loads the actual prepared GLB, validates indices/finite attributes and a 160k armour budget, attaches the named parts to the actual rig, samples 2,323 locomotion/attack poses, checks finite bounded transforms, checks pose-independent attachment and afterimage disposal. It does not judge seam aesthetics or collision balance.
 
 Studio: `/studio.html`. The generated suit is the default. Code-built fallback: select it in the studio or open the game with `?suit=procedural`. The procedural paint and shape controls intentionally do not change the baked GLB. Vanguard uses the new asset; other classes remain unchanged.
 

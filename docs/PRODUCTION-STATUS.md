@@ -6,7 +6,7 @@ The full game vision remains in `GAME-VISION.md`. The ideal art reference remain
 
 ## Current milestone: usable Vanguard
 
-Implemented: offline-generated armour preparation; 12 rigid generated joint regions and authored mechanical replacements; 47k-triangle generated armour; authored weapon grip; existing combat animation integration; asynchronous fallback/cancellation; rebuilt dodge afterimages; studio part/clay/paint inspection using game dodge transforms; metallic environment lighting in both renderers; revisioned asset loading from a hashed manifest.
+Implemented: offline-generated armour preparation; 12 rigid generated joint regions and authored mechanical replacements; 129k-triangle generated armour; authored weapon grip; existing combat animation integration; asynchronous fallback/cancellation; rebuilt dodge afterimages; studio part/clay/paint inspection using game dodge transforms; metallic environment lighting in both renderers; revisioned asset loading from a hashed manifest.
 
 Verified: the prepared GLB passes 2,323 sampled poses and asset/lifecycle checks; existing five combat-core tests pass. Browser studio inspections covered running, guard/back, wide sweep and dodge. A game deployment smoke check loaded the suit without recorded console errors. These checks are not a player evaluation of feel or full encounter acceptance.
 
