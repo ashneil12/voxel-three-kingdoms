@@ -3,7 +3,9 @@
 // lines. The active stage is picked by ?stage=<id> (the title menu reloads with it); the sky and haze are compiled into
 // shaders at boot, which is why a stage change reloads.
 
-export const STAGES = [
+import { DEMO } from '../heroes/index.js';
+
+const CLASSIC_STAGES = [
   {
     id: 'changban', zh: '長坂坡', en: 'CHANGBAN', seal: '長坂', time: '黃昏', look: 'dusk',
     intro: ['<em>長坂坡</em>之戰', 'Battle of Changban — break through Cao Cao\'s pursuit'],
@@ -56,5 +58,19 @@ export const STAGES = [
     },
   },
 ];
+export const STAGES = DEMO ? [{
+  id:'foundry', zh:'THE FOUNDRY', en:'FOUNDRY', seal:'01', time:'EVACUATION', look:'night',
+  intro:['<em>HOLD THE LINE</em>', 'Keep the machines away from the evacuation route'],
+  enemy:{ ch:'AI', army:'MACHINE LEGION', en:'Machine', band:0xe65b46, cloth:0x3b454f,
+    officers:[['SCOUT','SCOUT'],['BREAKER','BREAKER'],['HUNTER','HUNTER'],['SENTINEL','SENTINEL']] },
+  ally:{ ch:'EXO', label:'PILOT' },
+  boss:{ id:'warden', intro:['WARDEN ONLINE','COMMAND UNIT APPROACHING'] },
+  sky:{ sunElev:0.24, sunAz:-0.35, haze:0x242f3d, hazeWarm:0x545e69, glow:0xffa76a,
+    skyMid:0x334253, skyTop:0x101d2b, hznSun:0xb47d60, hznAway:0x536478,
+    cloudRose:0x78818a, cloudShade:0x333f4a, cloudLit:0xa8b8c3, dustLit:0xb99d83,
+    dustShade:0x687b87, apCool:0x7197b0, sunCore:[2.4,1.6,1.2] },
+  light:{ hemi:[0xb6d3e0,0x303744,2.3], sun:[0xffc08f,3.2], rim:[0x75c8e8,0.7], fire:0.4 },
+  lines:{},
+}] : CLASSIC_STAGES;
 const pick = new URLSearchParams(location.search).get('stage');
 export const STAGE = STAGES.find((s) => s.id === pick) || STAGES[0];

@@ -12,7 +12,7 @@ import * as THREE from 'three';
 import { on } from '../core/events.js';
 import { vrng, hash01 } from '../core/rng.js';
 import { MUSOU, dragonAt, dragonArc, SCRIPT } from './musou.js';
-import { HERO } from '../heroes/index.js';
+import { HERO, DEMO } from '../heroes/index.js';
 
 const _m = new THREE.Matrix4(), _l = new THREE.Matrix4(), _q = new THREE.Quaternion(), _s = new THREE.Vector3(), _p = new THREE.Vector3();
 const _x = new THREE.Vector3(), _y = new THREE.Vector3(), _z = new THREE.Vector3(), _v = new THREE.Vector3(), _c = new THREE.Color();
@@ -171,7 +171,12 @@ export function createMusouView(scene, game, camera) {
   document.head.appendChild(css);
   const cut = document.createElement('div');
   cut.className = 'mu-cut';
-  cut.innerHTML = `<div class="sub">${HERO.cut.sub}</div><div class="big">無雙</div><div class="seal">${HERO.cut.seal}</div>`;
+  cut.innerHTML = `<div class="sub">${HERO.cut.sub}</div><div class="big">${DEMO ? 'EXO' : '無雙'}</div><div class="seal">${HERO.cut.seal}</div>`;
+  if (DEMO) {
+    const demoStyle = document.createElement('style');
+    demoStyle.textContent = '.mu-cut .big,.mu-cut .seal,.mu-cut .sub{writing-mode:horizontal-tb;font-family:Arial,sans-serif;letter-spacing:.08em}.mu-cut .big{font-size:12vh;right:9%;top:44%}.mu-cut .sub{right:9%;top:38%}.mu-cut .seal{right:9%;top:62%;width:auto;height:auto;padding:.5vh 1vh;font-size:2vh}';
+    document.head.appendChild(demoStyle);
+  }
   document.body.appendChild(cut);
   const [cutSub, cutBig, cutSeal] = cut.children;
   const setStyle = (el, k, v) => { if (el.style[k] !== v) el.style[k] = v; };
@@ -414,14 +419,14 @@ export function createMusouView(scene, game, camera) {
   return {
     update(dt) {
       time += dt;
-      if (warm > 0 && tv < 0) { warm--; addU.uRays.value = 0; add.visible = fx.visible = dragon.visible = sh.m.visible = true; return; }
+      if (warm > 0 && tv < 0) { warm--; addU.uRays.value = 0; add.visible = fx.visible = sh.m.visible = true; dragon.visible = !DEMO; return; }
       if (mu.active) tv = mu.t;
       else if (tv >= 0) { tv += dt * 60; if (tv > MUSOU.end + 50) tv = -1; }
       if (sh.m.visible) updateShards(dt);
       if (tv < 0) { hideAll(); return; }
       updateGrade(tv);
       updateFx(tv);
-      if (!SCRIPT) updateDragon(tv, dt); else dragon.visible = false;   // scripted musous have no dragon
+      if (!SCRIPT && !DEMO) updateDragon(tv, dt); else dragon.visible = false;
       updateCut(tv);
     },
   };

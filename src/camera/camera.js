@@ -8,7 +8,9 @@
 // (occlusion.js), event-driven micro-kicks only on heavy hits (none on normal hits) and Musou choreography.
 // Render smoothing uses sim time elapsed between renders and shake uses sim frames, so captures are deterministic.
 import * as THREE from 'three';
-import { HERO } from '../heroes/index.js';
+import { DEMO, HERO } from '../heroes/index.js';
+import { lockedTarget, selectLock } from './lock.js';
+import { followYaw } from './follow.js';
 import { on } from '../core/events.js';
 import { ST } from '../crowd/crowd.js';
 import { FADE } from './occlusion.js';
@@ -32,6 +34,7 @@ export const CAM = {
   seekR: 10, seekShare: 0.35, seekShareLost: 0.08, seekIn: 30 * DEG, seekMax: 0.6, seekAcc: 1.2, seekBrake: 5, seekCool: 45,
   seekW: [2.5, 5], lookHold: 150,
   lockTol: 0.35,            // stick direction change (rad) that re-anchors the control frame to the view
+  autoGain: 0.055, autoStep: 0.036, autoHold: 180, // demo: lazy follow behind travel; manual look wins for 3 s
   crowdR: 10, crowdPull: 0.12, crowdPitch: -2.5 * DEG, // dense crowd (> ~40 within crowdR m): pull out 12 % (bench 10-15 %: hero stays ≥ 41 % H), look up 2.5° (frame top ≈ 7.9° above level: castle wall top + towers stay in)
   biasR: 8, biasMax: 0.18,  // aim bias toward the nearby mob: radius (m), max lateral shift (m) → hero stays at x 47-53 %
   leadYMax: 2, leadYRate: 45, // aerial vertical lead: cap (m) and smoothing (1/s): the jump-charge plunge pans ≤ 56 px/frame, feet in frame
@@ -90,28 +93,45 @@ function coverage(game, yaw) {
  * reads the stick relative to `yaw`, keeps running straight while the view swings round behind the hero.
  */
 export function createCamSim() {
+  let savedAuto = true;
+  if (DEMO) { try { savedAuto = localStorage.getItem('exo.cameraAuto') !== 'off'; } catch { /* storage can be unavailable */ } }
   // eng: the current attack was pressed with the stick released, seek: a re-frame is under way toward the yaw seekTo,
   // seekV: its yaw rate (rad/s), seekCd: frames before the next re-frame may start
-  const s = { yaw: 0, ctrl: 0, manualT: 0, lockAng: null, hx: null, hz: null, look: false, eng: false, seek: false, seekTo: 0, seekV: 0, seekCd: 0 };
+  const s = { yaw: 0, ctrl: 0, manualT: 0, autoHold: 0, autoFollow: savedAuto, lockAng: null, lock: null, hx: null, hz: null, look: false, eng: false, seek: false, seekTo: 0, seekV: 0, seekCd: 0 };
   s.reset = (yaw = 0) => {
-    s.yaw = s.ctrl = yaw; s.manualT = 0; s.lockAng = null; s.hx = s.hz = null; s.look = false;
+    s.yaw = s.ctrl = yaw; s.manualT = s.autoHold = 0; s.lockAng = s.lock = null; s.hx = s.hz = null; s.look = false;
     s.eng = s.seek = false; s.seekTo = s.seekV = s.seekCd = 0;
   };
   s.step = (game, inp) => {
     const h = game.hero;
+    if (DEMO && inp.pressed.cameraAuto) {
+      s.autoFollow = !s.autoFollow; s.autoHold = 0;
+      try { localStorage.setItem('exo.cameraAuto', s.autoFollow ? 'on' : 'off'); } catch { /* optional preference */ }
+    }
+    if (DEMO && inp.pressed.lock) s.lock = s.lock ? null : selectLock(game);
+    let target = DEMO ? lockedTarget(game) : null;
+    if (s.lock && !target) s.lock = null;
     const held = Math.hypot(inp.mx, inp.my) >= 0.1;
     // hero ground speed since the last step (lunges move him directly): the view does not turn while he dashes through
     const v = s.hx == null ? 0 : Math.hypot(h.x - s.hx, h.z - s.hz) * 60;
     s.hx = h.x; s.hz = h.z;
     // a manual look (orbit) holds the seek and the fight drift off until he moves again (r4: attacking in place keeps
     // the player's view; being hit does not count either)
-    if (h.state === 'run' || h.state === 'dodge' || h.state === 'jump') s.look = false;
+    if ((h.state === 'run' || h.state === 'dodge' || h.state === 'jump') && (!DEMO || !s.autoHold)) s.look = false;
     if (inp.pressed.attack || inp.pressed.charge) s.eng = !held;          // this attack was pressed hands-off the stick
     if (s.seekCd > 0) s.seekCd--;
     // a manual look also holds re-frames off for lookHold frames after the stick is let go (the player's view wins)
-    if (inp.orbit) { s.yaw += inp.orbit; s.ctrl += inp.orbit; s.manualT = 90; s.look = true; s.seek = false; s.seekV = 0; s.seekCd = CAM.lookHold; }
+    if (target) {
+      // Keep the opponent in front without a camera whip. Manual orbit resumes on unlock.
+      s.manualT = 0; s.look = false; s.seek = false; s.seekV = 0;
+      const desired = Math.atan2(target.x - h.x, target.z - h.z);
+      s.yaw += clamp(wrap(desired - s.yaw) * 0.18, -0.08, 0.08);
+    }
+    else if (inp.orbit) { s.yaw += inp.orbit; s.ctrl += inp.orbit; s.manualT = 90; if (DEMO) s.autoHold = CAM.autoHold; s.look = true; s.seek = false; s.seekV = 0; s.seekCd = CAM.lookHold; }
+    else if (DEMO && s.autoHold > 0) { s.autoHold--; s.manualT = 0; s.seek = false; s.seekV = 0; }
     else if (s.manualT > 0) s.manualT--;
     else if (h.state === 'musou') { s.yaw += wrap(h.yaw - s.yaw) * 0.08; s.seek = false; s.seekV = 0; }   // Musou chase: end up behind him
+    else if (DEMO && !s.autoFollow) { s.seek = false; s.seekV = 0; }
     else {
       // Fight-aware yaw: while he attacks and the view shows under half the soldiers the best view around him would
       // (stick released since the press; else only when it shows almost none of the fight: he ran past the mob), the
@@ -133,7 +153,12 @@ export function createCamSim() {
       }
       s.seekV += clamp(want - s.seekV, -acc / 60, acc / 60);
       s.yaw += s.seekV / 60;
-      if (h.state === 'run' || (h.state === 'attack' && !s.look)) {
+      if (DEMO && h.state === 'run' && held && h.speed > 1.5) {
+        // Travel is the intent, not the stick's changing camera-relative coordinates. The control frame below keeps
+        // the player's world path steady while the camera eases behind the suit.
+        const travel = Math.atan2(h.vx, h.vz);
+        s.yaw = followYaw(s.yaw, travel, CAM.autoGain, CAM.autoStep);
+      } else if (h.state === 'run' || (h.state === 'attack' && !s.look)) {
         // lazy realign behind the hero; fades out when he faces the camera (never whips around). In a mob the view
         // holds (the seek above frames it): only duels with a few soldiers follow his facing.
         const run = h.state === 'run', d = wrap(h.yaw - s.yaw);
@@ -236,7 +261,13 @@ export function createCameraRig(game, width, height) {
         blend = Math.max(0, blend - dt);
         bk = rest > 0 ? 1 - smooth(0, BLEND, blend) / rest : 1;
       }
-      const lat = shot ? side : bias;                                      // musou shot: its own screen-right offset
+      const lock = !shot && DEMO ? lockedTarget(game) : null;
+      if (lock) {
+        // Pull back enough to keep both fighters visible; the aim moves part-way toward the target.
+        const d = Math.hypot(lock.x - h.x, lock.z - h.z);
+        dist = Math.max(dist, Math.min(10, 5.1 + d * 0.35));
+      }
+      const lat = shot ? side : lock ? 0 : bias;                           // musou shot: its own screen-right offset
       // velocity lead v/follow cancels the exponential follow's steady lag (≈0.47 m at a run): the running hero stays
       // centred and the camera backs off in time when he runs at it (lunges and rolls still ease in)
       const lead = shot ? 0 : 1 / cfg.follow, lift = shot ? 0.6 : CAM.airLift;
@@ -244,6 +275,12 @@ export function createCameraRig(game, width, height) {
       const leadY = shot || h.grounded ? 0 : clamp(h.vy * lift / cfg.followY, -CAM.leadYMax, CAM.leadYMax);
       leadYs = snap ? leadY : leadYs + (leadY - leadYs) * (1 - Math.exp(-CAM.leadYRate * dt));
       target.set(h.x + rx * lat + h.vx * lead, h.y * lift + height + leadYs, h.z + rz * lat + h.vz * lead);
+      if (lock) {
+        const share = Math.min(0.38, 2.6 / Math.max(1, Math.hypot(lock.x - h.x, lock.z - h.z)));
+        target.x += (lock.x - h.x) * share;
+        target.z += (lock.z - h.z) * share;
+        target.y += Math.max(0, lock.y - h.y - 1.6) * 0.2;
+      }
       const kxz = snap ? 1 : 1 - Math.exp(-cfg.follow * dt), kyv = snap ? 1 : 1 - Math.exp(-cfg.followY * dt);
       if (snap) api.focus.copy(target);
       else { api.focus.x += (target.x - api.focus.x) * kxz; api.focus.z += (target.z - api.focus.z) * kxz; api.focus.y += (target.y - api.focus.y) * kyv; }

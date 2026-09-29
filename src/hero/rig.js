@@ -16,7 +16,7 @@ export const DIM = {
   thigh: 0.44, shin: 0.44, upper: 0.29, fore: 0.27,
   spine: 0.12, chest: 0.2, neck: 0.24, headUp: 0.04,
   shoulderX: 0.235, shoulderY: 0.2, hipX: 0.11, hipY: -0.05,
-  spearTip: 1.95, spearButt: -0.72, spearHead: 1.6,
+  spearTip: 1.95, spearButt: -0.28, spearHead: 1.6,
 };
 
 /** Uniform view scale of the posed hero (≈ 1.85 m). The rig poses and solves IK at scale 1 in pose units; hero.js then

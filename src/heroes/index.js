@@ -5,7 +5,9 @@ import guanyu from './guanyu.js';
 import zhangfei from './zhangfei.js';
 import lubu from './lubu.js';
 import zhugeliang from './zhugeliang.js';
+import { EXOSUIT, VANGUARD } from './exosuit.js';
 
-export const HEROES = [zhaoyun, guanyu, zhangfei, zhugeliang, lubu];
+export const DEMO = !new URLSearchParams(location.search).has('classic');
+export const HEROES = DEMO ? [VANGUARD, EXOSUIT] : [zhaoyun, guanyu, zhangfei, zhugeliang, lubu];
 const pick = new URLSearchParams(location.search).get('hero');
 export const HERO = HEROES.find((h) => h.id === pick) || HEROES[0];

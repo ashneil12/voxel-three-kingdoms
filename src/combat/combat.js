@@ -357,7 +357,7 @@ export function createCombat(game) {
     if (d > (officer ? 2.3 : 1.9) || h.y > 1.2) return;
     let a = Math.atan2(dx, dz) - c.yaw[i]; a = Math.atan2(Math.sin(a), Math.cos(a));
     if (Math.abs(a) > 1.1) return;
-    h.hurt(officer ? 22 : 10, c.x[i], c.z[i], officer);
+    if (h.hurt(officer ? 22 : 10, c.x[i], c.z[i], officer) === 'parry') c.parry(i);
   };
 
   cb.step = () => {

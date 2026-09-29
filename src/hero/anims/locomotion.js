@@ -229,6 +229,10 @@ export function createDodgeGhosts(scene, model) {
   const IF = LOCO.dodgeIFrames[1], JC = MOVES.jc;
   let seq = -1, lastT = 0, next = 1;
   return {
+    dispose() {
+      for (const g of [...groups, rim]) { for (const mesh of g.meshes) mesh.removeFromParent(); g.mat.dispose(); }
+      pre.dispose();
+    },
     update(hero, rig, dt) {
       const live = groups[0], dodging = hero.state === 'dodge';
       hx = hero.x; hz = hero.z;

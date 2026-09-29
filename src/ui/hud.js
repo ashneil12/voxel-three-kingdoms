@@ -7,10 +7,11 @@
 // Styles live in index.html (#hud ...). Sizes are rem, and 1rem = 1/72 of the viewport height (10 px at 720p).
 import { Vector3 } from 'three';
 import { on } from '../core/events.js';
-import { HERO } from '../heroes/index.js';
+import { HERO, DEMO } from '../heroes/index.js';
 import { STAGE } from '../stages/index.js';
 import { ST } from '../crowd/crowd.js';
 import { ARENA_RADIUS, WALL_Z, GATE_X } from '../world/world.js';
+import { lockedTarget } from '../camera/lock.js';
 
 const OFFICERS = STAGE.enemy.officers.map((o, i) => (i === 3 && STAGE.enemy.swap?.[HERO.id]) || o);   // the hero never fights himself
 const OPEN = STAGE.lines[HERO.id] || HERO.lines.open;
@@ -37,8 +38,22 @@ export function createHud(root, game, { camera = null } = {}) {
     <div class="h-copy">${HERO.copy}</div>
     <div class="h-player"><div class="badge"><canvas width="20" height="20"></canvas></div><div class="name">${HERO.zh}</div>
       <div class="bar hp"><em></em><i></i></div>
-      <div class="mu"><div><i></i></div><div><i></i></div><div><i></i></div><span>無雙</span></div></div>
+      <div class="mu"><div><i></i></div><div><i></i></div><div><i></i></div><span>無雙</span></div>
+      ${DEMO ? '<div class="h-guard"><b>GUARD</b><div class="track"><i></i></div><span>PARRY READY</span></div>' : ''}</div>
+    ${DEMO ? '<div class="h-lock"><span>◇</span><b></b></div><div class="h-camera-mode"></div>' : ''}
     <div class="h-ko"><div class="num"><b class="dig" data-t="0"><span>0</span></b><u></u></div><small><em>擊破</em>K.O. COUNT</small></div>`;
+  if (DEMO) {
+    root.querySelector('.h-intro .keys').innerHTML = '<kbd>WASD</kbd> move · <kbd>J</kbd> strike · <kbd>K</kbd> heavy · <kbd>F</kbd> hold guard / tap to parry · <kbd>Tab</kbd> lock target · <kbd>C</kbd> auto camera · <kbd>Shift</kbd> dodge · <kbd>I</kbd> overdrive';
+    root.querySelector('.h-target .seal').textContent = 'UNIT';
+    root.querySelector('.h-target strong').textContent = 'DISABLED';
+    root.querySelector('.h-chain em').textContent = 'HITS';
+    root.querySelector('.h-mile .seal').textContent = 'UNITS';
+    root.querySelector('.h-ko em').textContent = 'ROBOTS';
+    root.querySelector('.h-ko small').lastChild.textContent = ' DISABLED';
+    root.querySelector('.h-chain small').lastChild.textContent = ' COMBO';
+    root.querySelector('.h-map .seal').textContent = '01';
+    root.querySelector('.h-player .mu span').textContent = 'OVERDRIVE';
+  }
   const $ = (s) => root.querySelector(s), $$ = (s) => [...root.querySelectorAll(s)];
   const intro = $('.h-intro'), player = $('.h-player'), hpI = $('.hp i'), hpE = $('.hp em'), muSeg = $$('.mu i'), mu = $('.mu');
   const ko = $('.h-ko'), koB = $('.h-ko b'), koG = $('.h-ko u'), chain = $('.h-chain'), chainB = $('.h-chain b');
@@ -50,6 +65,9 @@ export function createHud(root, game, { camera = null } = {}) {
   const offs = $$('.off').map((el) => ({ el, bd: el.querySelector('.bd'), mk: el.querySelector('.mk'), ld: el.querySelector('.ld'),
     bar: el.querySelector('.bar i'), lagEl: el.querySelector('.bar em'), lag: 1 }));
   const moraleI = $('.morale i'), mapEl = $('.h-map');
+  const guardEl = DEMO ? $('.h-guard') : null, guardFill = DEMO ? $('.h-guard i') : null;
+  const guardText = DEMO ? $('.h-guard span') : null, lockEl = DEMO ? $('.h-lock') : null, lockName = DEMO ? $('.h-lock b') : null;
+  const cameraMode = DEMO ? $('.h-camera-mode') : null;
   const mapCv = $('.h-map canvas'), map = mapCv.getContext('2d');
   $$('canvas[width="20"]').forEach((cv) => paintPortrait(cv));
 
@@ -71,7 +89,7 @@ export function createHud(root, game, { camera = null } = {}) {
   const say = (zh, en, dur = 300) => { S.dlg = { zh, en, f: game.frame, dur }; };
   on('scenario', (e) => { reset(); resetText(); if (e.name === 'crowd' || e.name === 'arena') { S.dlg = { zh: OPEN[0], en: OPEN[1], f: 185, dur: 300 }; banner(STAGE.intro[0], STAGE.intro[1], 170); } });
   on('crowd:wave', (e) => {
-    if (game.frame - S.waveF > 600) { S.waveF = game.frame; banner(`<em>${STAGE.enemy.army}</em>援兵 到着`, `${STAGE.enemy.en} reinforcements have arrived!`, 130); }
+    if (game.frame - S.waveF > 600) { S.waveF = game.frame; banner(DEMO ? '<em>MACHINE LEGION</em> REINFORCEMENTS' : `<em>${STAGE.enemy.army}</em>援兵 到着`, `${STAGE.enemy.en} reinforcements have arrived!`, 130); }
     S.waves.push({ x: e.x, z: e.z, f: game.frame });
   });
   on('hit', (e) => { S.actF = game.frame; if (e.officer) { S.tgt = e.i; S.tgtF = game.frame; } });
@@ -79,12 +97,17 @@ export function createHud(root, game, { camera = null } = {}) {
   on('ko', (e) => {
     if (!e.officer) return;
     const [zh, en] = OFFICERS[(e.i - game.crowd.grunts) % OFFICERS.length];
-    banner(`敵將 <em>${zh}</em> 擊破！`, `Enemy officer ${en.replace(/\b(\w)(\w*)/g, (m, a, b) => a + b.toLowerCase())} defeated!`, 150);
+    banner(DEMO ? `<em>${zh}</em> DISABLED` : `敵將 <em>${zh}</em> 擊破！`, DEMO ? `${en} disabled` : `Enemy officer ${en.replace(/\b(\w)(\w*)/g, (m, a, b) => a + b.toLowerCase())} defeated!`, 150);
     S.tgt = e.i; S.tgtKoF = game.frame;
   });
   on('musou:start', () => { S.musouF = S.actF = game.frame; S.band = null; S.dlg = null; });
   on('musou:end', () => { S.musouEnd = game.frame; say(...HERO.lines.musou); S.dlg.f += 20; });
   on('hero:hurt', () => { S.hurtF = S.actF = game.frame; });
+  if (DEMO) {
+    on('hero:parry', () => { S.actF = game.frame; S.band = { html: '<em>PERFECT GUARD</em>', en: 'PARRY · TARGET STUNNED', dur: 70, f: game.frame }; });
+    on('hero:guardbreak', () => { S.band = { html: '<em>GUARD BROKEN</em>', en: 'RECOVER BEFORE BLOCKING AGAIN', dur: 90, f: game.frame }; });
+    on('demo:phase', (e) => banner(`<em>${e.title}</em>`, e.detail, 140));
+  }
   addEventListener('keydown', (e) => { if (e.code === 'KeyH') showKeys = !(showKeys ?? true); });
 
   const set = (el, prop, v) => { if (el.style[prop] !== v) el.style[prop] = v; };
@@ -128,6 +151,23 @@ export function createHud(root, game, { camera = null } = {}) {
         muSeg.forEach((el, k) => el.style.setProperty('--s', `${((sw - k) * 100).toFixed(1)}%`));
       }
       mu.classList.toggle('active', inMusou);
+      if (DEMO) {
+        text(cameraMode, `CAMERA ${game.cam.autoFollow ? 'AUTO' : 'MANUAL'} · C TO TOGGLE`);
+        set(guardFill, 'transform', `scaleX(${clamp01(h.guard / h.guardMax).toFixed(4)})`);
+        guardEl.classList.toggle('active', h.state === 'guard');
+        guardEl.classList.toggle('broken', h.guard < 1);
+        text(guardText, h.guard < 1 ? 'BROKEN' : h.parryCd ? `PARRY ${(h.parryCd / 60).toFixed(1)}s` : 'PARRY READY');
+        const lt = lockedTarget(game);
+        if (lt && camera) {
+          v3.set(lt.x, lt.y, lt.z).project(camera);
+          const visible = v3.z < 1 && Math.abs(v3.x) < 0.95 && Math.abs(v3.y) < 0.9;
+          set(lockEl, 'opacity', visible ? '1' : '0');
+          if (visible) {
+            set(lockEl, 'transform', `translate(${((v3.x + 1) * W / 2).toFixed(1)}px, ${((1 - v3.y) * H / 2).toFixed(1)}px)`);
+            text(lockName, lt.name);
+          }
+        } else set(lockEl, 'opacity', '0');
+      }
 
       // chain counter (left). Combat resolves a whole swing's hits on one sim frame, so the shown number rolls up to
       // h.combo in DW8-style ticks instead of jumping: one tick every 2 f, the first on the hit frame, front-loaded steps
@@ -348,7 +388,7 @@ export function createHud(root, game, { camera = null } = {}) {
         map.fillStyle = '#d0a040';
         map.beginPath(); map.moveTo(gx, 3); map.lineTo(gx - 5, 10); map.lineTo(gx + 5, 10); map.fill();
         map.font = '700 15px "Xingkai SC", "Kaiti SC", "HudBrush", serif'; map.textAlign = 'center'; map.fillStyle = 'rgba(236,214,172,0.9)';
-        map.fillText('城門', gx, 26);
+        map.fillText(DEMO ? 'GATE' : '城門', gx, 26);
       }
       S.waves = S.waves.filter((w) => f - w.f < 120);
       for (const w of S.waves) {

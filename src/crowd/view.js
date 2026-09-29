@@ -37,6 +37,28 @@ const WOOD = 0x5e3d24, STEEL = 0x98968f, RED = 0xc02a1c, BRONZE = 0x9a7838;
 const J = { waist: 0.04, neck: 0.5, shX: 0.235, shY: 0.43, hipX: 0.095, hipY: -0.02, knee: 0.42, hand: 0.5 };
 
 function bodyParts(C, officer) {
+  if (STAGE.id === 'foundry') {
+    const shell = officer ? 0x693743 : 0x344956, trim = officer ? 0xffa075 : 0x75c7de;
+    return {
+      hips:[b([-0.16,-0.1,-0.1],[0.16,0.06,0.1],0x17232b),b([-0.17,-0.04,-0.11],[0.17,0.06,0.11],shell)],
+      torso:[b([-0.17,-0.04,-0.11],[0.17,0.44,0.11],0x18252e),
+        b([-0.19,0.17,-0.13],[0.19,0.43,0.13],shell),
+        b([-0.11,0.25,0.13],[0.11,0.39,0.15],trim),
+        b([-0.31,0.3,-0.13],[-0.15,0.45,0.13],shell),b([0.15,0.3,-0.13],[0.31,0.45,0.13],shell)],
+      head:[b([-0.11,0.02,-0.11],[0.11,0.27,0.11],0x1b2932),
+        b([-0.12,0.16,-0.12],[0.12,0.3,0.12],shell),
+        b([-0.09,0.11,0.11],[0.09,0.18,0.14],trim)],
+      crest:[b([-0.05,0.3,-0.05],[0.05,0.42,0.05],trim)],
+      arm:[b([-0.065,-0.53,-0.065],[0.065,0.03,0.065],0x1b2932),
+        b([-0.085,-0.39,-0.08],[0.085,-0.16,0.08],shell),
+        b([-0.04,-0.5,0.066],[0.04,-0.39,0.09],trim)],
+      thigh:[b([-0.075,-0.43,-0.075],[0.075,0.02,0.075],0x1b2932),
+        b([-0.09,-0.31,-0.09],[0.09,-0.09,0.09],shell)],
+      shin:[b([-0.075,-0.42,-0.075],[0.075,0.02,0.075],0x1b2932),
+        b([-0.09,-0.38,-0.09],[0.09,-0.12,0.09],shell),
+        b([-0.09,-0.41,0.02],[0.09,-0.34,0.13],0x758895)],
+    };
+  }
   const L = lamel(C.armor, C.hi, C.lace);
   const plate = (x, y, z, i, j) => ((i + j) % 4 === 0 ? C.rivet : j % 4 === 3 ? C.hi : C.plate);
   const pauld = (x, y, z, i, j) => (j === 0 ? C.hi : j % 2 ? C.armor : shade(C.armor, 0.8));
@@ -103,6 +125,16 @@ function bodyParts(C, officer) {
 // weapons in weapon space: grip at the origin, +Z along the weapon
 const box = (s, p, c) => ({ s, p, c });
 function weaponGeos() {
+  if (STAGE.id === 'foundry') {
+    const metal = 0x8299a5, dark = 0x26343e, hot = 0xff9363;
+    const baton = (length) => boxesGeometry([
+      box([0.065,0.065,length],[0,0,length/2-0.48],dark),
+      box([0.11,0.11,0.15],[0,0,length-0.58],metal),
+      box([0.13,0.13,0.11],[0,0,length-0.48],hot)]);
+    return { spear:baton(1.8), sword:baton(1.0), glaive:baton(2.3), pole:baton(2.8),
+      shield:boxesGeometry([box([0.48,0.48,0.12],[0,0.12,0.12],metal),
+        box([0.26,0.26,0.14],[0,0.12,0.2],hot)]) };
+  }
   const spear = boxesGeometry([
     box([0.042, 0.042, 2.0], [0, 0, 0.38], WOOD), box([0.065, 0.065, 0.06], [0, 0, -0.62], 0x2a1d16),
     box([0.07, 0.07, 0.05], [0, 0, 1.4], BRONZE), box([0.1, 0.1, 0.08], [0, -0.02, 1.35], RED), box([0.05, 0.08, 0.08], [0, -0.08, 1.31], RED),
@@ -164,12 +196,13 @@ export function buildCrowdGeometries() {
 function flagTexture() {
   const c = document.createElement('canvas'); c.width = 64; c.height = 112;
   const g = c.getContext('2d');
-  g.fillStyle = '#b8301e'; g.fillRect(0, 0, 64, 112);
+  g.fillStyle = STAGE.id === 'foundry' ? '#334956' : '#b8301e'; g.fillRect(0, 0, 64, 112);
   g.fillStyle = '#e0b058'; g.fillRect(0, 0, 64, 5); g.fillRect(0, 0, 4, 112); g.fillRect(60, 0, 4, 112);
   g.fillStyle = 'rgba(255,225,180,0.28)'; g.fillRect(10, 16, 44, 60);                  // lighter panel behind the character
   g.fillStyle = '#1a0f0c';
   g.font = 'bold 44px "Xingkai SC","STXingkai","Kaiti SC","STKaiti","KaiTi","Songti SC",serif';
   g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.font = STAGE.id === 'foundry' ? 'bold 28px sans-serif' : g.font;
   g.fillText(STAGE.enemy.ch, 32, 46);
   g.globalCompositeOperation = 'destination-out';                                    // swallow-tail bottom
   g.beginPath(); g.moveTo(14, 112); g.lineTo(32, 88); g.lineTo(50, 112); g.fill();

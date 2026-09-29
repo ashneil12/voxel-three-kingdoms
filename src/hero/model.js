@@ -5,6 +5,9 @@
 import * as THREE from 'three';
 import { hash01 } from '../core/rng.js';
 import { shade } from '../core/voxel.js';
+import { createProceduralSuit } from './procedural-suit.js';
+import { attachGeneratedSuit } from './generated-suit.js?v=prepared-8';
+import { loadSuitDesign } from '../heroes/suit-design.js';
 
 export const V = 0.025;          // body voxel (m); spear 0.02/0.012, blade 0.011
 export const HV = 0.0175;        // head voxel: 13-voxel head ≈ 0.23 m (× HERO_SCALE) → ≈ 7.5 heads tall
@@ -137,6 +140,11 @@ export function heroLook(mat, fill = 0.4, rim = 0.9) {
  * (shaft +Z, origin = rear grip).
  */
 export function createHeroModel(rig, def) {
+  if (def.proceduralSuit) {
+    const model = createProceduralSuit(rig, loadSuitDesign());
+    return def.generatedSuit && new URLSearchParams(location.search).get('suit') !== 'procedural'
+      ? attachGeneratedSuit(rig, model) : model;
+  }
   // integration r1: albedo × 0.8 so the ivory lamellar keeps its scale rows under the environment's light + post-fx grade
   // (at 1.0 the armour clipped to flat white)
   const mat = heroLook(new THREE.MeshStandardMaterial({ color: new THREE.Color(0.8, 0.8, 0.8), vertexColors: true, roughness: 0.58, metalness: 0.08, flatShading: true }));

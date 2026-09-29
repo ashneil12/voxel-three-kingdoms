@@ -10,9 +10,10 @@
 import { rng } from '../core/rng.js';
 import { emit } from '../core/events.js';
 import { ARENA_RADIUS, GATE_X } from '../world/world.js';
+import { bossReady } from './timing.js';
 
 export const BOSS = {
-  hp: 4200, poise: 380, staggerF: 62, arrive: 60 * 22, arriveKOs: 45,
+  hp: 4200, poise: 380, staggerF: 62, arrive: 60 * 22, arriveKOs: 45, earliest: 0,
   walk: 3.2, run: 6.4, turn: 5, range: 3.4,
   // [windup, active, recover] frames, damage, reach
   sweep: { f: [34, 28, 30], dmg: 36, r: 3.9, every: 9 },
@@ -24,14 +25,21 @@ export const BOSS = {
 if (new URLSearchParams(location.search).has('boss')) BOSS.arrive = 60;   // debug: the boss rides out after 1 s
 
 export function createBoss(game, def) {
-  const b = { def, x: 0, z: 0, y: 0, vy: 0, yaw: 0, hp: BOSS.hp, hpMax: BOSS.hp, poise: BOSS.poise, st: 'off', stT: 0,
+  const b = { def, x: 0, z: 0, y: 0, vy: 0, yaw: 0, hp: BOSS.hp, hpMax: BOSS.hp, poise: BOSS.poise, staggerLimit: BOSS.staggerF, st: 'off', stT: 0,
     atk: null, ax: 0, az: 0, pause: 0, lastHit: -1, flash: 0, seq: 0, anim: { id: 'idle', t: 0 } };
   const h = game.hero;
 
-  b.reset = () => Object.assign(b, { st: 'off', stT: 0, hp: BOSS.hp, poise: BOSS.poise, atk: null, y: 0, vy: 0, pause: 0, lastHit: -1, flash: 0,
+  b.reset = () => Object.assign(b, { st: 'off', stT: 0, hp: BOSS.hp, poise: BOSS.poise, staggerLimit: BOSS.staggerF, atk: null, y: 0, vy: 0, pause: 0, lastHit: -1, flash: 0,
     x: GATE_X * 0.5, z: ARENA_RADIUS + 10, yaw: Math.PI });           // rides in from the gate side, just out of the arena
   b.alive = () => b.st !== 'off' && b.st !== 'dead';
   b.rage = () => b.hp / b.hpMax < BOSS.rage;
+  b.parry = () => {
+    if (!b.alive() || b.st === 'enter') return;
+    b.atk = null; b.vy = b.y = 0; b.poise = BOSS.poise;
+    b.staggerLimit = 36; // enough for a punish, shorter than a full poise break
+    b.st = 'stagger'; b.stT = 0;
+    emit('boss:stagger', { x: b.x, z: b.z });
+  };
 
   const set = (st) => { b.st = st; b.stT = 0; };
   const toHero = () => Math.atan2(h.x - b.x, h.z - b.z);
@@ -51,7 +59,7 @@ export function createBoss(game, def) {
     if (b.hp <= 0) { set('dead'); b.atk = null; h.kos++; emit('boss:defeat', { x: b.x, z: b.z, name: def.zh }); return; }
     if (b.st === 'stagger' || b.st === 'enter') return;
     b.poise -= hit.dmg * (hit.heavy ? 1.6 : 1) * (musou ? 0.5 : 1);
-    if (b.poise <= 0) { b.poise = BOSS.poise; b.atk = null; b.y = 0; b.vy = 0; set('stagger'); emit('boss:stagger', { x: b.x, z: b.z }); }
+    if (b.poise <= 0) { b.poise = BOSS.poise; b.atk = null; b.y = 0; b.vy = 0; b.staggerLimit = BOSS.staggerF; set('stagger'); emit('boss:stagger', { x: b.x, z: b.z }); }
   };
 
   function startAttack() {
@@ -73,14 +81,16 @@ export function createBoss(game, def) {
       const s = Math.sin(b.yaw), c = Math.cos(b.yaw), lz = dx * s + dz * c, lx = dx * c - dz * s;
       inside = lz > -0.5 && lz < 2.5 && Math.abs(lx) < A.w / 2 + 0.4;          // the blade tip just ahead as he lunges
     } else inside = Math.hypot(dx, dz) < A.r + 0.4;
-    if (inside && h.y < 1.6) h.hurt(A.dmg, b.x, b.z, true);
+    if (inside && h.y < 1.6 && h.hurt(A.dmg, b.x, b.z, true) === 'parry') b.parry();
     emit('boss:strike', { kind, x: b.x, z: b.z, yaw: b.yaw });
   }
 
   b.step = () => {
     if (b.flash > 0) b.flash--;
     if (b.st === 'off') {
-      if (game.frame > BOSS.arrive || h.kos >= BOSS.arriveKOs) { b.reset(); set('enter'); emit('boss:enter', { name: def.zh, en: def.en, x: b.x, z: b.z }); }
+      if (bossReady(game.roundFrame, h.kos, BOSS)) {
+        b.reset(); set('enter'); emit('boss:enter', { name: def.zh, en: def.en, x: b.x, z: b.z });
+      }
       return;
     }
     if (game.hitstop > 0) return;
@@ -115,11 +125,12 @@ export function createBoss(game, def) {
             if ((t - A.w) % 4 === 1) strikeHero('thrust');
           }
         } else if (t > A.w && t <= A.w + A.a && (t - A.w - 1) % S.every === 0) strikeHero('sweep');
+        if (b.st !== 'attack') break; // a perfect guard cancelled this strike
         if (t >= A.w + A.a + A.r) { b.atk = null; b.pause = b.rage() ? 20 : 45 + Math.round(rng.next() * 40); set('chase'); }
         break;
       }
       case 'stagger':
-        if (t >= BOSS.staggerF) set('chase');
+        if (t >= b.staggerLimit) set('chase');
         break;
       default: break;
     }
@@ -135,7 +146,7 @@ export function createBoss(game, def) {
       // his own moves: sweep = the tornado / whirlwind (c4), thrust = the piercing thrust (c3), leap = the plunge (c5)
       an.id = A.kind === 'sweep' ? 'c4' : A.kind === 'thrust' ? 'c3' : 'c5';
       an.t = A.kind === 'thrust' ? 0.14 + u * 0.6 : A.kind === 'leap' ? 0.1 + u * 0.6 : 0.1 + u * 0.8;
-    } else if (b.st === 'stagger') { an.id = 'hurt'; an.t = Math.min(1, b.stT / BOSS.staggerF); }
+    } else if (b.st === 'stagger') { an.id = 'hurt'; an.t = Math.min(1, b.stT / b.staggerLimit); }
     else if (b.st === 'dead') { an.id = 'hurt'; an.t = Math.min(1, b.stT / 40); }
     else if (b.st === 'enter' || (b.st === 'chase' && dist() > BOSS.range && b.pause <= 0)) {
       const was = an.id === 'run'; an.id = 'run'; an.t = (was ? an.t : 0) + 0.03;

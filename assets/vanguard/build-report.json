@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "source": "../../docs/art/production-pilot/vanguard-a-pose-hq.glb",
+  "sourceSha256": "5b3fcc2b6f373a22ce73609a3a881fba4a9d80ab18556fe141cf408ffd105505",
+  "output": "../../assets/vanguard/vanguard-combat.glb",
+  "sourceTriangles": 376667,
+  "omittedReplacedTriangles": 82908,
+  "removedCrumbTriangles": 2165,
+  "replacementRegions": [
+    "hands",
+    "neck",
+    "footL",
+    "footR"
+  ],
+  "outputTriangles": 128717,
+  "parts": [
+    {
+      "joint": "foreArmR",
+      "triangles": 6948
+    },
+    {
+      "joint": "upperArmR",
+      "triangles": 2808
+    },
+    {
+      "joint": "shinR",
+      "triangles": 13054
+    },
+    {
+      "joint": "shoulderR",
+      "triangles": 6430
+    },
+    {
+      "joint": "chest",
+      "triangles": 27107
+    },
+    {
+      "joint": "thighR",
+      "triangles": 8847
+    },
+    {
+      "joint": "head",
+      "triangles": 12603
+    },
+    {
+      "joint": "spine",
+      "triangles": 3122
+    },
+    {
+      "joint": "hips",
+      "triangles": 10241
+    },
+    {
+      "joint": "thighL",
+      "triangles": 9063
+    },
+    {
+      "joint": "shinL",
+      "triangles": 11702
+    },
+    {
+      "joint": "shoulderL",
+      "triangles": 6987
+    },
+    {
+      "joint": "upperArmL",
+      "triangles": 2867
+    },
+    {
+      "joint": "foreArmL",
+      "triangles": 6938
+    }
+  ],
+  "bytes": 22480520,
+  "sha256": "9ae20df1625a044cf3ebc97e796c077eb0c0b6b61062a1469af43e41443c43e9",
+  "landmarks": {
+    "shoulder": [
+      0.225,
+      1.355,
+      0
+    ],
+    "elbow": [
+      0.32,
+      1.15,
+      0
+    ],
+    "wrist": [
+      0.44,
+      0.92,
+      0.015
+    ],
+    "hip": [
+      0.13,
+      0.97,
+      0
+    ],
+    "knee": [
+      0.205,
+      0.6,
+      0.01
+    ],
+    "ankle": [
+      0.275,
+      0.17,
+      0
+    ]
+  },
+  "method": "Rigid armour in combat-joint local coordinates. Authored grip gloves, neck gasket, upper arms and boots replace unreliable source regions. Optional factory-paint vertex colours. No runtime skin classification."
+}

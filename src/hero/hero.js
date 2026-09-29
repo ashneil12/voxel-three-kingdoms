@@ -11,10 +11,12 @@ import { createHeroModel } from './model.js';
 import { createSecondary } from './secondary.js';
 import { MOVES, moveClip } from './moves.js';
 import { bufferInput, stepCombo } from './combo.js';
-import { stepLocomotion, stepPhysics, setState, LOCO } from './locomotion.js';
+import { stepLocomotion, stepPhysics, setState, stickDir, turnToward, LOCO } from './locomotion.js';
 import { ARENA_RADIUS, WALL_Z } from '../world/world.js';
 import { emit } from '../core/events.js';
-import { HERO } from '../heroes/index.js';
+import { DEMO, HERO } from '../heroes/index.js';
+import { lockedTarget } from '../camera/lock.js';
+import { guardHit } from './guard.js';
 import { fanOverlay } from './anims/fan.js';
 
 /** Clip registry sampled by the hero. Other parts (musou) register their clips here. */
@@ -27,6 +29,8 @@ const LOCO_IDS = new Set(Object.keys(LOCO_CLIPS));
 const W0 = CH.spear, W1 = CH.spin;
 const mkCarry = (ms) => ms?.carry && Object.fromEntries(Object.entries(ms.carry).map(([k, spec]) => [k, P(spec)]));
 const CARRY = mkCarry(HERO.moveset);
+const GUARD_POSE = P({ hipsR: [0, 0, 0], chest: [0, 0, 0],
+  spear: [-0.12, 1.05, 0.1, 0, 78, 0], gripR: 0, gripL: 0.45 });
 export function carryFor(def) { return mkCarry(def.moveset); }
 const MOVE_FEET = OWN ? {} : SPEAR_FEET;
 
@@ -34,6 +38,7 @@ export function createHero(game) {
   const h = {
     x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, yaw: 0,
     hp: 400, hpMax: 400, musou: 0, musouMax: 100,
+    guard: 100, guardMax: 100, guardStart: -999, guardWait: 0, parryCd: 0,
     state: 'idle', stateT: 0, move: null, moveT: 0, moveSeq: 0,
     grounded: true, airAttack: false, iframes: 0, speed: 0, runT: 0, runPhase: 0,
     combo: 0, comboT: 0, kos: 0,
@@ -51,7 +56,8 @@ export function createHero(game) {
   h.reset = ({ x = 0, z = 0, yaw = 0 } = {}) => {
     Object.assign(h, { x, y: 0, z, vx: 0, vy: 0, vz: 0, yaw, hp: h.hpMax, musou: 0, state: 'idle', stateT: 0, move: null,
       moveT: 0, moveSeq: 0, grounded: true, airAttack: false, iframes: 0, speed: 0, runT: 0, runPhase: 0, combo: 0, comboT: 0,
-      kos: 0, buf: null, bufT: 0, dodgeBuf: 0, jumpBuf: 0, musouBuf: 0, musouClip: null, musouT: 0,
+      kos: 0, guard: h.guardMax, guardStart: -999, guardWait: 0, parryCd: 0,
+      buf: null, bufT: 0, dodgeBuf: 0, jumpBuf: 0, musouBuf: 0, musouClip: null, musouT: 0,
       airN: 0, moveAir: false, dodgeSeq: 0 });
     Object.assign(h.anim, { id: 'idle', t: 0, k: 0, seq: -1, pid: null, pt: 0, pk: 0, blendF: 1, blendN: 1, yaw, lean: 0, fx: x, fz: z, px: x, pz: z, mf: null, mt: 0, om: null, ot: 0 });
   };
@@ -63,6 +69,20 @@ export function createHero(game) {
   h.hurt = (dmg, fromX, fromZ, officer) => {
     if (h.iframes > 0 || h.state === 'musou' || h.state === 'dodge') return false;
     if (h.state === 'dead') return false;
+    const guarded = DEMO ? guardHit(h, game.frame, dmg, fromX, fromZ) : null;
+    if (guarded?.type === 'parry') {
+      emit('hero:parry', { x: h.x, y: h.y + 1.2, z: h.z, fromX, fromZ });
+      return 'parry';
+    }
+    if (guarded) {
+      emit('hero:block', { x: h.x, y: h.y + 1.2, z: h.z, dmg: guarded.chip, guard: h.guard });
+      if (h.hp === 0) {
+        setState(h, 'dead'); emit('hero:death', { x: h.x, z: h.z, kos: h.kos, frame: game.frame });
+      } else if (guarded.broken) {
+        setState(h, 'hurt'); h.iframes = 28; emit('hero:guardbreak', { x: h.x, z: h.z });
+      }
+      return 'block';
+    }
     h.hp = Math.max(0, h.hp - dmg);
     h.musou = Math.min(h.musouMax, h.musou + dmg * 0.15);
     const armored = h.hp > 0 && !!h.move && (!officer || MOVES[h.move].armor);
@@ -82,12 +102,31 @@ export function createHero(game) {
   };
 
   h.step = (inp) => {
-    bufferInput(h, inp);
+    if (!DEMO || !inp.held.block) bufferInput(h, inp);
     if (inp.pressed.musou) h.musouBuf = 8;
     if (game.hitstop > 0) { game.hitstop--; return; }        // frozen by hitstop; presses stay buffered
     h.stateT++;
     if (h.state === 'dead') { stepPhysics(h); updateAnim(h); return; }
+    if (DEMO) {
+      if (h.parryCd > 0) h.parryCd--;
+      if (h.guardWait > 0) h.guardWait--;
+      else if (h.state !== 'guard') h.guard = Math.min(h.guardMax, h.guard + 0.55);
+    }
     if (h.iframes > 0) h.iframes--;
+    if (DEMO && inp.held.block && h.grounded && h.guard > 0 && !['hurt', 'musou', 'dodge'].includes(h.state)) {
+      if (h.state !== 'guard') {
+        h.move = null; h.buf = null; h.dodgeBuf = h.jumpBuf = 0;
+        setState(h, 'guard'); h.guardStart = game.frame;
+      }
+      h.guard = Math.max(0, h.guard - 0.3); h.guardWait = 55;
+      h.vx = h.vz = h.speed = 0;
+      const t = lockedTarget(game);
+      if (t) turnToward(h, Math.atan2(t.x - h.x, t.z - h.z), 0.18);
+      else { const [dx, dz, mag] = stickDir(inp, game.cam.yaw); if (mag) turnToward(h, Math.atan2(dx, dz), 0.18); }
+      if (h.guard === 0) { setState(h, 'hurt'); h.iframes = 28; emit('hero:guardbreak', { x: h.x, z: h.z }); }
+      stepPhysics(h); updateAnim(h); return;
+    }
+    if (h.state === 'guard') setState(h, 'idle');
     if (h.comboT > 0 && --h.comboT === 0) h.combo = 0;
     if (h.musouBuf > 0) h.musouBuf--;
     if (h.state === 'musou') game.musou.stepHero(inp);
@@ -116,6 +155,7 @@ function animDesc(h) {
     case 'jump': return [h.airN ? 'airFall' : 'air', Math.min(1, Math.max(0, 0.5 - h.vy / (2 * LOCO.jumpV))), 0, -1];
     case 'land': return ['land', h.stateT / LOCO.landFrames, 0, -1];
     case 'hurt': return ['hurt', h.stateT / LOCO.hurtFrames, 0, -1];
+    case 'guard': return ['guard', Math.min(1, h.stateT / 8), 0, -1];
     case 'dead': return ['hurt', Math.min(0.25, h.stateT / 40), 0, -3];
     default: return ['idle', (h.stateT % 150) / 150, 0, -1];
   }
@@ -141,6 +181,7 @@ export function updateAnim(h) {
 
 // ---------------------------------------------------------------- pose (pure)
 export function sampleAnim(id, t, k, out, lean = 0, carry = CARRY) {
+  if (id === 'guard') { out.set(GUARD_POSE); return out; }
   if (id === 'run') { runPose(t, k, out, lean); if (carry?.run) for (let j = W0; j < W1; j++) out[j] = carry.run[j]; return out; }
   if (id === 'dodge') { rollPose(t, out); if (carry?.roll) for (let j = W0; j < W1; j++) out[j] = carry.roll[j]; return out; }   // procedural dive roll
   return sampleClip(CLIPS[id] || CLIPS.idle, t, out);
@@ -170,7 +211,8 @@ export function createHeroView(scene, hero) {
   scene.add(rig.root);
   const model = createHeroModel(rig, HERO);
   const secondary = createSecondary(scene, rig, model.material, HERO);
-  const ghosts = createDodgeGhosts(scene, model);   // dodge afterimages + i-frame flash (locomotion-dodge)
+  let ghosts = createDodgeGhosts(scene, model);   // dodge afterimages + i-frame flash (locomotion-dodge)
+  model.ready?.then((loaded) => { if (loaded) { ghosts.dispose(); ghosts = createDodgeGhosts(scene, model); } });
   const pose = new Float32Array(POSE_SIZE);
   const pos = new THREE.Vector3();
   // edge lead (style.edgeLead, heavy blades): the shared clips are spear clips, so a glaive or halberd would often cut

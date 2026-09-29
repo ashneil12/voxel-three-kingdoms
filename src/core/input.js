@@ -1,25 +1,28 @@
 // Input → actions from keyboard, mouse and gamepad.
 // The sim calls sample() exactly once per fixed step; "pressed" edges are latched so a tap
 // between two steps is never lost.
-export const ACTIONS = ['attack', 'charge', 'jump', 'dodge', 'musou'];
+import { DEMO } from '../heroes/index.js';
+export const ACTIONS = ['attack', 'charge', 'jump', 'dodge', 'musou', 'lock', 'block', 'cameraAuto'];
 
 const KEYMAP = {
   KeyJ: 'attack', KeyK: 'charge', Space: 'jump', KeyL: 'dodge',
   ShiftLeft: 'dodge', ShiftRight: 'dodge', KeyI: 'musou',
+  Tab: 'lock', KeyF: 'block', KeyC: 'cameraAuto',
 };
 const MOVEKEYS = {
   KeyW: [0, 1], ArrowUp: [0, 1], KeyS: [0, -1], ArrowDown: [0, -1],
   KeyA: [-1, 0], ArrowLeft: [-1, 0], KeyD: [1, 0], ArrowRight: [1, 0],
 };
-// Gamepad (standard mapping): A/× jump, X/□ attack, Y/△ charge, B/○ musou, R1 dodge.
-const PADMAP = { 0: 'jump', 2: 'attack', 3: 'charge', 1: 'musou', 5: 'dodge', 7: 'dodge' };
+// Gamepad (standard mapping): L1 guard, R3 lock, R1 dodge.
+const PADMAP = { 0: 'jump', 2: 'attack', 3: 'charge', 1: 'musou', 4: 'block', 5: 'dodge', 7: 'dodge', 11: 'lock' };
 
 export function createInput() {
   const dev = { held: {}, latch: {}, keys: new Set(), orbitPx: 0, pad: {} };
   const out = { mx: 0, my: 0, orbit: 0, pressed: {}, held: {} };
 
   addEventListener('keydown', (e) => {
-    if (e.code === 'Space' || e.code.startsWith('Arrow')) e.preventDefault();
+    if (e.code === 'Space' || e.code.startsWith('Arrow') ||
+      (e.code === 'Tab' && DEMO && document.getElementById('menu')?.hidden)) e.preventDefault();
     dev.keys.add(e.code);
     const a = KEYMAP[e.code];
     if (a && !e.repeat) { dev.held[a] = true; dev.latch[a] = true; }
@@ -73,7 +76,7 @@ export function createInput() {
     orbit -= dev.orbitPx * 0.006; dev.orbitPx = 0;
     for (const a of ACTIONS) {
       out.pressed[a] = !!dev.latch[a];
-      out.held[a] = !!dev.held[a];
+      out.held[a] = !!dev.held[a] || !!(pad && Object.entries(PADMAP).some(([btn, action]) => action === a && pad.buttons[btn]?.pressed));
       dev.latch[a] = false;
     }
     const len = Math.hypot(mx, my);

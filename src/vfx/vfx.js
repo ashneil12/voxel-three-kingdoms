@@ -16,7 +16,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { on } from '../core/events.js';
 import { vrng } from '../core/rng.js';
 import { MOVES } from '../hero/moves.js';
-import { HERO } from '../heroes/index.js';
+import { DEMO, HERO } from '../heroes/index.js';
 const SPEAR_SET = !HERO.moveset;                           // the C3 smoke arc and C5 shaft fan belong to Zhao Yun's spear set
 import { heroPose } from '../hero/hero.js';
 import { POSE_SIZE, spearWorld } from '../hero/rig.js';
@@ -710,6 +710,9 @@ export function createVfx(scene, game, world) {
   on('jump', (e) => dustPuff(e.x, e.z, 4, 1.8, 0.42, 0.06, 0.45));
   on('land', (e) => { dustPuff(e.x, e.z, e.hard ? 9 : 5, 2.4, 0.4); dustRing(e.x, e.z, e.hard ? 12 : 9, 0.35, e.hard ? 4.5 : 3.2, 0.42, 0.5); });
   on('hero:hurt', (e) => e.armored ? star(e.x, e.y, e.z, 0.45, 0.06, [1.6, 0.5, 0.3]) : star(e.x, e.y, e.z, 0.9, 0.1, [2.4, 0.5, 0.3]));
+  on('hero:block', (e) => star(e.x, e.y, e.z, 0.75, 0.12, [0.5, 1.5, 2.2]));
+  on('hero:parry', (e) => { star(e.x, e.y, e.z, 1.7, 0.22, [1.1, 2.4, 3.1]); ring(e.x, e.z, 2.2, 0.35, [0.6, 1.7, 2.4]); flash(0.09); });
+  on('hero:guardbreak', (e) => { dustRing(e.x, e.z, 12, 0.4, 2.2, 0.3, 0.4); flash(0.07); });
 
   // Heavy windows open → finisher volume. Charge finishers get their benchmark identity (charge-attacks notes):
   // C3 gold pillar ring (after the dark smoke arc, see afterStep), C5 fan of blue-white shafts from the ground,
@@ -737,15 +740,16 @@ export function createVfx(scene, game, world) {
       ring(h.x, h.z, R * 1.2, 0.45, [1.9, 1.3, 0.7]);
       star(h.x, 0.5, h.z, 1.6, 0.14, [2.2, 1.6, 1.0]);
       flash(0.14);
-    } else if (hit.pillars) {                               // C3 ring of gold pillars, 3+ H tall, disc ≈ 1.4 H
-      columns(h.x, h.z, hit.pillars, 2.6, 6.2, 1.0, 0.62, GOLD, 0.04, e.yaw);
-      ring(h.x, h.z, R * 1.2, 0.45, [2.0, 1.3, 0.5]);
+    } else if (hit.pillars) {                               // C3: suit shockwave in the demo, original pillars in classic
+      if (DEMO) rayBurst(h.x, 0.25, h.z, 18, R * 0.9, FLASH_COOL, [0.1, 0.45], 0.35, 0.4);
+      else columns(h.x, h.z, hit.pillars, 2.6, 6.2, 1.0, 0.62, GOLD, 0.04, e.yaw);
+      ring(h.x, h.z, R * 1.2, 0.45, DEMO ? [0.5, 1.4, 2.1] : [2.0, 1.3, 0.5]);
       dustRing(h.x, h.z, 22, 0.5, R * 1.6, 0.6, 0.6);
       dustColumn(h.x, h.z, 12, 1.6, 3.2, 3.2, [0.8, 1.1], 0.55);
       rocks(h.x, h.z, 14, 2.8, 0.14, 0.34, [4, 8], 3.5);
       flash(0.12);
-    } else if (e.move === 'c5' && SPEAR_SET) {                           // fan of broad blue-white shafts ≈ 2.5 H from the ground, rock chips
-      columns(h.x, h.z, 9, 0.7, 5.2, 0.95, 0.3, SHAFT, 0.62, e.yaw, SHAFT_K);
+    } else if (e.move === 'c5' && SPEAR_SET) {                           // fan impact: suit sparks or classic shafts
+      if (!DEMO) columns(h.x, h.z, 9, 0.7, 5.2, 0.95, 0.3, SHAFT, 0.62, e.yaw, SHAFT_K);
       rayBurst(h.x, 0.15, h.z, 4, R * 0.9, FLASH_COOL, [0.8, 1.3], 0.3, 0.35);
       ring(h.x, h.z, R * 1.2, 0.4, [0.7, 1.2, 2.0]);
       dustRing(h.x, h.z, 20, 0.5, R * 1.7, 0.55, 0.6);
@@ -764,7 +768,8 @@ export function createVfx(scene, game, world) {
       for (let k = 0; k < 4; k++) {
         const d = (hit.off || 0) + 1 + k * (hit.len - 1) / 3.2;
         const px = h.x + fx * d + vrng.range(-0.3, 0.3), pz = h.z + fz * d + vrng.range(-0.3, 0.3);
-        beam(PILLAR, px, 0, pz, vrng.range(-0.05, 0.05), 1, vrng.range(-0.05, 0.05), vrng.range(5, 6.5), vrng.range(0.9, 1.2), 0.55, [2.4, 1.3, 0.4], k * 0.03);
+        if (DEMO) star(px, 0.55, pz, 0.8, 0.12, [0.7, 1.7, 2.2]);
+        else beam(PILLAR, px, 0, pz, vrng.range(-0.05, 0.05), 1, vrng.range(-0.05, 0.05), vrng.range(5, 6.5), vrng.range(0.9, 1.2), 0.55, [2.4, 1.3, 0.4], k * 0.03);
         dustPuff(px, pz, 3, 2.2, 0.5, 0.1, 0.55);
       }
       ring(h.x + fx * 2.5, h.z + fz * 2.5, 3.2, 0.35, [1.8, 1.3, 0.7]);
@@ -860,7 +865,7 @@ export function createVfx(scene, game, world) {
         }
         // C3: dark smoke arc grows over the hero from ≈ 12 sf before the slam, so the gold pillars flash out of a dark
         // beat (benchmark: dark arc f341-348, pillars f349)
-        if (SPEAR_SET && h.move === 'c3' && C3_SLAM > 12) { const k = t - (C3_SLAM - 12); if (k >= 0 && k < 8) darkArc(h, k / 8, (k + 1) / 8); }
+        if (!DEMO && SPEAR_SET && h.move === 'c3' && C3_SLAM > 12) { const k = t - (C3_SLAM - 12); if (k >= 0 && k < 8) darkArc(h, k / 8, (k + 1) / 8); }
         // footfall dust while a lunge carries the hero along the ground (N4 run-in, dash, N6 hop-lunge…)
         if (!m.air && h.y < 0.2 && t % 4 === 0) for (const [f0, f1] of m.lunge) if (t >= f0 && t <= f1) { dustPuff(h.x, h.z, 2, 1.4, 0.3, 0.05, 0.4); break; }
       }

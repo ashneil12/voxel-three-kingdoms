@@ -17,7 +17,8 @@ import { setState, stickDir, turnToward } from '../hero/locomotion.js';
 import { ST } from '../crowd/crowd.js';
 import { ARENA_RADIUS as ARENA_R } from '../world/world.js';
 import { SUN_DIR } from '../world/sky.js';
-import { HERO } from '../heroes/index.js';
+import { DEMO, HERO } from '../heroes/index.js';
+import { lockedTarget } from '../camera/lock.js';
 
 // A hero with his own musou (moveset.musou) keeps the shared beats — activation, cut-in, pull-back, CONTACT at 132, the
 // FINISHER ring wave at 176, control back at 200 — and scripts everything between: his own clips, travel, turns,
@@ -183,7 +184,9 @@ export function createMusou(game) {
   mu.start = (inp) => {
     const h = game.hero, c = game.crowd;
     const [sx, sz, smag] = stickDir(inp, game.cam.yaw);           // held stick aims the Musou (else: current facing)
-    if (smag) h.yaw = Math.atan2(sx, sz);
+    const target = DEMO ? lockedTarget(game) : null;
+    if (target) h.yaw = Math.atan2(target.x - h.x, target.z - h.z);
+    else if (smag) h.yaw = Math.atan2(sx, sz);
     mu.active = true; mu.t = 0; mu.waveR = 0; mu.seq++;
     mu.yaw0 = mu.ayaw = h.yaw; mu.ax = h.x; mu.az = h.z;
     startMusou = h.musou;

@@ -1,0 +1,15 @@
+{
+  "name": "exo-asset-tools",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "vanguard": "node prepare-vanguard.mjs",
+    "verify": "node verify-vanguard.mjs"
+  },
+  "dependencies": {
+    "@gltf-transform/core": "^4.2.1",
+    "@gltf-transform/functions": "^4.2.1",
+    "meshoptimizer": "^1.3.0",
+    "sharp": "^0.35.5"
+  }
+}

@@ -195,6 +195,12 @@ export function createCrowd(game, grunts = 300) {
 
   function releaseToken(i) { if (c.token[i]) { c.token[i] = 0; c.tokensUsed--; } }
   c.releaseToken = releaseToken;
+  c.parry = (i) => {
+    if (i < 0 || i >= N || !isAlive(c.st[i])) return;
+    releaseToken(i);
+    c.st[i] = ST.HURT; c.stT[i] = 0; c.hurtDur[i] = 55;
+    c.wind[i] = 0; c.vx[i] = c.vz[i] = 0; c.cd[i] = 120;
+  };
 
   function setSt(i, s) { c.st[i] = s; c.stT[i] = 0; }
 
@@ -248,6 +254,7 @@ export function createCrowd(game, grunts = 300) {
           c.wind[i] = 0;
           if (!c.feint[i]) game.combat.enemyStrike(i);
           else emit('enemy:attack', { i, x: c.x[i], y: 1.1, z: c.z[i], officer: c.type[i] === 1, feint: 1 });   // a swing at the air
+          if (c.st[i] !== ST.ATTACK) continue; // parry interrupted the swing
         }
         // creep into reach (a feint stops a pace short: the blow cuts the air in front of him)
         const reach = c.feint[i] ? 2.45 : CROWD.attackRange - 0.2;

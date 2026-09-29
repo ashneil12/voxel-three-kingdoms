@@ -4,6 +4,7 @@
 import * as THREE from 'three';
 import { on, emit } from '../core/events.js';
 import { boxesGeometry } from '../core/voxel.js';
+import { DEMO } from '../heroes/index.js';
 
 const HEAL = { officer: 120, grunt: 60 }, LIFE = 60 * 30, R = 1.1, EVERY = 40, N = 12;
 
@@ -18,7 +19,11 @@ export function createPickups(game, scene) {
   on('scenario', () => { buns.length = 0; gruntKOs = 0; });
 
   // view: a steamed bun (white dome, pleated top, a red dot) on a plate
-  const geo = boxesGeometry([
+  const geo = boxesGeometry(DEMO ? [
+    { s:[0.45,0.14,0.38], p:[0,0.16,0], c:0x263846 },
+    { s:[0.32,0.08,0.3], p:[0,0.27,0], c:0x83d6e8 },
+    { s:[0.12,0.05,0.33], p:[0,0.34,0], c:0xffaa61 },
+  ] : [
     { s: [0.5, 0.2, 0.5], p: [0, 0.1, 0], c: 0xf2ece0 }, { s: [0.42, 0.12, 0.42], p: [0, 0.26, 0], c: 0xf6f1e6 },
     { s: [0.26, 0.08, 0.26], p: [0, 0.36, 0], c: 0xfaf6ee }, { s: [0.08, 0.04, 0.08], p: [0, 0.41, 0], c: 0xd0321f },
     { s: [0.66, 0.04, 0.66], p: [0, 0.0, 0], c: 0x8a5a2a },

@@ -3,6 +3,8 @@ import { MOVES, NEUTRAL, AIR_CHAIN_MAX } from './moves.js';
 import { stickDir, turnToward, startDodge, startJump, setState, LOCO } from './locomotion.js';
 import { ST, CROWD } from '../crowd/crowd.js';
 import { emit } from '../core/events.js';
+import { DEMO } from '../heroes/index.js';
+import { lockedTarget } from '../camera/lock.js';
 
 const BUF = 14;           // frames a press stays buffered once it is eligible to fire
 const WAIT = 40;          // frames a press may wait for its window before it is dropped: covers every normal's cancel
@@ -74,8 +76,10 @@ export function startMove(h, id, inp, game) {
     h.airAttack = true; h.airN = (h.airN || 0) + 1;
   }
   // steering: stick wins; otherwise soft-lock (threat first, then the nearest enemy roughly in front)
+  const target = DEMO ? lockedTarget(game) : null;
   const [dx, dz, mag] = stickDir(inp, game.cam.yaw);
-  if (mag) h.yaw = Math.atan2(dx, dz);
+  if (target) h.yaw = Math.atan2(target.x - h.x, target.z - h.z);
+  else if (mag) h.yaw = Math.atan2(dx, dz);
   else {
     const t = softTarget(h, m, game.crowd);
     if (t >= 0) h.yaw = Math.atan2(game.crowd.x[t] - h.x, game.crowd.z[t] - h.z);
@@ -144,8 +148,9 @@ export function stepCombo(h, inp, game) {
   if (m) {
     // steer early frames
     if (h.moveT < m.steer) {
-      const [dx, dz, mag] = stickDir(inp, game.cam.yaw);
-      if (mag) turnToward(h, Math.atan2(dx, dz), 0.35);
+      const target = DEMO ? lockedTarget(game) : null;
+      if (target) turnToward(h, Math.atan2(target.x - h.x, target.z - h.z), 0.22);
+      else { const [dx, dz, mag] = stickDir(inp, game.cam.yaw); if (mag) turnToward(h, Math.atan2(dx, dz), 0.35); }
     }
     // lunge
     for (const [f0, f1, dist, ease] of m.lunge) {

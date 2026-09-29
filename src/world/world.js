@@ -51,6 +51,35 @@ export function createWorld(scene) {
   rim.position.copy(SUN_DIR).multiplyScalar(100);
   scene.add(rim);
 
+  if (STAGE.id === 'foundry') {
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(180, 180),
+      new THREE.MeshStandardMaterial({ color:0x26333d, roughness:0.88, metalness:0.2 }));
+    floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+    const grid = new THREE.GridHelper(90, 30, 0x6b9eb0, 0x455c67);
+    grid.position.y = 0.015; scene.add(grid);
+    const steel = new THREE.MeshStandardMaterial({ color:0x334756, roughness:0.65, metalness:0.5 });
+    const lit = new THREE.MeshStandardMaterial({ color:0x71c1d8, emissive:0x428ca8, emissiveIntensity:0.6 });
+    const box = (x,y,z,w,h,d,mat=steel) => {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);
+      m.position.set(x,y,z); m.castShadow = true; m.receiveShadow = true; scene.add(m);
+    };
+    for (let i = 0; i < 24; i++) {
+      const a = i * Math.PI / 12, r = 50 + i % 3 * 5, x = Math.sin(a)*r, z = Math.cos(a)*r;
+      box(x,5,z,2,10,2); box(x,9,z,2.3,0.22,2.3,lit);
+    }
+    for (let i = -2; i <= 2; i++) {
+      box(i*12,6,72,8,12,6); box(i*12,12.2,72,8.5,0.3,6.5,lit);
+    }
+    const tmp = new THREE.Vector3(); let t = 0;
+    return { sun, hemi, fires:[], banners:[], sunDir:SUN_DIR, lightDir:LIGHT_DIR,
+      update(dt,focus) {
+        t += dt; sky.material.uniforms.uTime.value = t;
+        const step = 56 / 2048;
+        tmp.set(Math.round(focus.x/step)*step,0,Math.round(focus.z/step)*step);
+        sun.target.position.copy(tmp); sun.position.copy(LIGHT_DIR).multiplyScalar(70).add(tmp);
+      } };
+  }
+
   buildTerrain(scene, GATE_X, FIELD_FIRES);
   const castle = buildCastle(scene, { wallZ: WALL_Z, gateX: GATE_X });
   const setpiece = buildSetpiece(scene);                            // 赤壁 river + fleet, 虎牢關 rock walls (setpieces.js)

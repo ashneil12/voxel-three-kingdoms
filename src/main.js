@@ -1,6 +1,7 @@
 // Boot + fixed 60 Hz loop. Sim modules (hero, combat, crowd, musou, camera control yaw) advance only in step();
 // render-side modules read sim state in render() and never write it.
 import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { rng, vrng } from './core/rng.js';
 import { emit } from './core/events.js';
 import { createInput } from './core/input.js';
@@ -8,7 +9,7 @@ import { createPost } from './post/post.js';
 import { createWorld } from './world/world.js';
 import { createHero, createHeroView, updateAnim } from './hero/hero.js';
 import { MOVES } from './hero/moves.js';
-import { createCrowd } from './crowd/crowd.js';
+import { createCrowd, CROWD } from './crowd/crowd.js';
 import { createCrowdView } from './crowd/view.js';
 import { createCombat } from './combat/combat.js';
 import { createMusou } from './musou/musou.js';
@@ -18,16 +19,24 @@ import { createVfx } from './vfx/vfx.js';
 import { createSignatureFx } from './vfx/signature.js';
 import { createChargeFx } from './vfx/charge.js';
 import { createHud, paintPortrait } from './ui/hud.js';
-import { HERO, HEROES } from './heroes/index.js';
+import { HERO, HEROES, DEMO } from './heroes/index.js';
+import { WARDEN } from './heroes/exosuit.js';
 import { STAGE, STAGES } from './stages/index.js';
-import { createBoss } from './boss/boss.js';
+import { createBoss, BOSS } from './boss/boss.js';
 import { createBossView } from './boss/view.js';
 import { createAudio } from './audio/audio.js';
 import { createPickups } from './ui/pickups.js';
 import { on } from './core/events.js';
 
 const params = new URLSearchParams(location.search);
-const ENEMIES = Math.max(0, Math.min(2000, params.get('enemies') ? Number(params.get('enemies')) | 0 : 300));
+const ENEMIES = Math.max(0, Math.min(2000, params.get('enemies') ? Number(params.get('enemies')) | 0 : DEMO ? 72 : 300));
+if (DEMO) {
+  BOSS.hp = 850;
+  BOSS.poise = 140;
+  BOSS.arriveKOs = 60;
+  BOSS.earliest = params.has('boss') ? 0 : 60 * 70;
+  if (!params.has('boss')) BOSS.arrive = 60 * 115;
+}
 
 const canvas = document.getElementById('c');
 let vw = innerWidth, vh = innerHeight;
@@ -35,9 +44,15 @@ let vw = innerWidth, vh = innerHeight;
 const post = createPost({ canvas, width: vw, height: vh });
 const scene = new THREE.Scene();
 const world = createWorld(scene);
+if (DEMO) {
+  const room = new RoomEnvironment(), pmrem = new THREE.PMREMGenerator(post.renderer);
+  scene.environment = pmrem.fromScene(room, .04).texture;
+  scene.environmentIntensity = .65;
+  room.dispose(); pmrem.dispose();
+}
 
 // ---- sim
-const game = { frame: 0, hitstop: 0, freeze: 0 };
+const game = { frame: 0, roundFrame: 0, hitstop: 0, freeze: 0 };
 game.cam = createCamSim();
 game.hero = createHero(game);
 game.crowd = createCrowd(game, ENEMIES);
@@ -45,7 +60,8 @@ game.combat = createCombat(game);
 game.musou = createMusou(game);
 // stage boss (虎牢關): Lü Bu — or Guan Yu when the player is Lü Bu
 const bossCfg = STAGE.boss && (STAGE.boss.id === HERO.id ? STAGE.boss.alt : STAGE.boss);
-game.boss = bossCfg ? createBoss(game, HEROES.find((h) => h.id === bossCfg.id)) : null;
+game.boss = bossCfg ? createBoss(game, HEROES.find((h) => h.id === bossCfg.id) || (DEMO ? WARDEN : null)) : null;
+if (DEMO) on('boss:enter', () => game.crowd.reset());
 const input = createInput();
 const pickups = createPickups(game, scene);   // meat buns: heal on pickup (ui/pickups.js)
 if (params.has('debug') || params.has('rec')) Object.assign(window, { game, scene });   // debug: inspect sim state from the console
@@ -79,6 +95,15 @@ function step() {
   if (PREVIEW) { previewStep(); return; }
   if (window.__onStep) window.__onStep(game.frame);          // recordings (?rec): scripted input keyed by sim frame
   const inp = input.sample();
+  if (DEMO && !params.has('boss')) {
+    if (game.roundFrame === 60 * 30) {
+      CROWD.engaged = 54; CROWD.wave = [12, 18];
+      emit('demo:phase', { title: 'SECOND WAVE', detail: 'More machines are converging.' });
+    } else if (game.roundFrame === 60 * 60) {
+      CROWD.engaged = 68; CROWD.wave = [15, 22];
+      emit('demo:phase', { title: 'FINAL PUSH', detail: 'Hold until the command unit arrives.' });
+    }
+  }
   game.cam.step(game, inp);
   game.hero.step(inp);
   game.combat.step();
@@ -87,6 +112,7 @@ function step() {
   if (game.boss) game.boss.step();
   game.musou.step();
   game.frame++;
+  game.roundFrame++;
   vfx.afterStep();
 }
 
@@ -113,7 +139,7 @@ function render() {
 const result = (() => {
   const el = document.createElement('div');
   el.id = 'result'; el.hidden = true;
-  el.innerHTML = '<div class="big"></div><div class="en"></div><div class="stats"></div><div class="btns"><button data-a="retry">再戰<small>RETRY · Enter</small></button><button data-a="menu">選將<small>HEROES · Esc</small></button><button data-a="go">繼續<small>CONTINUE</small></button></div>';
+  el.innerHTML = `<div class="big"></div><div class="en"></div><div class="stats"></div><div class="btns"><button data-a="retry">${DEMO ? 'RETRY' : '再戰'}<small>RETRY · Enter</small></button><button data-a="menu">${DEMO ? 'MENU' : '選將'}<small>MENU · Esc</small></button><button data-a="go">${DEMO ? 'CONTINUE' : '繼續'}<small>CONTINUE</small></button></div>`;
   document.body.appendChild(el);
   const [big, en, stats] = el.children, cont = el.querySelector('[data-a="go"]');
   let maxCombo = 0, open = false, t0 = 0;
@@ -121,10 +147,10 @@ const result = (() => {
   on('scenario', () => { maxCombo = 0; });
   const show = (win, delay) => setTimeout(() => {
     if (open || (!win && game.hero.state !== 'dead')) return;
-    big.textContent = win ? '勝利' : '戰死'; en.textContent = win ? 'VICTORY' : 'FALLEN IN BATTLE';
+    big.textContent = DEMO ? (win ? 'AREA SECURE' : 'SUIT DOWN') : win ? '勝利' : '戰死'; en.textContent = win ? 'VICTORY' : 'MISSION FAILED';
     el.classList.toggle('win', win); cont.hidden = !win;
     const s = Math.round((game.frame - t0) / 60);
-    stats.innerHTML = `<span>擊破 <b>${game.hero.kos}</b></span><span>最大連擊 <b>${maxCombo}</b></span><span>時間 <b>${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}</b></span>`;
+    stats.innerHTML = `<span>${DEMO ? 'ROBOTS DISABLED' : '擊破'} <b>${game.hero.kos}</b></span><span>${DEMO ? 'BEST COMBO' : '最大連擊'} <b>${maxCombo}</b></span><span>${DEMO ? 'TIME' : '時間'} <b>${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}</b></span>`;
     el.hidden = false; open = true; hudEl.hidden = true;
   }, delay);
   on('hero:death', () => show(false, 1800));
@@ -146,11 +172,13 @@ const result = (() => {
 function start() {
   rng.seed(1); vrng.seed(7936);
   result.hide();
+  game.roundFrame = 0;
+  if (DEMO) { CROWD.engaged = 42; CROWD.wave = [8, 13]; }
   game.hero.reset();
   game.crowd.reset(); game.combat.reset(); game.musou.reset(); game.cam.reset(0);
   if (game.boss) game.boss.reset(), game.boss.st = 'off';
   heroView.reset();
-  game.crowd.spawnArmy(Math.min(ENEMIES, game.crowd.grunts));
+  game.crowd.spawnArmy(Math.min(DEMO ? 36 : ENEMIES, game.crowd.grunts));
   if (params.has('musou')) game.hero.musou = game.hero.musouMax;   // debug: start with a full gauge
   emit('scenario', { name: 'arena' });
 }
@@ -164,6 +192,57 @@ addEventListener('resize', () => {
 
 // ---- start / pause menu (index.html #menu): the sim waits while it is open
 const menu = document.getElementById('menu'), go = document.getElementById('go'), hudEl = document.getElementById('hud');
+if (DEMO) {
+  document.title = 'EXO: HOLD THE LINE — combat demo';
+  menu.querySelector('.t').innerHTML = 'EXO <i>HOLD THE LINE</i>';
+  menu.querySelector('.en').textContent = 'A POWERED SUIT AGAINST THE MACHINE LEGION';
+  menu.querySelector('.links').style.display = 'none';
+  const studioLink = document.createElement('a');
+  studioLink.href = './studio.html'; studioLink.textContent = 'OPEN SUIT STUDIO'; studioLink.className = 'studio-link';
+  menu.appendChild(studioLink);
+  const labels = ['MOVE','ATTACK','HEAVY','JUMP','BOOST DODGE','OVERDRIVE','CAMERA'];
+  menu.querySelectorAll('table td:first-child').forEach((td, i) => { td.innerHTML = labels[i]; });
+  menu.querySelector('table tr:nth-child(3)').insertAdjacentHTML('afterend',
+    '<tr><td>GUARD / PARRY</td><td><kbd>F</kbd> hold to block · tap just before impact to stun</td></tr><tr><td>LOCK TARGET</td><td><kbd>Tab</kbd> toggle · camera follows the target</td></tr>');
+  menu.querySelector('table tr:last-child td:last-child').innerHTML = '<kbd>C</kbd> auto on/off · <kbd>Q</kbd><kbd>E</kbd> or drag for manual look';
+  go.innerHTML = 'DEPLOY <small>START</small>';
+  menu.querySelector('.hint').textContent = 'J attack · K heavy · F guard/parry · Tab lock · C camera mode · Shift dodge · I overdrive · Esc pause';
+  const style = document.createElement('style');
+  style.textContent = `
+    #menu { background:linear-gradient(90deg,rgba(5,14,22,.96) 0%,rgba(5,14,22,.86) 43%,rgba(5,14,22,.05) 90%); color:#d9e9ee; font-family:Arial,sans-serif; }
+    #menu .t { font:800 clamp(48px,7vw,96px)/1 Arial,sans-serif; letter-spacing:-.05em; color:#f0f7f8; }
+    #menu .t i { writing-mode:horizontal-tb; vertical-align:baseline; background:none; box-shadow:none; margin-left:.1em; padding:0; font:700 .28em/1 Arial,sans-serif; letter-spacing:.16em; color:#81ccdc; }
+    #menu .en { max-width:590px; font:700 14px/1.4 Arial,sans-serif; letter-spacing:.24em; color:#81ccdc; }
+    #menu .sub { max-width:600px; color:#c9dbe2; font:500 16px/1.4 Arial,sans-serif; letter-spacing:.02em; }
+    #menu table { border-color:#60b7cd; }
+    #menu td:first-child { color:#81ccdc; font:700 14px/1.2 Arial,sans-serif; letter-spacing:.08em; }
+    #menu .heroes button { background:rgba(22,43,55,.78); box-shadow:0 0 0 1px #587989; }
+    #menu .heroes button.on { background:rgba(34,72,87,.9); box-shadow:0 0 0 2px #75c7db; }
+    #menu .heroes button b,#menu .stages button b { font-family:Arial,sans-serif; letter-spacing:.06em; }
+    #menu #go { background:#81ccdc; color:#0e2732; font:800 24px/1 Arial,sans-serif; letter-spacing:.12em; box-shadow:0 4px 18px #07141b; }
+    #menu .hint { max-width:610px; letter-spacing:.02em; color:#b3cad2; }
+    #menu table { margin-top:1.1rem; font-size:1.5rem; }
+    #menu td { padding:.26rem 1.2rem; }
+    #menu #go { margin-top:1.2rem; }
+    #menu .studio-link { position:absolute; right:2.4rem; top:2.4rem; padding:.75rem 1rem; color:#d7f1f4;
+      background:rgba(18,43,54,.9); border:1px solid #80c8d8; border-radius:.35rem; text-decoration:none;
+      font:700 1.2rem/1 Arial,sans-serif; letter-spacing:.1em; }
+    #menu .studio-link:hover { background:#315767; }
+    #hud .h-intro .zh,#hud .h-player .name { font-family:Arial,sans-serif; font-weight:800; letter-spacing:-.03em; }
+    #hud .h-intro .seal { display:none; }
+    #hud .h-guard { position:absolute; left:15%; bottom:2.1rem; width:30%; display:flex; align-items:center; gap:.7rem; font:700 1.15rem/1 Arial,sans-serif; color:#a6c9d4; letter-spacing:.08em; }
+    #hud .h-guard .track { position:relative; height:.75rem; flex:1; background:#12212b; box-shadow:0 0 0 1px #628695; }
+    #hud .h-guard .track i { position:absolute; inset:0; transform-origin:left center; background:linear-gradient(90deg,#4f91a8,#ace8f1); }
+    #hud .h-guard.active { color:#ecf9fc; }
+    #hud .h-guard.broken .track i { background:#e06b4f; }
+    #hud .h-guard span { min-width:8rem; text-align:right; font-size:.95rem; }
+    #hud .h-lock { left:0; top:0; opacity:0; display:flex; flex-direction:column; align-items:center; width:0; height:0; color:#a7e7f0; font:800 1.1rem/1 Arial,sans-serif; letter-spacing:.1em; text-shadow:0 1px 5px #06141b; }
+    #hud .h-lock span { font:700 5rem/1 Arial,sans-serif; transform:translate(-50%,-50%); text-shadow:0 0 1rem #56c6dc; }
+    #hud .h-lock b { position:absolute; top:2.6rem; transform:translateX(-50%); white-space:nowrap; padding:.2rem .5rem; background:rgba(6,23,32,.65); }
+    #hud .h-camera-mode { right:2.4%; top:25.4rem; font:700 1.05rem/1 Arial,sans-serif; letter-spacing:.1em; color:#aedbe5; background:rgba(6,23,32,.55); padding:.4rem .55rem; }
+  `;
+  document.head.appendChild(style);
+}
 // hero select: one card per officer; picking another reloads with ?hero=<id> (the model is built at boot)
 // … and one per battle (?stage=<id>; the sky is compiled at boot too)
 const pick = (key, id, cur) => { if (id === cur) return; const q = new URLSearchParams(location.search); q.set(key, id); location.search = q; };

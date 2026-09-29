@@ -11,6 +11,7 @@ import { sampleClip } from '../hero/rig.js';
 import { makeAuthor } from '../hero/anims/author.js';
 import { finalizeMoves } from '../hero/moves.js';
 import { fadeOccluder } from '../camera/occlusion.js';
+import { DEMO } from '../heroes/index.js';
 
 const SCALE = HERO_SCALE * 1.2;
 
@@ -91,7 +92,7 @@ export function createBossView(scene, game, vfx, stage) {
   let bannerF = -999, bannerDur = 0, lag = 1;
   const say = (big, sub, dur = 170) => { bBig.textContent = big; bSub.textContent = sub; bannerF = game.frame; bannerDur = dur; };
   on('boss:enter', () => say(stage.bossIntro?.[0] || `${b.def.zh} 來襲`, stage.bossIntro?.[1] || `${b.def.en} APPROACHES`));
-  on('boss:defeat', () => say(`${b.def.zh} 敗走`, `${b.def.en} IS DEFEATED`, 220));
+  on('boss:defeat', () => say(DEMO ? 'WARDEN DISABLED' : `${b.def.zh} 敗走`, `${b.def.en} IS DEFEATED`, 220));
   on('scenario', () => { bannerF = -999; lag = 1; seq = null; show(false); bar.style.opacity = 0; });
 
   return {
