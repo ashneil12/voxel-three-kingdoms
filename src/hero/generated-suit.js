@@ -36,7 +36,7 @@ export function buildGeneratedSuit(rig, gltf) {
   const meshes={'generated:armour':mesh},roots=[mesh],seamMaterial=new THREE.MeshStandardMaterial({color:0x17212a,roughness:.7,metalness:.25});
   const triangles=source.geometry.index.count/3;
   // dark limb cores hide the interior where generated hands/feet were removed
-  for(const side of ['L','R']) for(const [joint,length,radius] of [['upperArm',.29,.056],['foreArm',.27,.06],['thigh',.44,.075],['shin',.44,.066]]) {
+  for(const side of ['L','R']) for(const [joint,length,radius] of [['thigh',.44,.075],['shin',.44,.066]]) {
     const geometry=new THREE.CylinderGeometry(radius,radius,length,12);
     geometry.translate(0,-length/2,0);
     const core=new THREE.Mesh(geometry,seamMaterial);core.name='joint-cover-'+joint+side;
@@ -50,7 +50,7 @@ export function attachGeneratedSuit(rig, model) {
     if(model.cancelled)return null;
     const built=buildGeneratedSuit(rig,gltf),retained={};
     for(const [name,mesh] of Object.entries(model.fallbackMeshes)) {
-      const keep=['weapon','handL','handR','footL','footR'].some(j=>mesh.parent===rig.joints[j]) ||
+      const keep=['weapon','handL','handR','footL','footR','upperArmL','upperArmR','foreArmL','foreArmR'].some(j=>mesh.parent===rig.joints[j]) ||
         mesh.parent===rig.joints.neck && (mesh.userData.studioMaterial || mesh.material)===model.materials.dark;
       mesh.visible=keep;if(keep)retained[name]=mesh;
     }

@@ -5,19 +5,21 @@
   "output": "../../assets/vanguard/vanguard-combat.glb",
   "representation": "smooth-skinned single mesh bound to combat rig joints",
   "sourceTriangles": 376667,
-  "omittedReplacedTriangles": 82908,
-  "removedCrumbTriangles": 88,
+  "omittedReplacedTriangles": 126092,
+  "removedCrumbTriangles": 75,
   "replacementRegions": [
     "hands",
     "neck",
     "footL",
-    "footR"
+    "footR",
+    "upperArms",
+    "foreArms"
   ],
-  "outputTriangles": 78309,
-  "outputVertices": 102265,
-  "removedBridgeTriangles": 257,
-  "blendedNodes": 3060,
-  "totalNodes": 36015,
+  "outputTriangles": 79324,
+  "outputVertices": 101978,
+  "removedBridgeTriangles": 237,
+  "blendedNodes": 3309,
+  "totalNodes": 36724,
   "cuts": {
     "hip": 0.93,
     "elbow": 1.15,
@@ -31,15 +33,15 @@
   "joints": [
     {
       "joint": "hips",
-      "dominantVertices": 3561
+      "dominantVertices": 4189
     },
     {
       "joint": "spine",
-      "dominantVertices": 894
+      "dominantVertices": 1062
     },
     {
       "joint": "chest",
-      "dominantVertices": 7459
+      "dominantVertices": 8791
     },
     {
       "joint": "neck",
@@ -47,59 +49,59 @@
     },
     {
       "joint": "head",
-      "dominantVertices": 3796
+      "dominantVertices": 4446
     },
     {
       "joint": "shoulderL",
-      "dominantVertices": 1928
+      "dominantVertices": 2317
     },
     {
       "joint": "upperArmL",
-      "dominantVertices": 685
+      "dominantVertices": 63
     },
     {
       "joint": "foreArmL",
-      "dominantVertices": 1867
+      "dominantVertices": 41
     },
     {
       "joint": "thighL",
-      "dominantVertices": 2770
+      "dominantVertices": 3225
     },
     {
       "joint": "shinL",
-      "dominantVertices": 2817
+      "dominantVertices": 3333
     },
     {
       "joint": "footL",
-      "dominantVertices": 69
+      "dominantVertices": 79
     },
     {
       "joint": "shoulderR",
-      "dominantVertices": 1735
+      "dominantVertices": 2071
     },
     {
       "joint": "upperArmR",
-      "dominantVertices": 670
+      "dominantVertices": 62
     },
     {
       "joint": "foreArmR",
-      "dominantVertices": 1815
+      "dominantVertices": 33
     },
     {
       "joint": "thighR",
-      "dominantVertices": 2702
+      "dominantVertices": 3221
     },
     {
       "joint": "shinR",
-      "dominantVertices": 3171
+      "dominantVertices": 3710
     },
     {
       "joint": "footR",
-      "dominantVertices": 76
+      "dominantVertices": 81
     }
   ],
-  "bytes": 21578096,
-  "sha256": "5fae92d0cfcd16bbd9bd49c40477d31a7b8e3c8f8eea7e85035e26daeb3bc844",
+  "bytes": 21570764,
+  "sha256": "7c23c208e92b2ff9b81f92a176cf83e9173a75132f66d872930345e62a09703d",
   "landmarks": {
     "shoulder": [
       0.225,

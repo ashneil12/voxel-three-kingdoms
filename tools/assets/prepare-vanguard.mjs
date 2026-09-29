@@ -38,7 +38,8 @@ const landmarks = {
 const CUT = { hip: +(process.env.CUT_HIP ?? .93), elbow: +(process.env.CUT_ELBOW ?? 1.15), knee: +(process.env.CUT_KNEE ?? .61) };
 const BLEND = { hip: +(process.env.BLEND_HIP ?? .008), limb: +(process.env.BLEND_LIMB ?? .022), torso: +(process.env.BLEND_TORSO ?? .03) };
 
-const OMIT = new Set(['neck', 'footL', 'footR', null]);
+const AUTHORED_ARMS = process.env.AUTHORED_ARMS !== '0';   // arms/hands are engineered parts: the generated arms are torn shells
+const OMIT = new Set(['neck', 'footL', 'footR', null, ...(AUTHORED_ARMS ? ['upperArmL', 'upperArmR', 'foreArmL', 'foreArmR'] : [])]);
 function region(x, y, z) {
   const a = Math.abs(x), s = x >= 0 ? 'L' : 'R';
   if (a > .31 && y < .91 && y > .55) return null;                // open source hands (authored gloves replace them)
@@ -240,7 +241,7 @@ const report = {
   schemaVersion: 2, source: input, sourceSha256: createHash('sha256').update(await readFile(input)).digest('hex'), output,
   representation: 'smooth-skinned single mesh bound to combat rig joints',
   sourceTriangles: idx.length / 3, omittedReplacedTriangles: omitted, removedCrumbTriangles: removedCrumbs,
-  replacementRegions: ['hands', 'neck', 'footL', 'footR'], outputTriangles: outIdx.length / 3, outputVertices: n, removedBridgeTriangles: bridgeTriangles,
+  replacementRegions: ['hands', 'neck', 'footL', 'footR', ...(AUTHORED_ARMS ? ['upperArms', 'foreArms'] : [])], outputTriangles: outIdx.length / 3, outputVertices: n, removedBridgeTriangles: bridgeTriangles,
   blendedNodes: blended, totalNodes: nn, cuts: CUT, blend: BLEND, joints: perJoint,
   bytes: bytes.byteLength, sha256: createHash('sha256').update(bytes).digest('hex'), landmarks,
   method: 'One armour mesh, geodesic joint-blend skin weights, inverse-bind = source A-pose to joint rest frame. Authored gloves, neck gasket and boots stay rigid. No runtime classification.',

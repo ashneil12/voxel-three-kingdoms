@@ -3,7 +3,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { applyRoll } from './hero/anims/locomotion.js';
 import { createRig, HERO_SCALE, POSE_SIZE, P } from './hero/rig.js';
 import { createProceduralSuit } from './hero/procedural-suit.js';
-import { attachGeneratedSuit, disposeGeneratedSuit } from './hero/generated-suit.js?v=skin-2';
+import { attachGeneratedSuit, disposeGeneratedSuit } from './hero/generated-suit.js?v=skin-3';
 import { SUIT_DEFAULT, suitDesign, loadSuitDesign, saveSuitDesign, SUIT_STORAGE_KEY } from './heroes/suit-design.js';
 import { sampleAnim } from './hero/hero.js';
 import './musou/musou.js'; // registers the existing overdrive clips
@@ -241,6 +241,7 @@ if (qs.get('sheet')) {
       sampleAnim(act, act === 'run' ? tt * Math.PI * 2 : tt, Number(qs.get('k') ?? 1), pose);
       rig.root.scale.setScalar(1); rig.apply(pose, root, 0); rig.root.scale.setScalar(HERO_SCALE);
       applyRoll(rig, { id: act, t: tt }); rig.root.updateMatrixWorld(true);
+      if (qs.get('focus')) { const f = new THREE.Vector3(); rig.joints[qs.get('focus')].getWorldPosition(f); target.copy(f); updateCamera(); }
       renderer.render(scene, camera);
       ctx.drawImage(canvas, 0, 0, canvas.width, canvas.height, (i % cols) * CW, Math.floor(i / cols) * CH, CW, CH);
       ctx.fillStyle = '#000'; ctx.font = '20px monospace'; ctx.fillText(`${act} ${tt.toFixed(2)}`, (i % cols) * CW + 8, Math.floor(i / cols) * CH + 22);
