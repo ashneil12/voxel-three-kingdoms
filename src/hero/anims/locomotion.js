@@ -11,9 +11,9 @@ const sstep = (a, b, x) => { const u = Math.min(1, Math.max(0, (x - a) / (b - a)
 // Run carry (DW8): upright forward lean; the right hand holds the shaft at the hip, butt end up ahead-left past the
 // head, blade trailing low behind-right; left arm free.
 const RUN_SPEC = {
-  hips: [0, 0.84, 0.03], hipsR: [16, 0, 0], spine: [6, 0, 0], chest: [4, 0, 0], head: [2, 0, 0],
+  hips: [0, 0.84, 0.03], hipsR: [16, 0, 0], spine: [2, 0, 0], chest: [4, 0, 0], head: [0, 0, 0],
   footL: [0.13, 0.08, 0.2, 0, 5], footR: [-0.13, 0.1, -0.22, 20, -5],
-  spear: spearAbout([-0.3, 1.0, 0.05], 222, -22, 0, 0.5), gripR: 0.5, gripL: 0.5, lfree: 1, armL: [10, 0, 14, 85],
+  spear: spearAbout([-0.26, 0.98, 0.14], -6, 30, 0, 0.95), gripR: 0.95, gripL: 0.5, lfree: 1, armL: [10, 0, 14, 85],
 };
 const RUN_BASE = P(RUN_SPEC);
 const AIR_FALL = {
@@ -111,20 +111,20 @@ export function runPose(phase, k, out, lean = 0) {
   // shows it: a deeper bounce per step, the pelvis shifting over the stance foot and the shoulders rocking with it
   const sw = Math.cos(phase - Math.PI * s);                          // +1 at left mid-stance, -1 at right mid-stance
   out[CH.hips] = lean * 0.18 + sw * 0.035 * k;
-  out[CH.hips + 1] = 0.86 - 0.06 * k + bob * 0.05 * k - al * 0.2;    // snap turns drop into a low bank
-  out[CH.hipsR] = (10 + 14 * k + al * 20) * D2R + bob * 0.04 * k;
+  out[CH.hips + 1] = 0.94 - 0.05 * k + bob * 0.045 * k - al * 0.2;    // snap turns drop into a low bank
+  out[CH.hipsR] = (4 + 8 * k + al * 20) * D2R + bob * 0.03 * k;
   const hy = (zR - zL) * 0.3;                                        // hips follow the forward leg...
   out[CH.hipsR + 1] = hy;
   out[CH.hipsR + 2] = -lean - sw * 4 * k * D2R;
   out[CH.spine + 1] = -0.5 * hy; out[CH.chest + 1] = -0.8 * hy;      // ...shoulders counter-rotate
-  out[CH.chest] = (4 + 4 * k) * D2R;
+  out[CH.chest] = (2 + 3 * k) * D2R;
   out[CH.chest + 2] = sw * 6 * k * D2R;                              // shoulders rock over the stance leg
   out[CH.head + 2] = lean * 0.5;                                     // keep the eyes nearer level in the bank
   out[CH.armL] = (zL / half) * (30 + 35 * k) * D2R;                  // left arm swings against the left leg
   out[CH.armL + 3] = (80 + 15 * k) * D2R;
   out[CH.spear] += sw * 0.03 * k;
   out[CH.spear + 1] += bob * 0.04 * k;                               // right arm (spear) swings against the right leg
-  out[CH.spear + 2] -= (zR / half) * 0.14 * k;
+  out[CH.spear + 2] -= (zR / half) * 0.05 * k;
   out[CH.spear + 4] -= bob * 3 * k * D2R;
   return out;
 }
@@ -139,7 +139,7 @@ const _S = new Float32Array(POSE_SIZE);
 export function rollPose(u, out) {
   sampleClip(LOCO_CLIPS.dodge, u, out);
   const th = rollAngle(u), e = -(th > Math.PI ? th - TAU : th) / D2R;
-  const sp = spearAbout([-0.34, ROLL_PIVOT[1], ROLL_PIVOT[2]], 186, e, 0, 0.55);
+  const sp = spearAbout([-0.34, ROLL_PIVOT[1], ROLL_PIVOT[2]], -6, -e, 0, 0.95);
   _S.set(out);
   for (let i = 0; i < 6; i++) _S[CH.spear + i] = i < 3 ? sp[i] : sp[i] * D2R;
   _S[CH.gripR] = 0;
@@ -192,8 +192,28 @@ export function createDodgeGhosts(scene, model) {
   const groups = [];
   let hx = 0, hz = 0;
   const _a = new THREE.Vector3(), _b = new THREE.Vector3();
-  const clone = (geo, mat, order, g) => {
-    const c = new THREE.Mesh(geo, mat);
+  const baked = [];                                            // skinned sources: per-ghost static copies of the posed vertices
+  const _bv = new THREE.Vector3();
+  const bake = (geo, m) => {
+    const p = m.geometry.attributes.position, o = geo.attributes.position;
+    for (let i = 0; i < p.count; i++) { _bv.fromBufferAttribute(p, i); m.applyBoneTransform(i, _bv).applyMatrix4(m.matrixWorld); o.setXYZ(i, _bv.x, _bv.y, _bv.z); }
+    o.needsUpdate = true; geo.computeBoundingSphere();
+  };
+  const bakedGeo = (g, i) => {
+    baked[g] ||= [];
+    if (!baked[g][i]) {
+      const geo = new THREE.BufferGeometry(), p = src[i].geometry.attributes.position;
+      geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(p.count * 3), 3).setUsage(THREE.DynamicDrawUsage));
+      geo.setIndex(src[i].geometry.index); baked[g][i] = geo;
+    }
+    return baked[g][i];
+  };
+  const clone = (geo, mat, order, g, i = -1, shellOnly = false) => {
+    const skinnedSrc = i >= 0 && src[i].isSkinnedMesh;
+    let c;
+    if (skinnedSrc && shellOnly) {                             // live glow / rim: a detached skinned copy, scaled by its own matrix
+      c = new THREE.SkinnedMesh(src[i].geometry, mat); c.bindMode = THREE.DetachedBindMode; c.bind(src[i].skeleton, new THREE.Matrix4());
+    } else c = new THREE.Mesh(skinnedSrc ? bakedGeo(g, i) : geo, mat);
     c.matrixAutoUpdate = false; c.visible = false; c.frustumCulled = false; c.renderOrder = order;
     if (g) c.onBeforeRender = (r, sc, cam) => {                  // view fade: screen overlap of ghost and hero boxes
       const G = groups[g];
@@ -208,24 +228,31 @@ export function createDodgeGhosts(scene, model) {
   for (let g = 0; g < N; g++) {
     const mat = new THREE.MeshBasicMaterial({ color: g ? 0x48d8c8 : 0x6fe8dc, transparent: true, opacity: 0,
       blending: g ? THREE.NormalBlending : THREE.AdditiveBlending, depthWrite: false });
-    const meshes = src.map((m) => clone(m.geometry, mat, 3, g));
-    if (g) for (const m of src) meshes.push(clone(m.geometry, pre, 2));
+    const meshes = src.map((m, i) => clone(m.geometry, mat, 3, g, i, g === 0));
+    if (g) src.forEach((m, i) => meshes.push(clone(m.geometry, pre, 2, g, i)));
     groups.push({ mat, meshes, age: LIFE, peak: 0, alpha: 0, x: 0, z: 0 });
   }
   const snap = (g) => {
-    for (let i = 0; i < g.meshes.length; i++) { g.meshes[i].matrix.copy(src[i % src.length].matrixWorld); g.meshes[i].matrixWorldNeedsUpdate = true; }
+    for (let i = 0; i < g.meshes.length; i++) {
+      const s = src[i % src.length], m = g.meshes[i];
+      if (s.isSkinnedMesh) { if (i < src.length) bake(m.geometry, s); m.matrix.identity(); } else m.matrix.copy(s.matrixWorld);
+      m.matrixWorldNeedsUpdate = true;
+    }
   };
   const show = (g, on) => { for (const m of g.meshes) m.visible = on; };
   // live glow = the model grown about the body centre (an additive shell that also rims the silhouette)
   const _S = new THREE.Matrix4(), _T = new THREE.Matrix4();
   const shell = (g, k, x, y, z) => {
     _S.makeTranslation(x, y, z).multiply(_T.makeScale(k, k, k)).multiply(_T.makeTranslation(-x, -y, -z));
-    for (let i = 0; i < g.meshes.length; i++) { g.meshes[i].matrix.multiplyMatrices(_S, src[i].matrixWorld); g.meshes[i].matrixWorldNeedsUpdate = true; }
+    for (let i = 0; i < g.meshes.length; i++) {
+      if (src[i].isSkinnedMesh) g.meshes[i].matrix.copy(_S); else g.meshes[i].matrix.multiplyMatrices(_S, src[i].matrixWorld);
+      g.meshes[i].matrixWorldNeedsUpdate = true;
+    }
   };
   // i-frame / jump-charge rim: the same grown shell drawn back faces only, so it shows just outside the silhouette (and
   // around limbs in front of the body) while the armour itself stays readable — the r2 pop turned the hero into a blob
   const rimMat = new THREE.MeshBasicMaterial({ color: 0xe8fffb, side: THREE.BackSide, transparent: true, opacity: 0, depthWrite: false });
-  const rim = { mat: rimMat, meshes: src.map((m) => clone(m.geometry, rimMat, 3, 0)) };
+  const rim = { mat: rimMat, meshes: src.map((m, i) => clone(m.geometry, rimMat, 3, 0, i, true)) };
   const IF = LOCO.dodgeIFrames[1], JC = MOVES.jc;
   let seq = -1, lastT = 0, next = 1;
   return {

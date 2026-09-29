@@ -14,30 +14,35 @@ export function loadGeneratedSuit() {
   return cached;
 }
 export function buildGeneratedSuit(rig, gltf) {
-  for(const source of gltf.scene.children) {
-    const joint=source.userData.joint || source.name;
+  let source=null;
+  gltf.scene.traverse(o=>{if(o.isSkinnedMesh)source=o;});
+  if(!source)throw new Error('Prepared armour has no skinned mesh');
+  // The GLB's joint nodes are only names + inverse-bind matrices: the rig's own joints drive the mesh.
+  const bones=source.skeleton.bones.map(b=>{
+    const joint=b.userData.joint || b.name;
     if(!rig.joints[joint]) throw new Error(`Prepared armour names an unknown joint: ${joint}`);
-  }
-  const meshes={}, roots=[], seamMaterial=new THREE.MeshStandardMaterial({color:0x17212a,roughness:.7,metalness:.25});
+    return rig.joints[joint];
+  });
+  const skeleton=new THREE.Skeleton(bones,source.skeleton.boneInverses.map(m=>m.clone()));
+  const material=source.material;material.vertexColors=false;material.needsUpdate=true;
   const cleanMaterial=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.55,metalness:.3,side:THREE.DoubleSide});
-  let triangles=0;
-  for(const source of gltf.scene.children) {
-    const joint=source.userData.joint || source.name;
-    const part=source.clone(true);
-    part.traverse(mesh=>{if(!mesh.isMesh)return;mesh.castShadow=true;mesh.receiveShadow=true;
-      mesh.material.vertexColors=false;mesh.material.needsUpdate=true;
-      mesh.userData.cleanMaterial=cleanMaterial;
-      meshes[`generated:${joint}:${Object.keys(meshes).length}`]=mesh;
-      triangles+=(mesh.geometry.index?.count ?? mesh.geometry.attributes.position.count)/3;});
-    rig.joints[joint].add(part);roots.push(part);
-  }
-  for(const side of ['L','R']) for(const [joint,length,radius] of [['upperArm',.29,.045],['foreArm',.27,.046],['thigh',.44,.057],['shin',.44,.05]]) {
+  const mesh=new THREE.SkinnedMesh(source.geometry,material);
+  mesh.name='generated:armour';
+  // identity bind matrix: skinned world position = jointWorld · inverseBind · vertex, wherever the mesh is parented
+  mesh.bind(skeleton,new THREE.Matrix4());
+  mesh.frustumCulled=false;mesh.castShadow=true;mesh.receiveShadow=true;
+  mesh.userData.cleanMaterial=cleanMaterial;
+  rig.root.add(mesh);
+  const meshes={'generated:armour':mesh},roots=[mesh],seamMaterial=new THREE.MeshStandardMaterial({color:0x17212a,roughness:.7,metalness:.25});
+  const triangles=source.geometry.index.count/3;
+  // dark limb cores hide the interior where generated hands/feet were removed
+  for(const side of ['L','R']) for(const [joint,length,radius] of [['upperArm',.29,.056],['foreArm',.27,.06],['thigh',.44,.075],['shin',.44,.066]]) {
     const geometry=new THREE.CylinderGeometry(radius,radius,length,12);
     geometry.translate(0,-length/2,0);
     const core=new THREE.Mesh(geometry,seamMaterial);core.name='joint-cover-'+joint+side;
     rig.joints[joint+side].add(core);roots.push(core);meshes[core.name]=core;
   }
-  return {meshes,roots,seamMaterial,cleanMaterial,triangles};
+  return {meshes,roots,seamMaterial,cleanMaterial,triangles,skinned:mesh};
 }
 export function attachGeneratedSuit(rig, model) {
   model.assetState='loading';model.fallbackMeshes={...model.meshes};

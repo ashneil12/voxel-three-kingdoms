@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { hash01 } from '../core/rng.js';
 import { shade } from '../core/voxel.js';
 import { createProceduralSuit } from './procedural-suit.js';
-import { attachGeneratedSuit } from './generated-suit.js?v=prepared-8';
+import { attachGeneratedSuit } from './generated-suit.js?v=skin-2';
 import { loadSuitDesign } from '../heroes/suit-design.js';
 
 export const V = 0.025;          // body voxel (m); spear 0.02/0.012, blade 0.011

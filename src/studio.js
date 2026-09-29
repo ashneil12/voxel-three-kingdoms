@@ -3,7 +3,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { applyRoll } from './hero/anims/locomotion.js';
 import { createRig, HERO_SCALE, POSE_SIZE, P } from './hero/rig.js';
 import { createProceduralSuit } from './hero/procedural-suit.js';
-import { attachGeneratedSuit, disposeGeneratedSuit } from './hero/generated-suit.js?v=prepared-8';
+import { attachGeneratedSuit, disposeGeneratedSuit } from './hero/generated-suit.js?v=skin-2';
 import { SUIT_DEFAULT, suitDesign, loadSuitDesign, saveSuitDesign, SUIT_STORAGE_KEY } from './heroes/suit-design.js';
 import { sampleAnim } from './hero/hero.js';
 import './musou/musou.js'; // registers the existing overdrive clips
@@ -83,10 +83,29 @@ const showcase=P({hips:[0,.92,0],hipsR:[0,-6,0],spine:[2,2,0],chest:[1,3,0],head
   spear:[-.05,1.08,.11,-48,-33,10],gripR:.3,lfree:1,armL:[2,0,10,18]});
 const status = (value) => { $('#status').textContent = value; };
 const clay = new THREE.MeshStandardMaterial({color:0x829195,roughness:.8,metalness:0,side:THREE.DoubleSide});
+const weightMat = new THREE.MeshBasicMaterial({ vertexColors: true });
+const JOINT_HUES = { hips: 0, spine: 30, chest: 60, neck: 90, head: 120, shoulderL: 150, upperArmL: 180, foreArmL: 210, thighL: 240, shinL: 270, footL: 300,
+  shoulderR: 165, upperArmR: 195, foreArmR: 225, thighR: 255, shinR: 285, footR: 315 };
+function weightColours(mesh) {   // each vertex = weight-blended joint hue, so blend zones read as gradients
+  if (mesh.userData.weightColour) return mesh.userData.weightColour;
+  const g = mesh.geometry, si = g.attributes.skinIndex, sw = g.attributes.skinWeight, out = new Float32Array(si.count * 3), c = new THREE.Color();
+  const hues = mesh.skeleton.bones.map((b) => { const h = JOINT_HUES[b.name] ?? 0; return new THREE.Color().setHSL(h / 360, .85, .5); });
+  for (let i = 0; i < si.count; i++) {
+    let r = 0, gg = 0, b = 0;
+    for (let k = 0; k < 4; k++) { const w = sw.getComponent(i, k); if (!w) continue; const col = hues[si.getComponent(i, k)]; r += col.r * w; gg += col.g * w; b += col.b * w; }
+    out.set([r, gg, b], i * 3);
+  }
+  return (mesh.userData.weightColour = new THREE.BufferAttribute(out, 3));
+}
 function updateSurface() {
+  const mode = $('#surface').value;
   for (const mesh of Object.values(model.meshes)) {
     mesh.userData.studioMaterial ||= mesh.material;
-    mesh.material = $('#surface').value === 'clay' ? clay : $('#surface').value === 'clean' && mesh.userData.cleanMaterial ? mesh.userData.cleanMaterial : mesh.userData.studioMaterial;
+    if (mesh.isSkinnedMesh) {
+      mesh.userData.paint ||= mesh.geometry.attributes.color;
+      mesh.geometry.setAttribute('color', mode === 'weights' ? weightColours(mesh) : mesh.userData.paint);
+    }
+    mesh.material = mode === 'weights' && mesh.isSkinnedMesh ? weightMat : mode === 'clay' ? clay : mode === 'clean' && mesh.userData.cleanMaterial ? mesh.userData.cleanMaterial : mesh.userData.studioMaterial;
   }
 }
 const control = (key) => $(`[data-key="${key}"]`);
@@ -144,7 +163,7 @@ function rebuild() {
   highlight(); showParts();
   updateSurface();
 }
-syncControls(); rebuild();
+syncControls(); if (qs.get('surface')) $('#surface').value = qs.get('surface'); rebuild();
 $('#representation').addEventListener('change', () => { selected = null; rebuild(); });
 $('#surface').addEventListener('change', updateSurface);
 for (const input of document.querySelectorAll('[data-key]')) input.addEventListener('input', () => {
@@ -198,7 +217,7 @@ function frame(now) {
     t = (t + dt * ($('#action').value === 'idle' || $('#action').value === 'run' ? 0.28 : 0.42)) % 1;
     $('#timeline').value = String(Math.round(t * 100)); $('#time').value = `${Math.round(t * 100)}%`;
   }
-  if($('#action').value==='showcase')pose.set(showcase);else sampleAnim($('#action').value, t, 0.65, pose);
+  if($('#action').value==='showcase')pose.set(showcase);else sampleAnim($('#action').value, $('#action').value === 'run' ? t * Math.PI * 2 : t, $('#action').value === 'run' ? 1 : 0.65, pose);
   rig.root.scale.setScalar(1);
   rig.apply(pose, root, 0); rig.root.scale.setScalar(HERO_SCALE);
   applyRoll(rig, {id: $('#action').value, t});
@@ -206,3 +225,26 @@ function frame(now) {
   renderer.render(scene, camera);
 }
 requestAnimationFrame(frame);
+
+// ?sheet=<action>:<view>:<count> renders a contact sheet of engine frames across the action (for reviewing motion).
+if (qs.get('sheet')) {
+  const [act, cam = 'side', count = '8'] = qs.get('sheet').split(':'), N = Number(count), cols = Math.min(N, 4), rows = Math.ceil(N / cols);
+  const CW = 400, CH = 520, sheet = document.createElement('canvas');
+  sheet.width = CW * cols; sheet.height = CH * rows;
+  Object.assign(sheet.style, { position: 'fixed', inset: '0', zIndex: 99, width: '100vw', background: '#fff' });
+  const ctx = sheet.getContext('2d');
+  Promise.resolve(model.ready).then(() => {
+    [orbit.yaw, orbit.pitch, orbit.radius] = views[cam]; target.set(cam === 'detail' ? 0 : -.1, cam === 'detail' ? 1.48 : .95, 0); if (qs.get('ty')) target.y = Number(qs.get('ty')); if (qs.get('tx')) target.x = Number(qs.get('tx')); if (qs.get('r')) orbit.radius = Number(qs.get('r')); if (qs.get('yaw')) orbit.yaw = Number(qs.get('yaw')); updateCamera();
+    const prevW = canvas.clientWidth, prevH = canvas.clientHeight; renderer.setSize(CW, CH, false); camera.aspect = CW / CH; camera.updateProjectionMatrix();
+    for (let i = 0; i < N; i++) {
+      const tt = i / N;
+      sampleAnim(act, act === 'run' ? tt * Math.PI * 2 : tt, Number(qs.get('k') ?? 1), pose);
+      rig.root.scale.setScalar(1); rig.apply(pose, root, 0); rig.root.scale.setScalar(HERO_SCALE);
+      applyRoll(rig, { id: act, t: tt }); rig.root.updateMatrixWorld(true);
+      renderer.render(scene, camera);
+      ctx.drawImage(canvas, 0, 0, canvas.width, canvas.height, (i % cols) * CW, Math.floor(i / cols) * CH, CW, CH);
+      ctx.fillStyle = '#000'; ctx.font = '20px monospace'; ctx.fillText(`${act} ${tt.toFixed(2)}`, (i % cols) * CW + 8, Math.floor(i / cols) * CH + 22);
+    }
+    document.body.appendChild(sheet); window.sheetDone = true;
+  });
+}

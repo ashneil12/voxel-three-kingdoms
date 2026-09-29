@@ -4,13 +4,15 @@
 
 The full game vision remains in `GAME-VISION.md`. The ideal art reference remains `art/art-direction.png`. Target: polished technological exosuits, readable close-range action, robot crowds and demanding bosses, distinct class builds and mission-earned upgrades. Keep supernatural/demonic material out; do not invent theological mechanics.
 
-## Current milestone: usable Vanguard
+## Current milestone: skinned Vanguard, revised locomotion
 
-Implemented: offline-generated armour preparation; 12 rigid generated joint regions and authored mechanical replacements; 129k-triangle generated armour; authored weapon grip; existing combat animation integration; asynchronous fallback/cancellation; rebuilt dodge afterimages; studio part/clay/paint inspection using game dodge transforms; metallic environment lighting in both renderers; revisioned asset loading from a hashed manifest.
+Implemented: one smoothly skinned 78k-triangle armour mesh on the shared combat rig (geodesic joint blends, hip/knee/elbow cuts measured from the source, bridge-triangle removal, offline weights, hashed manifest); authored grip gloves, neck gasket, boots and lance; dark limb cores; afterimages and glow rim baked/skinned from the posed mesh; studio contact sheets and skin-weight view; metallic environment lighting in both renderers.
 
-Verified: the prepared GLB passes 2,323 sampled poses and asset/lifecycle checks; existing five combat-core tests pass. Browser studio inspections covered running, guard/back, wide sweep and dodge. A game deployment smoke check loaded the suit without recorded console errors. These checks are not a player evaluation of feel or full encounter acceptance.
+Locomotion: run rebuilt. The lance is now carried at the right hip, tip forward-up, instead of trailing behind the head; torso upright with a smaller lean, hips higher so the knees are not permanently crouched, less spear sway. The dodge roll keeps the lance forward so it flows out of the new carry. Attack clips are unchanged.
 
-Not art-final: remaining source noise, close-up cut seams and uncertain inferred back design. Not mobile-qualified: no mobile LOD/performance evidence. The full ideal game is not complete.
+Verified: prepared GLB passes 2,323 sampled poses with a stretch check (`npm run verify`), combat-core tests, studio contact sheets of run, dodge, n1, c1 and idle, and a real game session (deploy, run, dodge; no console errors). Not verified: player feel, attack pose quality beyond the sampled sheets, guard/parry, boss and enemy interaction, mobile performance.
+
+Not art-final: remaining source noise in the paint, the inferred back design, spear-blade carry clipping through enemies (visual only), thin dark limb cores where the generator left gaps.
 
 ## Gates toward the complete game
 

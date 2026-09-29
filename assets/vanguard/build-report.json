@@ -1,78 +1,105 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "source": "../../docs/art/production-pilot/vanguard-a-pose-hq.glb",
   "sourceSha256": "5b3fcc2b6f373a22ce73609a3a881fba4a9d80ab18556fe141cf408ffd105505",
   "output": "../../assets/vanguard/vanguard-combat.glb",
+  "representation": "smooth-skinned single mesh bound to combat rig joints",
   "sourceTriangles": 376667,
   "omittedReplacedTriangles": 82908,
-  "removedCrumbTriangles": 2165,
+  "removedCrumbTriangles": 88,
   "replacementRegions": [
     "hands",
     "neck",
     "footL",
     "footR"
   ],
-  "outputTriangles": 128717,
-  "parts": [
+  "outputTriangles": 78309,
+  "outputVertices": 102265,
+  "removedBridgeTriangles": 257,
+  "blendedNodes": 3060,
+  "totalNodes": 36015,
+  "cuts": {
+    "hip": 0.93,
+    "elbow": 1.15,
+    "knee": 0.61
+  },
+  "blend": {
+    "hip": 0.008,
+    "limb": 0.022,
+    "torso": 0.03
+  },
+  "joints": [
     {
-      "joint": "foreArmR",
-      "triangles": 6948
-    },
-    {
-      "joint": "upperArmR",
-      "triangles": 2808
-    },
-    {
-      "joint": "shinR",
-      "triangles": 13054
-    },
-    {
-      "joint": "shoulderR",
-      "triangles": 6430
-    },
-    {
-      "joint": "chest",
-      "triangles": 27107
-    },
-    {
-      "joint": "thighR",
-      "triangles": 8847
-    },
-    {
-      "joint": "head",
-      "triangles": 12603
+      "joint": "hips",
+      "dominantVertices": 3561
     },
     {
       "joint": "spine",
-      "triangles": 3122
+      "dominantVertices": 894
     },
     {
-      "joint": "hips",
-      "triangles": 10241
+      "joint": "chest",
+      "dominantVertices": 7459
     },
     {
-      "joint": "thighL",
-      "triangles": 9063
+      "joint": "neck",
+      "dominantVertices": 0
     },
     {
-      "joint": "shinL",
-      "triangles": 11702
+      "joint": "head",
+      "dominantVertices": 3796
     },
     {
       "joint": "shoulderL",
-      "triangles": 6987
+      "dominantVertices": 1928
     },
     {
       "joint": "upperArmL",
-      "triangles": 2867
+      "dominantVertices": 685
     },
     {
       "joint": "foreArmL",
-      "triangles": 6938
+      "dominantVertices": 1867
+    },
+    {
+      "joint": "thighL",
+      "dominantVertices": 2770
+    },
+    {
+      "joint": "shinL",
+      "dominantVertices": 2817
+    },
+    {
+      "joint": "footL",
+      "dominantVertices": 69
+    },
+    {
+      "joint": "shoulderR",
+      "dominantVertices": 1735
+    },
+    {
+      "joint": "upperArmR",
+      "dominantVertices": 670
+    },
+    {
+      "joint": "foreArmR",
+      "dominantVertices": 1815
+    },
+    {
+      "joint": "thighR",
+      "dominantVertices": 2702
+    },
+    {
+      "joint": "shinR",
+      "dominantVertices": 3171
+    },
+    {
+      "joint": "footR",
+      "dominantVertices": 76
     }
   ],
-  "bytes": 22480520,
-  "sha256": "9ae20df1625a044cf3ebc97e796c077eb0c0b6b61062a1469af43e41443c43e9",
+  "bytes": 21578096,
+  "sha256": "5fae92d0cfcd16bbd9bd49c40477d31a7b8e3c8f8eea7e85035e26daeb3bc844",
   "landmarks": {
     "shoulder": [
       0.225,
@@ -105,5 +132,5 @@
       0
     ]
   },
-  "method": "Rigid armour in combat-joint local coordinates. Authored grip gloves, neck gasket, upper arms and boots replace unreliable source regions. Optional factory-paint vertex colours. No runtime skin classification."
+  "method": "One armour mesh, geodesic joint-blend skin weights, inverse-bind = source A-pose to joint rest frame. Authored gloves, neck gasket and boots stay rigid. No runtime classification."
 }
