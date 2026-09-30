@@ -8,6 +8,7 @@ import { HERO } from './heroes/index.js';   // also merges the hero's rig propor
 import { attachGeneratedSuit, disposeGeneratedSuit } from './hero/generated-suit.js?v=skin-2';
 import { SUIT_DEFAULT, suitDesign, loadSuitDesign, saveSuitDesign, SUIT_STORAGE_KEY } from './heroes/suit-design.js';
 import { sampleAnim } from './hero/hero.js';
+import { createSecondary } from './hero/secondary.js';
 import './musou/musou.js'; // registers the existing overdrive clips
 
 const $ = (q) => document.querySelector(q);
@@ -117,7 +118,10 @@ function syncControls() {
     const out = $(`[data-out="${key}"]`); if (out) out.value = Number(value).toFixed(2);
   }
 }
+let sec = null;                                    // spring chains (tabard, hair, tassels) + pauldron swing, as in the game
+function disposeSecondary() { if (sec) for (const c of sec.chains) for (const m of c.meshes) { scene.remove(m); m.geometry.dispose(); } sec = null; }
 function disposeModel() {
+  disposeSecondary();
   if (!model) return;
   disposeGeneratedSuit(model);
   for (const mesh of Object.values(model.meshes)) {
@@ -145,6 +149,7 @@ function rebuild() {
   disposeModel();
   if ($('#representation').value === 'voxel') {
     model = createHeroModel(rig, HERO); model.materials = {}; model.ready = Promise.resolve();
+    if (HERO.chains) sec = createSecondary(scene, rig, model.material, HERO);
     for (const input of document.querySelectorAll('[data-key]')) input.disabled = true;
     for (const id of ['#save', '#reset', '#export']) $(id).disabled = true;
     $('#metrics').textContent = `${HERO.en} · voxel hero model on the game rig`;
@@ -267,6 +272,30 @@ $('#edit-copy').addEventListener('click', async () => {
 });
 window.__studioPose = { spec: () => edit && poseSpec(edit), set: (ch, v) => { if (edit) edit[ch] = v; } };
 
+// One studio frame of an action: pose, rig, dive-roll pitch, then the secondary motion. `tpose` is a design check against
+// the T-pose reference (arms straight out, lance hidden); `settle` runs the chains to rest (contact-sheet stills).
+const TPOSE = P({ hips: [0, 1.0, 0], hipsR: [0, 0, 0], spine: [0, 0, 0], chest: [0, 0, 0], head: [0, 0, 0],
+  footL: [0.11, 0.075, 0, 0, 0], footR: [-0.11, 0.075, 0, 0, 0], spear: [-0.3, 1, 0, 0, -90, 0], gripR: 0, gripL: 0.5, lfree: 1, armL: [0, 0, 0, 0] });
+const ZAXIS = new THREE.Vector3(0, 0, 1);
+function stage(act, tt, k, dt, settle) {
+  if (edit) pose.set(edit);
+  else if (act === 'tpose') pose.set(TPOSE);
+  else if (act === 'showcase') pose.set(showcase);
+  else sampleAnim(act, act === 'run' ? tt * Math.PI * 2 : tt, k, pose);
+  rig.root.scale.setScalar(1); rig.apply(pose, root, 0); rig.root.scale.setScalar(HERO_SCALE);
+  applyRoll(rig, { id: act, t: tt });
+  const tp = act === 'tpose' && !edit;
+  rig.joints.weapon.visible = !tp;
+  if (tp) for (const [s, sx] of [['L', 1], ['R', -1]]) {
+    rig.joints['upperArm' + s].quaternion.setFromAxisAngle(ZAXIS, sx * Math.PI / 2);
+    rig.joints['foreArm' + s].quaternion.identity(); rig.joints['hand' + s].quaternion.identity();
+  }
+  rig.root.updateMatrixWorld(true);
+  if (sec) { if (settle) { sec.reset(); for (let i = 0; i < 90; i++) sec.update(1 / 60); } else sec.update(dt); }
+  if (tp) for (const s of ['L', 'R']) rig.joints['pauldron' + s]?.quaternion.identity();   // design check: pauldrons at rest
+  if (tp) rig.root.updateMatrixWorld(true);
+}
+
 function resize() {
   const w = canvas.clientWidth, h = canvas.clientHeight;
   renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
@@ -279,12 +308,8 @@ function frame(now) {
     t = (t + dt * ($('#action').value === 'idle' || $('#action').value === 'run' ? 0.28 : 0.42)) % 1;
     $('#timeline').value = String(Math.round(t * 100)); $('#time').value = `${Math.round(t * 100)}%`;
   }
-  if (edit) pose.set(edit);
-  else if($('#action').value==='showcase')pose.set(showcase);else sampleAnim($('#action').value, $('#action').value === 'run' ? t * Math.PI * 2 : t, $('#action').value === 'run' ? 1 : 0.65, pose);
-  rig.root.scale.setScalar(1);
-  rig.apply(pose, root, 0); rig.root.scale.setScalar(HERO_SCALE);
-  applyRoll(rig, {id: $('#action').value, t});
-  rig.root.updateMatrixWorld(true);
+  const act = $('#action').value;
+  stage(act, t, act === 'run' ? 1 : 0.65, playing ? dt : 0, false);
   renderer.render(scene, camera);
 }
 requestAnimationFrame(frame);
@@ -307,9 +332,7 @@ if (qs.get('sheet') || qs.get('rows')) {
     rowsList.forEach((act, r) => {
       for (let i = 0; i < (qs.get('rows') ? N : N); i++) {
         const tt = i / N, idx = qs.get('rows') ? i : i, cx = (qs.get('rows') ? i : i % cols) * CW, cy = (qs.get('rows') ? r : Math.floor(i / cols)) * CH;
-        sampleAnim(act, act === 'run' ? tt * Math.PI * 2 : tt, Number(qs.get('k') ?? 1), pose);
-        rig.root.scale.setScalar(1); rig.apply(pose, root, 0); rig.root.scale.setScalar(HERO_SCALE);
-        applyRoll(rig, { id: act, t: tt }); rig.root.updateMatrixWorld(true);
+        stage(act, tt, Number(qs.get('k') ?? 1), 0, true);
         if (qs.get('focus')) { const f = new THREE.Vector3(); rig.joints[qs.get('focus')].getWorldPosition(f); target.copy(f); updateCamera(); }
         renderer.render(scene, camera);
         ctx.drawImage(canvas, 0, 0, canvas.width, canvas.height, cx, cy, CW, CH);

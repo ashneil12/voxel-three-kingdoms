@@ -68,4 +68,4 @@ export const VANGUARD_SKINNED = {
   proceduralSuit:true, generatedSuit:true, suitDesign:SUIT_DEFAULT,
 };
 
-export { VANGUARD_VOXEL as VANGUARD } from './vanguard.js';
+export { VANGUARD } from './vanguard.js';
