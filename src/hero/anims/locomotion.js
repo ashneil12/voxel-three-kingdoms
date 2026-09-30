@@ -8,7 +8,6 @@ import { MOVES } from '../moves.js';
 const D2R = Math.PI / 180, TAU = Math.PI * 2;
 const sstep = (a, b, x) => { const u = Math.min(1, Math.max(0, (x - a) / (b - a))); return u * u * (3 - 2 * u); };
 
-// Run carry: fighter's run — both hands stay on the lance held at the ready across the body, upright torso, level gliding pelvis, small counter-rotation.
 // head, blade trailing low behind-right; left arm free.
 const RUN_SPEC = {
   hips: [0, 0.88, 0.02], hipsR: [6, -14, 0], spine: [3, 4, 0], chest: [3, 6, 0], head: [0, 4, 0],
