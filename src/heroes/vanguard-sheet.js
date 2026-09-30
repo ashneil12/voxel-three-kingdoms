@@ -1,4 +1,4 @@
-// VANGUARD (sheet reconstruction, kept for comparison: ?vanguard=sheet) — the sheet's chibi ivory/navy mech, rebuilt voxel-for-voxel from the concept views (data: vanguard-data.js).
+// VANGUARD (default: the character-sheet reconstruction; other builds via ?vanguard=ref|authored) — the sheet's chibi ivory/navy mech, rebuilt voxel-for-voxel from the concept views (data: vanguard-data.js).
 // One voxel = 0.0245 m. Every rig joint gets its own rigid voxel grid; the rig's proportions (rigDim) are the model's own,
 // so the rest pose matches the sheet and the shared moveset/IK/animation drive it unchanged.
 import { B, vox } from '../hero/model.js';
@@ -41,4 +41,8 @@ export const VANGUARD_SHEET = {
   lines: { open: ['EXO-01 deployed.', 'The evacuation is behind us. Hold the line.'], musou: ['OVERDRIVE', 'Overdrive engaged.'] },
   face, pal: { G: '#f0cfa6', g: '#c8a880', T: '#2b282f', w: '#ff9528' },
   rigDim: RIG_DIM, matColor: 0.54, fill: 0.2, rim: 0.45, glow: 0.7, build, chains: () => [],
+  // run: two hands on the lance at the ready, upright and gliding (HERO.run / HERO.carry: anims/locomotion.js, hero.js)
+  run: { lean: [4, 6], chest: [3, 1], hipsY: [0.88, 0.04], bounce: 0.022, shift: 0.02, twist: 0.18, roll: 2, rock: 3,
+    yaw: -14, yawUp: [4, 6], stepH: [0.05, 0.2], kick: 0.1, footX: 0.09 },
+  carry: { run: { spear: [-0.24, 1.0, 0.06, 28, 24, 0], gripR: 0, gripL: 0.5, lfree: 0, armL: [0, 0, 0, 0] } },
 };

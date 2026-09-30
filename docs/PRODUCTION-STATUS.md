@@ -4,22 +4,17 @@
 
 The full game vision remains in `GAME-VISION.md`. The ideal art reference remains `art/art-direction.png`. Target: polished technological exosuits, readable close-range action, robot crowds and demanding bosses, distinct class builds and mission-earned upgrades. Keep supernatural/demonic material out; do not invent theological mechanics.
 
-## Current milestone: Vanguard authored the original heroes' way
+## Current milestone: sheet-reconstructed voxel Vanguard (default), two alternates kept
 
-Vanguard (EXO-01) is now built like the original officers (`src/heroes/vanguard.js`): hand-authored fine voxels (1.25 cm body,
-1.52 cm head) centred on the shared rig at its own proportions, so the shared spear moveset, two-hand IK grips and spring
-chains fit him exactly as they fit Zhao Yun. Design follows the clean, lean T-pose reference: rounded ivory helmet with a
-stepped navy crest and wraparound orange visor, layered navy chest plate with an orange chevron, lean dark waist, layered
-ivory/navy hip plates on the thighs, chunky gauntlets, navy tabards front and back as spring chains. Run: his own two-hand
-ready carry and run style (`run` / `carry` in the hero def); the shared clips are back to the original author's.
-The sheet-reconstructed voxel model stays available as `?vanguard=sheet` for comparison; the skinned suit as the second card.
+Default Vanguard (`src/heroes/vanguard-sheet.js`, data `vanguard-data.js`) is the original build: the character sheet's front/side/back views on a 15 px = 1 voxel
+grid → silhouette-carved hand-authored envelope → per-region side shift → mirror → RLE voxels per rig joint (`tools/vanguard/`: `vanguard_parts.py`, `voxelize.py`,
+`export_game.py`, `diffview.py`), with its own rig proportions (`rigDim`), lengthened legs/torso/forearms (export `STRETCH` table), smaller head, `hipLift`, tuned lighting,
+and a two-hand ready run (`run` / `carry` in the hero def). The shared animation clips are the original author's.
+Alternates (same studio/game, pick with the URL): `?vanguard=ref` — boxes per joint from the T-pose turnaround through the img2threejs pipeline (`tools/vanguard-ref/`,
+unchanged rig, tabard chains); `?vanguard=authored` — hand-authored fine voxels on the original rig. The skinned suit remains the second card.
+Ash's call (2026-09-30): the sheet reconstruction was better than both later rebuilds; keep that process.
 
-Studio (`/studio.html`): T-pose design check, secondary motion (tabards, pauldron swing), contact sheets (`?rows=`), pose
-editor. Verified: contact sheets of idle/run/n1-n3/guard, scripted in-game run (combo, heavy, dodge, jump attack,
-overdrive) with no console errors, combat-core tests 5/5.
-
-Skills written from studying the original code: `voxel-hero-design` and `voxel-hero-animation` (`~/.claude/skills`, linked into
-Claude and Codex): body budget measured on all five originals, detail/chain recipes, the strike recipe, timing tables.
+Studio (`/studio.html`): T-pose design check, secondary motion, contact sheets (`?rows=`), pose editor. Verified: contact sheets of idle/run/n1/n3, combat-core tests 5/5.
 
 Not art-final: helmet profile is still boxier than the reference; no own moveset yet (Vanguard uses Zhao Yun's spear set); detail density ~100 boxes vs 65-275 on the originals; not yet played by Ash with the rebuild.
 

@@ -4,7 +4,7 @@ A pilot in a powered exosuit holds an industrial arena against a machine legion.
 
 For the intended complete game, see [Game vision](docs/GAME-VISION.md). The [studio and production approach](docs/STUDIO-PLAN.md) records the proposed next development milestone. These describe future work, not features already present in this demo.
 
-For current implementation and verification, use [Production status](docs/PRODUCTION-STATUS.md) and [Vanguard asset pipeline](docs/ASSET-PIPELINE.md). Vanguard is a code-authored fine-voxel hero on the shared combat rig, built the way the original officers are (`?vanguard=sheet` shows the earlier sheet reconstruction). Open `/studio.html` to inspect poses; `?suit=procedural` keeps the earlier code-built suit available. Source surface cleanup is still provisional.
+For current implementation and verification, use [Production status](docs/PRODUCTION-STATUS.md) and [Vanguard asset pipeline](docs/ASSET-PIPELINE.md). Vanguard is the character-sheet voxel reconstruction on the shared combat rig (`?vanguard=ref` and `?vanguard=authored` show the two later rebuilds). Open `/studio.html` to inspect poses; `?suit=procedural` keeps the earlier code-built suit available. Source surface cleanup is still provisional.
 
 ## Play locally
 

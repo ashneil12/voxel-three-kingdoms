@@ -6,15 +6,16 @@ import zhangfei from './zhangfei.js';
 import lubu from './lubu.js';
 import zhugeliang from './zhugeliang.js';
 import { EXOSUIT } from './exosuit.js';
-import { VANGUARD } from './vanguard.js';
-import { VANGUARD_AUTHORED } from './vanguard-authored.js';
 import { VANGUARD_SHEET } from './vanguard-sheet.js';
+import { VANGUARD_AUTHORED } from './vanguard-authored.js';
+import { VANGUARD as VANGUARD_REF } from './vanguard.js';
 import { DIM } from '../hero/rig.js';
 
 const params = new URLSearchParams(location.search);
-// ?vanguard=authored | sheet swap in the earlier Vanguard builds for comparison (default: the turnaround-reference build)
+// Default Vanguard = the character-sheet reconstruction (tools/vanguard: sheet views -> silhouette carve -> RLE voxels per rig joint).
+// ?vanguard=ref (turnaround-reference boxes, tools/vanguard-ref) and ?vanguard=authored (hand-authored fine voxels) stay available.
 const VAR = params.get('vanguard');
-const VANGUARD_PICK = VAR === 'sheet' ? VANGUARD_SHEET : VAR === 'authored' ? VANGUARD_AUTHORED : VANGUARD;
+const VANGUARD_PICK = VAR === 'ref' ? VANGUARD_REF : VAR === 'authored' ? VANGUARD_AUTHORED : VANGUARD_SHEET;
 export const DEMO = !new URLSearchParams(location.search).has('classic');
 export const HEROES = DEMO ? [VANGUARD_PICK, EXOSUIT] : [zhaoyun, guanyu, zhangfei, zhugeliang, lubu];
 const pick = new URLSearchParams(location.search).get('hero');
