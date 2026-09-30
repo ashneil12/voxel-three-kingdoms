@@ -23,7 +23,8 @@ import { fanOverlay } from './anims/fan.js';
 // a hero with his own moveset brings his own attack clips, authored on his own move table (heroes/*.moves.js)
 const OWN = HERO.moveset ? HERO.moveset.clips(makeAuthor(MOVES, HERO.moveset.entry || {}), MOVES) : null;
 // his own clips may also replace the locomotion poses (idle, air, airFall, land, hurt): later keys win
-export const CLIPS = { ...LOCO_CLIPS, ...(OWN || ATTACK_CLIPS) };
+// a hero may also replace just some locomotion clips without a whole moveset (`HERO.loco`: { idle, ... })
+export const CLIPS = { ...LOCO_CLIPS, ...(OWN || ATTACK_CLIPS), ...(HERO.loco || {}) };
 const LOCO_IDS = new Set(Object.keys(LOCO_CLIPS));
 // weapon carry while running / rolling (moveset.carry.run / .roll: weapon + arm channels over the shared procedural poses)
 const W0 = CH.spear, W1 = CH.spin;
