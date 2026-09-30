@@ -10,6 +10,8 @@ Implemented: Vanguard is a ~24k-voxel hero built from the front/side/back sheet 
 
 Locomotion: run rebuilt (lance at the right hip, upright torso). Contact sheets of guard, dodge, jump, hurt, n1-n6 and c1-c6 reviewed on the voxel body with no gross clipping or lost grips; combat-core tests pass (5/5).
 
+Proportions: `tools/vanguard/export_game.py` `STRETCH` table lengthens thighs/shins/torso/forearms by duplicating plain voxel rows per rig group; head voxels are 6% smaller (`hv`); `hipLift` raises the pelvis. Scripted in-game playtest (combo, guard, dodge, air string, overdrive, boss bar) ran with no console errors.
+
 Rebuild: edit parts, then `python3 voxelize.py && python3 export_game.py` (see `tools/vanguard/README.md`).
 
 Not art-final: head/ear-disc and pauldron shapes are stepped approximations; side/back silhouettes differ from the sheet in places (the sheet poses the right arm and spear); hips read slightly wide-stanced; overdrive/musou have no dedicated body pose; the inferred back design is unreviewed by art.
