@@ -5,7 +5,8 @@ import { B, vox } from '../hero/model.js';
 import { P, clip } from '../hero/rig.js';
 import { VOXEL, RIG_DIM, GROUPS, SPEAR } from './vanguard-data.js';
 
-const PAL = [null, 0xf0cfa6, 0x2a5cbc, 0xff9528, 0xf0b232, 0x2b282f, 0x3d3944, 0x2a2428];   // 1 ivory 2 navy 3 orange 4 gold 5 black 6 dark 7 shaft
+// lighter than the raw sheet reads in the dark arena: cream ivory, brighter navy, softer blacks (the reskin's lightness, kept)
+const PAL = [null, 0xf3dcb8, 0x2f68cc, 0xffa030, 0xf0b232, 0x3a3742, 0x5a5664, 0x2a2428];   // 1 ivory 2 navy 3 orange 4 gold 5 black 6 dark 7 shaft   // 1 ivory 2 navy 3 orange 4 gold 5 black 6 dark 7 shaft
 
 function decode(g) {
   const [nx, ny, nz] = g.n, grid = new Uint8Array(nx * ny * nz);
@@ -47,7 +48,7 @@ export const VANGUARD_SHEET = {
   cut: { sub: 'VANGUARD OVERDRIVE', seal: 'OVERDRIVE' },
   lines: { open: ['EXO-01 deployed.', 'The evacuation is behind us. Hold the line.'], musou: ['OVERDRIVE', 'Overdrive engaged.'] },
   face, pal: { G: '#f0cfa6', g: '#c8a880', T: '#2b282f', w: '#ff9528' },
-  loco: LOCO, rigDim: RIG_DIM, matColor: 0.54, fill: 0.2, rim: 0.45, glow: 0.7, build, chains: () => [],
+  loco: LOCO, rigDim: RIG_DIM, matColor: 0.8, fill: 0.36, rim: 0.3, glow: 0.8, build, chains: () => [],
   // run: two hands on the lance at the ready, upright and gliding (HERO.run / HERO.carry: anims/locomotion.js, hero.js)
   run: { lean: [4, 6], chest: [3, 1], hipsY: [0.88, 0.04], bounce: 0.022, shift: 0.02, twist: 0.18, roll: 2, rock: 3,
     yaw: -14, yawUp: [4, 6], stepH: [0.05, 0.2], kick: 0.1, footX: 0.09 },
