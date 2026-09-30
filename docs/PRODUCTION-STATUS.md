@@ -18,7 +18,7 @@ Studio (`/studio.html`): T-pose design check, secondary motion (tabards, pauldro
 editor. Verified: contact sheets of idle/run/n1-n3/guard, scripted in-game run (combo, heavy, dodge, jump attack,
 overdrive) with no console errors, combat-core tests 5/5.
 
-Skills written from studying the original code: `voxel-hero-design` and `voxel-hero-animation` (`~/.buzz/SKILLS`, linked into
+Skills written from studying the original code: `voxel-hero-design` and `voxel-hero-animation` (`~/.claude/skills`, linked into
 Claude and Codex): body budget measured on all five originals, detail/chain recipes, the strike recipe, timing tables.
 
 Not art-final: helmet profile is still boxier than the reference; no own moveset yet (Vanguard uses Zhao Yun's spear set); detail density ~100 boxes vs 65-275 on the originals; not yet played by Ash with the rebuild.
