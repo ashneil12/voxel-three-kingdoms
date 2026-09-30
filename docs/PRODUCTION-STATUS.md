@@ -4,15 +4,15 @@
 
 The full game vision remains in `GAME-VISION.md`. The ideal art reference remains `art/art-direction.png`. Target: polished technological exosuits, readable close-range action, robot crowds and demanding bosses, distinct class builds and mission-earned upgrades. Keep supernatural/demonic material out; do not invent theological mechanics.
 
-## Current milestone: skinned Vanguard, revised locomotion
+## Current milestone: voxel Vanguard on the shared rig
 
-Implemented: one smoothly skinned 78k-triangle armour mesh on the shared combat rig (geodesic joint blends, hip/knee/elbow cuts measured from the source, bridge-triangle removal, offline weights, hashed manifest); authored grip gloves, neck gasket, boots and lance; dark limb cores; afterimages and glow rim baked/skinned from the posed mesh; studio contact sheets and skin-weight view; metallic environment lighting in both renderers.
+Implemented: Vanguard is a ~24k-voxel hero built from the front/side/back sheet views (`tools/vanguard/`: `vanguard_parts.py` envelope boxes, `voxelize.py` silhouette carve + colour + side-view shift + mirror, `export_game.py` RLE per rig joint into `src/heroes/vanguard-data.js`, `diffview.py` ref-vs-model mismatch images). It uses the same rig, IK and clips as the other heroes via a per-hero `rigDim`; grips, stance and pivots are set on vertical limb chains. The earlier skinned mesh remains available as `VANGUARD_SKINNED` in `src/heroes/exosuit.js`.
 
-Locomotion: run rebuilt. The lance is now carried at the right hip, tip forward-up, instead of trailing behind the head; torso upright with a smaller lean, hips higher so the knees are not permanently crouched, less spear sway. The dodge roll keeps the lance forward so it flows out of the new carry. Attack clips are unchanged.
+Locomotion: run rebuilt (lance at the right hip, upright torso). Contact sheets of guard, dodge, jump, hurt, n1-n6 and c1-c6 reviewed on the voxel body with no gross clipping or lost grips; combat-core tests pass (5/5).
 
-Verified: prepared GLB passes 2,323 sampled poses with a stretch check (`npm run verify`), combat-core tests, studio contact sheets of run, dodge, n1, c1 and idle, and a real game session (deploy, run, dodge; no console errors). Not verified: player feel, attack pose quality beyond the sampled sheets, guard/parry, boss and enemy interaction, mobile performance.
+Rebuild: edit parts, then `python3 voxelize.py && python3 export_game.py` (see `tools/vanguard/README.md`).
 
-Not art-final: remaining source noise in the paint, the inferred back design, spear-blade carry clipping through enemies (visual only), thin dark limb cores where the generator left gaps.
+Not art-final: head/ear-disc and pauldron shapes are stepped approximations; side/back silhouettes differ from the sheet in places (the sheet poses the right arm and spear); hips read slightly wide-stanced; overdrive/musou have no dedicated body pose; the inferred back design is unreviewed by art.
 
 ## Gates toward the complete game
 
