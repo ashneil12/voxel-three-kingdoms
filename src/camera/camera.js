@@ -20,7 +20,7 @@ const BLEND = 0.45;                                   // s, Musou → gameplay b
 export const CAM = {
   // Default rig from bench/notes/camera-hud-world.md (DW8): vFOV 40°, ≈4.9 m behind and 2.9 m above the feet, pitch
   // ≈14.6°, aim crossing the hero at 1.62 m → hero ≈ 45 % of frame height, feet ≈ 89 %, horizon ≈ 14 %.
-  dist: 5.06, height: 1.62, pitch: 14.6 * DEG, fov: 40,
+  dist: 6.4, height: 1.85, pitch: 15 * DEG, fov: 40,   // pulled out ~25 % from the DW8 bench rig (5.06 / 1.62) so the taller Vanguard and the fight read
   follow: 18, followY: 20,  // position follow rates (1/s): re-centres in ≈0.2 s; a velocity lead removes the run lag
   airLift: 0.7, airTilt: 0.03, // aerial: aim rises 0.7 m per m of hero height and the view tilts up 0.03 rad per m
   yawLerp: 12,              // render smoothing of the sim view yaw (manual orbit)
@@ -265,7 +265,7 @@ export function createCameraRig(game, width, height) {
       if (lock) {
         // Pull back enough to keep both fighters visible; the aim moves part-way toward the target.
         const d = Math.hypot(lock.x - h.x, lock.z - h.z);
-        dist = Math.max(dist, Math.min(10, 5.1 + d * 0.35));
+        dist = Math.max(dist, Math.min(11, 6.4 + d * 0.35));
       }
       const lat = shot ? side : lock ? 0 : bias;                           // musou shot: its own screen-right offset
       // velocity lead v/follow cancels the exponential follow's steady lag (≈0.47 m at a run): the running hero stays

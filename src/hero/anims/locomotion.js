@@ -89,7 +89,7 @@ export function runPose(phase, k, out, lean = 0) {
   const s = 0.5 - 0.2 * k;                      // stance fraction of the cycle per foot (flight phase at speed)
   const Ls = v * s * T, zc = 0.04;
   let zL = 0, zR = 0;
-  for (const [b, off, x, side] of [[CH.footL, 0, 0.11, 1], [CH.footR, 0.5, -0.11, -1]]) {
+  for (const [b, off, x, side] of [[CH.footL, 0, 0.04, 1], [CH.footR, 0.5, -0.04, -1]]) {
     let p = phase / TAU + off; p -= Math.floor(p);
     let z, y, pitch;
     if (p < s) {                                 // stance: heel strike ahead → toe-off behind
@@ -111,13 +111,13 @@ export function runPose(phase, k, out, lean = 0) {
   // shows it: a deeper bounce per step, the pelvis shifting over the stance foot and the shoulders rocking with it
   const sw = Math.cos(phase - Math.PI * s);                          // +1 at left mid-stance, -1 at right mid-stance
   out[CH.hips] = lean * 0.18 + sw * 0.035 * k;
-  out[CH.hips + 1] = 0.94 - 0.05 * k + bob * 0.045 * k - al * 0.2;    // snap turns drop into a low bank
-  out[CH.hipsR] = (4 + 8 * k + al * 20) * D2R + bob * 0.03 * k;
+  out[CH.hips + 1] = 1.0 - 0.04 * k + bob * 0.06 * k - al * 0.2;    // snap turns drop into a low bank
+  out[CH.hipsR] = (1 + 6 * k + al * 20) * D2R + bob * 0.03 * k;
   const hy = (zR - zL) * 0.3;                                        // hips follow the forward leg...
   out[CH.hipsR + 1] = hy;
   out[CH.hipsR + 2] = -lean - sw * 4 * k * D2R;
   out[CH.spine + 1] = -0.5 * hy; out[CH.chest + 1] = -0.8 * hy;      // ...shoulders counter-rotate
-  out[CH.chest] = (2 + 3 * k) * D2R;
+  out[CH.chest] = (1 + 2 * k) * D2R;
   out[CH.chest + 2] = sw * 6 * k * D2R;                              // shoulders rock over the stance leg
   out[CH.head + 2] = lean * 0.5;                                     // keep the eyes nearer level in the bank
   out[CH.armL] = (zL / half) * (30 + 35 * k) * D2R;                  // left arm swings against the left leg

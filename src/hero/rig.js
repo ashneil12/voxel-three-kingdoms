@@ -96,6 +96,7 @@ export const EASE = {
  * `mono` clips use time-aware monotone cubic tangents instead: arcs still flow through keys that keep going the same
  * way, but a key where a channel reverses or holds is a clean stop (chambers and held poses never drift or overshoot).
  */
+const REST = P();
 export function clip(keys, loop = false, mono = false) { return { keys: keys.map(([t, p, e]) => ({ t, p, e: EASE[e || 'io'] })), loop, mono }; }
 
 /** Monotone (Fritsch–Carlson style) tangent at the middle of three samples, in value per unit time. */
@@ -124,6 +125,16 @@ export function sampleClip(c, t, out) {
     if (c.mono) { m1 = monoSlope(p0[j], p1[j], p2[j], dt0, dt1) * dt1; m2 = monoSlope(p1[j], p2[j], p3[j], dt1, dt2) * dt1; }
     else { m1 = (p2[j] - p0[j]) * 0.5; m2 = (p3[j] - p1[j]) * 0.5; }
     out[j] = (2 * u3 - 3 * u2 + 1) * p1[j] + (u3 - 2 * u2 + u) * m1 + (-2 * u3 + 3 * u2) * p2[j] + (u3 - u2) * m2;
+  }
+  if (c.settle) {                                // recovery drift: upper body eases toward the stance instead of freezing on the finish
+    const { a, b, end, w } = c.settle, sm = (x) => { x = Math.min(1, Math.max(0, x)); return x * x * (3 - 2 * x); };
+    const k = w * sm((t - a) / (b - a)) * (1 - sm((t - b) / (end - b)));
+    if (k > 0) for (let j = 0; j < 33; j++) {
+      if (j >= 15 && j < 25) continue;           // feet stay planted
+      let d = REST[j] - out[j];
+      if (IS_ANGLE[j]) d -= Math.round(d / (2 * Math.PI)) * 2 * Math.PI;
+      out[j] += d * k;
+    }
   }
   if (c.feet) c.feet(t, out);                    // baked foot track (attack clips: planted feet + steps, see attacks.js)
   return out;
