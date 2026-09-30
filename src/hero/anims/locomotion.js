@@ -8,12 +8,12 @@ import { MOVES } from '../moves.js';
 const D2R = Math.PI / 180, TAU = Math.PI * 2;
 const sstep = (a, b, x) => { const u = Math.min(1, Math.max(0, (x - a) / (b - a))); return u * u * (3 - 2 * u); };
 
-// Run carry (DW8): upright forward lean; the right hand holds the shaft at the hip, butt end up ahead-left past the
+// Run carry: fighter's run — both hands stay on the lance held at the ready across the body, upright torso, level gliding pelvis, small counter-rotation.
 // head, blade trailing low behind-right; left arm free.
 const RUN_SPEC = {
-  hips: [0, 0.84, 0.03], hipsR: [16, 0, 0], spine: [2, 0, 0], chest: [4, 0, 0], head: [0, 0, 0],
+  hips: [0, 0.88, 0.02], hipsR: [6, -14, 0], spine: [3, 4, 0], chest: [3, 6, 0], head: [0, 4, 0],
   footL: [0.13, 0.08, 0.2, 0, 5], footR: [-0.13, 0.1, -0.22, 20, -5],
-  spear: spearAbout([-0.26, 0.98, 0.14], -6, 30, 0, 0.95), gripR: 0.95, gripL: 0.5, lfree: 1, armL: [10, 0, 14, 85],
+  spear: [-0.24, 1.0, 0.06, 28, 24, 0], gripR: 0, gripL: 0.5, lfree: 0, armL: [0, 0, 0, 0],
 };
 const RUN_BASE = P(RUN_SPEC);
 const AIR_FALL = {
@@ -89,7 +89,7 @@ export function runPose(phase, k, out, lean = 0) {
   const s = 0.5 - 0.2 * k;                      // stance fraction of the cycle per foot (flight phase at speed)
   const Ls = v * s * T, zc = 0.04;
   let zL = 0, zR = 0;
-  for (const [b, off, x, side] of [[CH.footL, 0, 0.04, 1], [CH.footR, 0.5, -0.04, -1]]) {
+  for (const [b, off, x, side] of [[CH.footL, 0, 0.09, 1], [CH.footR, 0.5, -0.09, -1]]) {
     let p = phase / TAU + off; p -= Math.floor(p);
     let z, y, pitch;
     if (p < s) {                                 // stance: heel strike ahead → toe-off behind
@@ -97,8 +97,8 @@ export function runPose(phase, k, out, lean = 0) {
       z = zc + Ls * (0.5 - u); y = 0.08; pitch = -0.15 + 0.75 * u * u;
     } else {                                     // swing: heel kicks up behind, knee drives through, reach
       const u = (p - s) / (1 - s), e = u * u * (3 - 2 * u);
-      z = zc + Ls * (e - 0.5) - 0.2 * k * Math.sin(Math.PI * u) * (1 - u);
-      y = 0.08 + (0.08 + 0.34 * k) * Math.sin(Math.PI * Math.pow(u, 0.75));
+      z = zc + Ls * (e - 0.5) - 0.1 * k * Math.sin(Math.PI * u) * (1 - u);
+      y = 0.08 + (0.05 + 0.2 * k) * Math.sin(Math.PI * Math.pow(u, 0.75));
       pitch = 0.9 * (1 - e) - 0.25 * e;
     }
     out[b] = x; out[b + 1] = y; out[b + 2] = z; out[b + 3] = pitch * (0.4 + 0.6 * k); out[b + 4] = side * 5 * D2R;
@@ -110,22 +110,18 @@ export function runPose(phase, k, out, lean = 0) {
   // locomotion-dodge r3: the stride has to read from the chase camera behind a cape that hides the legs, so the body
   // shows it: a deeper bounce per step, the pelvis shifting over the stance foot and the shoulders rocking with it
   const sw = Math.cos(phase - Math.PI * s);                          // +1 at left mid-stance, -1 at right mid-stance
-  out[CH.hips] = lean * 0.18 + sw * 0.035 * k;
-  out[CH.hips + 1] = 1.0 - 0.04 * k + bob * 0.06 * k - al * 0.2;    // snap turns drop into a low bank
-  out[CH.hipsR] = (1 + 6 * k + al * 20) * D2R + bob * 0.03 * k;
-  const hy = (zR - zL) * 0.3;                                        // hips follow the forward leg...
-  out[CH.hipsR + 1] = hy;
-  out[CH.hipsR + 2] = -lean - sw * 4 * k * D2R;
-  out[CH.spine + 1] = -0.5 * hy; out[CH.chest + 1] = -0.8 * hy;      // ...shoulders counter-rotate
-  out[CH.chest] = (1 + 2 * k) * D2R;
-  out[CH.chest + 2] = sw * 6 * k * D2R;                              // shoulders rock over the stance leg
-  out[CH.head + 2] = lean * 0.5;                                     // keep the eyes nearer level in the bank
-  out[CH.armL] = (zL / half) * (30 + 35 * k) * D2R;                  // left arm swings against the left leg
-  out[CH.armL + 3] = (80 + 15 * k) * D2R;
-  out[CH.spear] += sw * 0.03 * k;
-  out[CH.spear + 1] += bob * 0.04 * k;                               // right arm (spear) swings against the right leg
-  out[CH.spear + 2] -= (zR / half) * 0.05 * k;
-  out[CH.spear + 4] -= bob * 3 * k * D2R;
+  out[CH.hips] = lean * 0.18 + sw * 0.02 * k;
+  out[CH.hips + 1] = 0.9 - 0.04 * k + bob * 0.02 * k - al * 0.2;      // snap turns drop into a low bank; otherwise a level, gliding pelvis
+  out[CH.hipsR] = (5 + 3 * k + al * 20) * D2R + bob * 0.015 * k;
+  const hy = (zR - zL) * 0.18;                                       // hips follow the forward leg a little...
+  out[CH.hipsR + 1] = -14 * D2R + hy;
+  out[CH.hipsR + 2] = -lean - sw * 2 * k * D2R;
+  out[CH.spine + 1] = 4 * D2R - 0.6 * hy; out[CH.chest + 1] = 6 * D2R - 0.9 * hy;   // ...shoulders counter-rotate, so the lance stays steady
+  out[CH.chest] = (3 + k) * D2R;
+  out[CH.chest + 2] = sw * 3 * k * D2R;
+  out[CH.head + 2] = lean * 0.5;
+  out[CH.spear] += sw * 0.015 * k;                                   // both hands stay on the shaft: the arms ride the torso, no flailing
+  out[CH.spear + 1] += bob * 0.02 * k;
   return out;
 }
 
