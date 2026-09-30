@@ -40,5 +40,5 @@ export const VANGUARD_VOXEL = {
   cut: { sub: 'VANGUARD OVERDRIVE', seal: 'OVERDRIVE' },
   lines: { open: ['EXO-01 deployed.', 'The evacuation is behind us. Hold the line.'], musou: ['OVERDRIVE', 'Overdrive engaged.'] },
   face, pal: { G: '#f0cfa6', g: '#c8a880', T: '#2b282f', w: '#ff9528' },
-  rigDim: RIG_DIM, matColor: 0.6, fill: 0.22, rim: 0.5, build, chains: () => [],
+  rigDim: RIG_DIM, matColor: 0.6, fill: 0.22, rim: 0.5, glow: 0.45, build, chains: () => [],
 };

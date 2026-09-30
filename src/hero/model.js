@@ -117,11 +117,15 @@ export function lamellar(a, b, { base = 0xdcdee2, rowH = 3, pw = 4, trim = null,
  * concept: peach rim/sun, blue-grey fill. Added after lighting and faded out where the surface is already bright, so
  * it lifts the shade side without blowing sunlit armour into the bloom. Does not touch the scene or other materials.
  */
-export function heroLook(mat, fill = 0.4, rim = 0.9) {
+export function heroLook(mat, fill = 0.4, rim = 0.9, glow = 0) {
   mat.onBeforeCompile = (sh) => {
     sh.uniforms.uHeroFill = { value: fill };
     sh.uniforms.uHeroRim = { value: rim };
-    sh.fragmentShader = 'uniform float uHeroFill, uHeroRim;\n' + sh.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+    sh.uniforms.uHeroGlow = { value: glow };
+    sh.fragmentShader = 'uniform float uHeroFill, uHeroRim, uHeroGlow;\n' + sh.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+      // saturated orange/gold vertex colours (visor, lights, trim) glow so the bloom pass picks them up
+      float heroOg = smoothstep(0.5, 0.75, vColor.r) * smoothstep(0.42, 0.18, vColor.b) * smoothstep(0.2, 0.32, vColor.g);
+      totalEmissiveRadiance += vec3(1.0, 0.55, 0.14) * heroOg * uHeroGlow;
       float heroNdv = abs(dot(normal, normalize(vViewPosition)));
       float heroFl = max(dot(normal, normalize(vec3(-0.4, 0.55, 0.75))), 0.0) * 0.8 + 0.2;
       vec3 heroExtra = diffuseColor.rgb * (uHeroFill * heroFl * vec3(0.78, 0.84, 1.0)
@@ -129,7 +133,7 @@ export function heroLook(mat, fill = 0.4, rim = 0.9) {
       outgoingLight += heroExtra * (1.0 - smoothstep(0.2, 0.85, dot(outgoingLight, vec3(0.2126, 0.7152, 0.0722))));
       #include <opaque_fragment>`);
   };
-  mat.customProgramCacheKey = () => `hero-look-${fill}-${rim}`;
+  mat.customProgramCacheKey = () => `hero-look-${fill}-${rim}-${glow}`;
   return mat;
 }
 
@@ -148,7 +152,7 @@ export function createHeroModel(rig, def) {
   // integration r1: albedo × 0.8 so the ivory lamellar keeps its scale rows under the environment's light + post-fx grade
   // (at 1.0 the armour clipped to flat white)
   const mc = def.matColor ?? 0.8;
-  const mat = heroLook(new THREE.MeshStandardMaterial({ color: new THREE.Color(mc, mc, mc), vertexColors: true, roughness: 0.58, metalness: 0.08, flatShading: true }), def.fill ?? 0.4, def.rim ?? 0.9);
+  const mat = heroLook(new THREE.MeshStandardMaterial({ color: new THREE.Color(mc, mc, mc), vertexColors: true, roughness: 0.58, metalness: 0.08, flatShading: true }), def.fill ?? 0.4, def.rim ?? 0.9, def.glow ?? 0);
   const mats = {
     body: mat,
     metal: heroLook(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.35, metalness: 0.55, flatShading: true }), 0.25, 0.6),
