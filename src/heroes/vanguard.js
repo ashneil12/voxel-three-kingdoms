@@ -82,6 +82,10 @@ function torso() {
     shell([-11, 2, -13], [11, 16, -10], 'I', 1),
     ...[1, -1].map((sx) => shell(...mx(sx, [3, 6, -14], [10, 14, -13]), 'N', 0)),
     B([-2, 3, -15], [2, 15, -13], C.K), light([-1, 4, -15], [1, 14, -14]),
+    // detail: three vent slits on each flank, rivets on the collar blocks, vent rows either side of the power slot
+    ...[1, -1].flatMap((sx) => [8, 10, 12].map((y) => P(...mx(sx, [13, y, -5], [14, y + 1, 5]), C.K))),
+    ...[1, -1].map((sx) => P(...mx(sx, [9, 20, 5], [10, 21, 6]), C.M)),
+    ...[1, -1].flatMap((sx) => [3, 5].map((y) => P(...mx(sx, [3, y, -14], [10, y + 1, -13]), C.Id))),
   ];
   P_.neck = [B([-4, -2, -4], [4, 7, 4], C.D), P([-4, 1, -4], [4, 2, 4], C.M), P([-4, 4, -4], [4, 5, 4], C.M)];
   return P_;
@@ -94,7 +98,7 @@ function limbs(P_) {
     // upper arm: black frame, dark grey sleeve, ivory elbow cop
     P_['upperArm' + s] = [
       B([-4, -24, -4], [4, 2, 4], C.K),
-      shell([-5, -13, -5], [5, -4, 5], 'D', 1),
+      B([-5, -13, -5], [5, -4, 5], (x, y) => (md(y, 3) === 0 ? C.K : C.D)),
       shell([-5, -26, -7], [5, -18, 4], 'I', 2, 1),
     ];
     // forearm: chunky ivory gauntlet, navy plate on the outside (on top in the T-pose), dark wrist cuff, orange wrist light
@@ -104,6 +108,8 @@ function limbs(P_) {
       shell(...m([6, -15, -5], [8, -3, 6]), 'N', 1),
       B([-5, -21, -5], [5, -17, 5], (x, y) => (y === -18 ? C.M : C.D)),
       light([-1, -20, 5], [1, -18, 6]),
+      P([-7, -10, -7], [7, -9, 8], C.Id),
+      P(...m([7, -14, -3], [8, -13, -2]), C.M), P(...m([7, -14, 3], [8, -13, 4]), C.M),
     ];
     // fist around the shaft (hand local Z = along the spear): black glove, dark grey knuckle guard
     P_['hand' + s] = [
@@ -115,7 +121,7 @@ function limbs(P_) {
     // ivory, navy, ivory tiers stepping out and down, an orange running light on the navy tier; metal piston behind
     P_['thigh' + s] = [
       B([-6, -36, -6], [6, 2, 6], C.K),
-      shell([-6, -31, -5], [6, -19, 7], 'I', 2),
+      shell([-6, -31, -5], [6, -19, 7], 'I', 2), P([-6, -25, 6], [6, -24, 7], C.Id),
       shell(...m([-4, -7, -8], [11, 3, 10]), 'I', 2, 1),
       shell(...m([-3, -15, -7], [12, -6, 11]), 'I', 2), P(...m([-3, -14, 10], [5, -7, 11]), C.N),
       shell(...m([-1, -22, -6], [13, -14, 10]), 'I', 2), P(...m([12, -21, -5], [13, -15, 9]), C.N),
@@ -130,6 +136,7 @@ function limbs(P_) {
       shell(...m([6, -6, -4], [8, 4, 6]), 'N', 1),
       shell([-8, -29, -7], [8, -7, 8], 'I', 2),
       shell([-4, -25, 8], [4, -13, 9], 'N', 0),
+      P([-6, -27, 7], [-5, -9, 8], C.Id), P([4, -27, 7], [5, -9, 8], C.Id), P([-8, -28, -7], [8, -27, 8], C.Id),
       B([-2, -25, -8], [2, -9, -6], C.M), P([-2, -17, -8], [2, -16, -6], C.D),
       light(...m([6, -31, -1], [8, -29, 2])),
     ];
@@ -141,6 +148,7 @@ function limbs(P_) {
       B([-7, -6, 16], [7, -3, 18], C.K),
       P([-8, -6, -8], [8, -5, 18], C.Kd),
       B([-4, -6, -9], [4, -2, -7], C.D),
+      P([-8, -3, -8], [8, -2, 11], C.D), P(...m([7, -3, 2], [8, -2, 4]), C.M),
     ];
   }
   return P_;
@@ -157,6 +165,7 @@ function pauldronBoxes(sx) {
     shell(...m([6, 3, -8], [12, 5, 7]), 'N', 1),
     light(...m([9, -5, 10], [11, -3, 11])),
     P(...m([3, -11, -10], [13, -10, 10]), C.Id),
+    ...[-6, 0, 6].map((z) => P(...m([12, -1, z], [13, 0, z + 1]), C.M)),
   ];
 }
 
@@ -184,6 +193,8 @@ function head() {
     // ear pieces: dark blocks with an orange light at visor height; nape guard
     ...[1, -1].flatMap((sx) => [B(...mx(sx, [9, 6, -2], [10, 10, 2]), C.K), light(...mx(sx, [9, 7, -1], [10, 9, 1]))]),
     round([-7, 1, -9], [7, 6, -6], 1),
+    ...[1, -1].flatMap((sx) => [1, 3].map((y) => P(...mx(sx, [7, y, 2], [8, y + 1, 5]), C.D))),
+    ...[1, -1].map((sx) => P(...mx(sx, [8, 11, -6], [9, 12, 5]), C.Id)),
   ];
 }
 
