@@ -261,12 +261,12 @@ export function createRig() {
   };
   mk('root', null);
   mk('hips', j.root, 0, 0.9, 0);
-  mk('spine', j.hips, 0, 0.06, 0);
-  mk('chest', j.spine, 0, DIM.spine + 0.08, 0);
+  mk('spine', j.hips, 0, DIM.spineUp ?? 0.06, 0);           // hero proportions: heroes/index.js merges HERO.rigDim into DIM before the rig is built
+  mk('chest', j.spine, 0, DIM.chestUp ?? (DIM.spine + 0.08), 0);
   mk('neck', j.chest, 0, DIM.neck, 0);
   mk('head', j.neck, 0, DIM.headUp, 0);
   for (const [s, sx] of [['R', -1], ['L', 1]]) {
-    mk('shoulder' + s, j.chest, sx * DIM.shoulderX, DIM.shoulderY, -0.01);
+    mk('shoulder' + s, j.chest, sx * DIM.shoulderX, DIM.shoulderY, DIM.shoulderZ ?? -0.01);
     mk('upperArm' + s, j['shoulder' + s]);
     mk('foreArm' + s, j['upperArm' + s], 0, -DIM.upper, 0);
     mk('hand' + s, j['foreArm' + s], 0, -DIM.fore, 0);
@@ -309,7 +309,7 @@ export function createRig() {
       const k = pose[39], sc = Math.cos(pose[38]), ss = Math.sin(pose[38]);
       let drop = 0;
       for (let i = 0; i < 2; i++) {
-        const b = i ? 20 : 15, x = pose[b], z = pose[b + 2], T = footT[i];
+        const b = i ? 20 : 15, x = pose[b] + (i ? -1 : 1) * (DIM.footDX || 0), z = pose[b + 2], T = footT[i];   // wider hips (hero rigDim) widen the stance
         T.set(x + k * (x * sc - z * ss - x), pose[b + 1], z + k * (x * ss + z * sc - z)).applyMatrix4(R.matrixWorld);
         j[i ? 'thighR' : 'thighL'].getWorldPosition(_S);
         const hz = Math.hypot(T.x - _S.x, T.z - _S.z), maxD = (DIM.thigh + DIM.shin) * 0.995, vy = _S.y - T.y;

@@ -3,6 +3,8 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { applyRoll } from './hero/anims/locomotion.js';
 import { createRig, HERO_SCALE, POSE_SIZE, P } from './hero/rig.js';
 import { createProceduralSuit } from './hero/procedural-suit.js';
+import { createHeroModel } from './hero/model.js';
+import { HERO } from './heroes/index.js';   // also merges the hero's rig proportions into DIM before the rig below is built
 import { attachGeneratedSuit, disposeGeneratedSuit } from './hero/generated-suit.js?v=skin-2';
 import { SUIT_DEFAULT, suitDesign, loadSuitDesign, saveSuitDesign, SUIT_STORAGE_KEY } from './heroes/suit-design.js';
 import { sampleAnim } from './hero/hero.js';
@@ -141,6 +143,14 @@ function highlight() {
 }
 function rebuild() {
   disposeModel();
+  if ($('#representation').value === 'voxel') {
+    model = createHeroModel(rig, HERO); model.materials = {}; model.ready = Promise.resolve();
+    for (const input of document.querySelectorAll('[data-key]')) input.disabled = true;
+    for (const id of ['#save', '#reset', '#export']) $(id).disabled = true;
+    $('#metrics').textContent = `${HERO.en} · voxel hero model on the game rig`;
+    status('The hero voxel model the game uses, on the shared combat rig (same code path as index.html).');
+    highlight(); showParts(); updateSurface(); return;
+  }
   model = createProceduralSuit(rig, design, { editable: true });
   const generated = $('#representation').value === 'generated';
   for (const input of document.querySelectorAll('[data-key]')) input.disabled = generated;

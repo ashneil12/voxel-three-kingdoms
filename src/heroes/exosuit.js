@@ -60,10 +60,12 @@ export const WARDEN = {
   build:()=>build({ ...C, plate:0x7b3440, dark:0x492631, light:0xff9a76, orange:0xffd07a }),
 };
 
-export const VANGUARD = {
+export const VANGUARD_SKINNED = {
   ...EXOSUIT, id:'vanguard', zh:'EXO-01', en:'VANGUARD', seal:'PILOT',
   weapon:'POWER LANCE', role:'ARMORED RESPONSE',
   sub:'BUILT TO HOLD THE LINE', cut:{ sub:'VANGUARD OVERDRIVE', seal:'OVERDRIVE' },
   face, pal:{ G:'#d9d3c4', g:'#42647c', T:'#202d37', w:'#ffab55' },
   proceduralSuit:true, generatedSuit:true, suitDesign:SUIT_DEFAULT,
 };
+
+export { VANGUARD_VOXEL as VANGUARD } from './vanguard.js';

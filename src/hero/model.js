@@ -147,7 +147,8 @@ export function createHeroModel(rig, def) {
   }
   // integration r1: albedo × 0.8 so the ivory lamellar keeps its scale rows under the environment's light + post-fx grade
   // (at 1.0 the armour clipped to flat white)
-  const mat = heroLook(new THREE.MeshStandardMaterial({ color: new THREE.Color(0.8, 0.8, 0.8), vertexColors: true, roughness: 0.58, metalness: 0.08, flatShading: true }));
+  const mc = def.matColor ?? 0.8;
+  const mat = heroLook(new THREE.MeshStandardMaterial({ color: new THREE.Color(mc, mc, mc), vertexColors: true, roughness: 0.58, metalness: 0.08, flatShading: true }), def.fill ?? 0.4, def.rim ?? 0.9);
   const mats = {
     body: mat,
     metal: heroLook(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.35, metalness: 0.55, flatShading: true }), 0.25, 0.6),
@@ -168,7 +169,7 @@ export function createHeroModel(rig, def) {
     const odd = !built.bv && /foreArm|thigh|shin/.test(joint);       // odd-width parts: centre them
     add(rig.joints[joint], vox(boxes, bv, { off: odd ? [-0.5, 0, -0.5] : [0, 0, 0], jitter: built.bv ? 0.035 : 0.05 }), joint);
   }
-  add(rig.joints.head, vox(built.head, built.hv || HV, { off: [-0.5, 0, 0], jitter: 0.04 }), 'head');   // hv: finer head voxels for detailed faces
+  add(rig.joints.head, vox(built.head, built.hv || HV, { off: built.headOff || [-0.5, 0, 0], jitter: 0.04 }), 'head');   // hv: finer head voxels for detailed faces
   // pauldrons ride on a helper under each shoulder; secondary.js turns it halfway with the upper arm
   if (built.pauldrons) for (const [s, sx] of [['R', -1], ['L', 1]]) {
     const pd = new THREE.Object3D();
