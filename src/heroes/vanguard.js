@@ -25,7 +25,7 @@ function build() {
   for (const n of ['hips', 'spine', 'chest', 'neck']) parts[n] = group(n);
   for (const s of ['L', 'R']) for (const n of ['upperArm', 'foreArm', 'hand', 'thigh', 'shin', 'foot']) parts[n + s] = group(n + s);
   const weapon = [{ geo: vox(groupOf(SPEAR), VOXEL, { jitter: 0.03 }), mat: 'metal' }];
-  return { parts, head: group('head'), headOff: [0, 0, 0], hv: VOXEL, bv: VOXEL, pauldrons: (sx) => group(sx > 0 ? 'pauldronL' : 'pauldronR'), weapon };
+  return { parts, head: group('head'), headOff: [0, 0, 0], hv: VOXEL * 0.94, bv: VOXEL, pauldrons: (sx) => group(sx > 0 ? 'pauldronL' : 'pauldronR'), weapon };
 }
 
 const face = [
@@ -40,5 +40,5 @@ export const VANGUARD_VOXEL = {
   cut: { sub: 'VANGUARD OVERDRIVE', seal: 'OVERDRIVE' },
   lines: { open: ['EXO-01 deployed.', 'The evacuation is behind us. Hold the line.'], musou: ['OVERDRIVE', 'Overdrive engaged.'] },
   face, pal: { G: '#f0cfa6', g: '#c8a880', T: '#2b282f', w: '#ff9528' },
-  rigDim: RIG_DIM, matColor: 0.6, fill: 0.22, rim: 0.5, glow: 0.45, build, chains: () => [],
+  rigDim: RIG_DIM, matColor: 0.54, fill: 0.2, rim: 0.45, glow: 0.7, build, chains: () => [],
 };

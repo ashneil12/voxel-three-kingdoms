@@ -290,7 +290,7 @@ export function createRig() {
     apply(pose, pos, yaw) {
       const R = j.root;
       R.position.copy(pos); R.rotation.set(0, yaw + pose[38], 0);
-      j.hips.position.set(pose[0], pose[1], pose[2]);
+      j.hips.position.set(pose[0], pose[1] + (DIM.hipLift || 0), pose[2]);
       j.hips.rotation.set(pose[3], pose[4], pose[5]);
       j.spine.rotation.set(pose[6], pose[7], pose[8]);
       j.chest.rotation.set(pose[9], pose[10], pose[11]);
