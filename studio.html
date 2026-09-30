@@ -39,6 +39,8 @@
     #part-list button { width: 100%; text-align: left; border: 0; background: none; padding: 5px 7px; color: #b9cbd0; }
     #part-list button:hover, #part-list button[aria-selected="true"] { background: #294652; color: #fff; }
     #status { min-height: 2em; color: #b9d6d7; }
+    #pose-editor { margin-top: 10px; } .pgroup { margin-top: 8px; } .pgroup b { color: #9dd3dd; font: 700 11px/1 system-ui; letter-spacing: .12em; text-transform: uppercase; }
+    .pgroup label { margin: 4px 0; } .pgroup label span { min-width: 52px; } [hidden] { display: none !important; }
     .overlay h1 { color: #29343b; } .overlay .eyebrow { color: #576b74; }
     .overlay p, .hint { color: #58616a; }
     #reference { width: 100%; border-radius: 4px; margin-top: 8px; }
@@ -68,6 +70,12 @@
       <label><span>Action</span><select id="action"><option value="showcase">Reference stance</option><option value="idle">Idle</option><option value="run">Run</option><option value="guard">Guard</option><option value="dodge">Dodge</option><option value="n1">First strike</option><option value="n3">Wide sweep</option><option value="c1">Heavy launcher</option><option value="c4">Spin attack</option><option value="mu_act">Overdrive start</option><option value="mu_fin">Overdrive finish</option></select></label>
       <label><span>Timeline</span><input id="timeline" type="range" min="0" max="100" value="20"><output id="time">20%</output></label>
       <div class="row"><button id="play" type="button">Play motion</button><button id="pause" type="button">Pause</button></div>
+    </section>
+    <section>
+      <h3>Pose editor</h3>
+      <p>Freeze the current frame, pose every rig channel, then copy it as code for the clip.</p>
+      <div class="row"><button id="edit-on" type="button">Edit this frame</button><button id="edit-off" type="button" hidden>Back to clip</button><button id="edit-copy" class="primary" type="button" hidden>Copy as code</button></div>
+      <div id="pose-editor" hidden></div>
     </section>
     <section>
       <details><summary>Art-direction reference</summary><a href="./docs/art/art-direction.png" target="_blank"><img id="reference" src="./docs/art/art-direction.png" alt="Ideal ivory and blue exosuit concept. Left side is the fidelity target."></a><p>Left-hand suit is the target. Concept illustration, not an engine render.</p></details>

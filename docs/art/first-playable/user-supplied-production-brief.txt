@@ -1,0 +1,641 @@
+Yes. I would have the agent do **only the art/reference production pass first**, plus organise the repo so none of the decisions we have made get lost. No character rebuilding, no gameplay work, no new viewer work yet.
+
+Paste this to the agent and attach the Vanguard character sheet with it:
+
+> # MASTER TASK: FIRST PLAYABLE ART PACK + DESIGN HANDOFF
+>
+> We now have a working code-built character pipeline. Before expanding implementation, create and organise the visual source material for the first playable slice.
+>
+> **Do not build the playable slice yet.**
+>
+> Your job in this task is:
+>
+> 1. Save the attached Vanguard character sheet into the repository as the locked visual style reference.
+> 2. Preserve the existing game-vision and design documents.
+> 3. Consolidate the production decisions already made.
+> 4. Generate the first-playable asset reference images.
+> 5. Save every generated asset into a clean repository structure with sensible filenames and metadata.
+> 6. Produce a manifest that a later implementation agent can follow.
+>
+> The game's complete vision must remain intact. This task defines a first playable milestone only and must not silently redefine the final game around the smaller milestone. The vision document explicitly treats itself as the source of truth and says detailed implementation specifications should be added when features are ready to build. :chatgpt-content-reference{index="0"}
+>
+> ---
+>
+> # 1. LOCATE THE REPOSITORY AND EXISTING DOCUMENTS
+>
+> Find the current game repository and inspect its documentation before creating anything.
+>
+> Locate and preserve, where present:
+>
+> ```text
+> GAME-VISION.md
+> STUDIO-PLAN.md
+> DEMO.md
+> existing art-direction images
+> existing character-generation notes
+> current playable/demo source
+> existing canonical model viewer
+> ```
+>
+> Do not overwrite or rewrite these destructively.
+>
+> The existing game vision remains authoritative.
+>
+> ---
+>
+> # 2. SAVE THE ATTACHED VANGUARD SHEET
+>
+> The attached image is the current **locked style anchor** for the code-built character direction.
+>
+> Save the original image unchanged somewhere similar to:
+>
+> ```text
+> docs/art/first-playable/style-reference-vanguard.png
+> ```
+>
+> Also copy it into the production reference pack if useful:
+>
+> ```text
+> assets/reference/first-playable/characters/01_vanguard_character-sheet.png
+> ```
+>
+> Do not regenerate Vanguard at this stage.
+>
+> Do not alter the attached image.
+>
+> This image establishes the broad production language:
+>
+> ```text
+> chunky code-buildable 3D construction
+> large readable armour masses
+> clear articulation
+> strong silhouette
+> ivory / navy / dark mechanical palette
+> orange emissive details
+> limited micro-detail
+> large readable weapons
+> clear front / side / rear construction
+> stylised rather than realistic proportions
+> ```
+>
+> The intent is not literal voxel replication. The final game vision calls for polished stylised 3D, shaped armour, exposed machinery and efficient code-driven production. :chatgpt-content-reference{index="1"}
+>
+> ---
+>
+> # 3. RECORD THE PRODUCTION DECISIONS WE HAVE ALREADY MADE
+>
+> Create:
+>
+> ```text
+> docs/FIRST-PLAYABLE-PRODUCTION.md
+> ```
+>
+> Record the following decisions clearly so future agents stop reopening solved questions.
+>
+> ## Character production
+>
+> - Current preferred production path is code-built Three.js characters.
+> - `img2threejs` / coding-agent reconstruction is useful as the starting workflow.
+> - Character geometry must be authored around animation from the beginning.
+> - The current code-built Vanguard works and proves the architecture is viable.
+> - Quality should be improved through proportions, silhouette, animation, lighting, materials and VFX rather than chasing extreme geometric detail first.
+> - Full TRELLIS hero meshes repeatedly caused structural/animation problems.
+> - Mesh-to-voxel conversion lost too much visible quality for hero characters.
+> - Smoothed voxel reconstruction also failed the desired visual target.
+> - Full sprite/2.5D remains a fallback, not the current production direction.
+> - RunPod/cloud GPU infrastructure is not required for the current production direction.
+>
+> ## Character priorities
+>
+> In order:
+>
+> ```text
+> 1. silhouette and proportions
+> 2. animation and physical movement
+> 3. colour / material / lighting separation
+> 4. equipment and combat effects
+> 5. small surface details
+> ```
+>
+> This mirrors the priorities already established in the game vision. :chatgpt-content-reference{index="2"}
+>
+> ## Viewer
+>
+> There is already a canonical Codex-built 3D model viewer in the project.
+>
+> Find it and document:
+>
+> ```text
+> path
+> launch command
+> supported animation controls
+> supported inspection controls
+> ```
+>
+> Add this to:
+>
+> ```text
+> docs/MODEL-VIEWER.md
+> ```
+>
+> Future work must reuse this viewer.
+>
+> Do not create additional model viewers unless there is a genuine technical reason.
+>
+> ---
+>
+> # 4. DEFINE THE FIRST PLAYABLE
+>
+> Use the existing documents rather than inventing a different game.
+>
+> The first playable should centre on:
+>
+> **Vanguard entering an occupied industrial district and fighting through a short mission that demonstrates crowd combat, enemy roles, an optional specialist encounter, one meaningful mission upgrade and a culminating machine fight.**
+>
+> This follows the established loop of deploying with a fighting style, confronting formations, pursuing optional enemy technology and returning with new possibilities. :chatgpt-content-reference{index="3"}
+>
+> The complete game contains five Frames, but **only Vanguard needs to be production-ready for this slice**. The five long-term identities remain Vanguard, Breaker, Bastion, Conductor and Striker. :chatgpt-content-reference{index="4"}
+>
+> ---
+>
+> # 5. CREATE THE FIRST-PLAYABLE ART DIRECTORY
+>
+> Create something close to:
+>
+> ```text
+> assets/reference/first-playable/
+> │
+> ├── characters/
+> ├── weapons/
+> ├── environment/
+> ├── props/
+> ├── upgrades/
+> ├── vfx/
+> └── ui/
+> ```
+>
+> Also create:
+>
+> ```text
+> assets/reference/first-playable/manifest.json
+> assets/reference/first-playable/GENERATION-LOG.md
+> ```
+>
+> ---
+>
+> # 6. CHARACTER GENERATION RULES
+>
+> For major characters, generate **full character sheets in the same presentation family as the attached Vanguard reference**.
+>
+> A useful character sheet should generally contain:
+>
+> ```text
+> front
+> front 3/4
+> side
+> back 3/4
+> back
+>
+> head detail
+> relevant armour detail
+> relevant mechanical joint detail
+>
+> idle
+> representative movement pose
+> one or two representative combat poses
+> ```
+>
+> The views should depict **the same design consistently**.
+>
+> Avoid:
+>
+> ```text
+> hyper-detailed photoreal armour
+> random micro-greebling
+> cloth-heavy designs
+> unclear joints
+> huge differences between turnaround views
+> anatomy impossible to reproduce through code
+> armour that visually merges every limb into the torso
+> ```
+>
+> Designs should look good while remaining feasible for a coding agent to reconstruct from boxes, wedges, cylinders, custom generated surfaces and a manageable amount of authored geometry.
+>
+> Do not make everything deliberately crude. The Vanguard reference proves that the art can still have strong shape language.
+>
+> ---
+>
+> # 7. GENERATE THE FIRST ENEMY FAMILY
+>
+> Generate and save:
+>
+> ```text
+> characters/02_grunt_character-sheet.png
+> characters/03_gunner_character-sheet.png
+> characters/04_shield-carrier_character-sheet.png
+> characters/05_repair-drone_character-sheet.png
+> characters/06_propulsion-hunter_character-sheet.png
+> characters/07_factory-enforcer_character-sheet.png
+> ```
+>
+> ## Grunt
+>
+> Purpose:
+>
+> ```text
+> ordinary melee pressure
+> appears in numbers
+> cheap enough to render many simultaneously
+> satisfying to destroy
+> ```
+>
+> Keep this significantly simpler than Vanguard.
+>
+> Manufactured enemy-machine aesthetic rather than resistance armour.
+>
+> ## Gunner
+>
+> Purpose:
+>
+> ```text
+> ranged lane pressure
+> forces repositioning
+> clearly readable ranged weapon
+> obvious pre-fire warning geometry/light
+> ```
+>
+> ## Shield Carrier
+>
+> Purpose:
+>
+> ```text
+> protects allies
+> establishes formation gameplay
+> front-facing defensive silhouette
+> exposes useful flanks/rear
+> ```
+>
+> ## Repair Drone
+>
+> Purpose:
+>
+> ```text
+> fragile support machine
+> visually distinct from humanoid combatants
+> easy to prioritise in crowds
+> visibly projects repair/support energy
+> ```
+>
+> ## Propulsion Hunter
+>
+> Purpose:
+>
+> ```text
+> optional specialist
+> aggressive mobility
+> propulsion technology
+> harder single-target encounter
+> source of movement-related upgrade technology
+> ```
+>
+> The secondary design document explicitly links propulsion specialists with movement technology. :chatgpt-content-reference{index="5"}
+>
+> ## Factory Enforcer
+>
+> Working boss/mini-boss concept.
+>
+> Base it on the established design idea of a factory enforcement machine with clearly readable systems such as:
+>
+> ```text
+> heavy shield or armour assembly
+> powerful impact/pile-driving arm
+> visible power/rear unit
+> large readable weak areas
+> significantly larger silhouette than ordinary machines
+> ```
+>
+> The design document specifically proposes this type of machine as a boss whose components and attacks create different openings. :chatgpt-content-reference{index="6"}
+>
+> Do not make the boss merely a scaled-up Grunt.
+>
+> ---
+>
+> # 8. WEAPON REFERENCES
+>
+> Save the Vanguard spear reference separately if required for implementation:
+>
+> ```text
+> weapons/01_vanguard-spear.png
+> ```
+>
+> If necessary, generate a dedicated weapon sheet derived from the attached Vanguard design showing:
+>
+> ```text
+> full spear
+> side profile
+> blade/head detail
+> grip regions
+> shaft
+> orange energy/emissive component
+> ```
+>
+> Also create weapon references where the Gunner or Factory Enforcer needs dedicated machinery.
+>
+> Do not merge weapons permanently into character designs where the game should treat them as separate equipment.
+>
+> ---
+>
+> # 9. ENVIRONMENT ART
+>
+> Generate:
+>
+> ```text
+> environment/01_industrial-district-kit.png
+> environment/02_resistance-outpost-kit.png
+> props/01_machine-props.png
+> props/02_cover-and-destructibles.png
+> ```
+>
+> These should be **production asset boards**, not merely beautiful environment paintings.
+>
+> Show individual buildable elements clearly.
+>
+> Industrial district kit can include:
+>
+> ```text
+> road/floor segments
+> raised walkways
+> industrial walls
+> barriers
+> cargo containers
+> machine housings
+> railings
+> stairs
+> pipes
+> power units
+> lamp posts
+> signage
+> damaged structures
+> ```
+>
+> Resistance outpost kit can include:
+>
+> ```text
+> maintenance station
+> work lights
+> barricades
+> supply containers
+> repair equipment
+> resistance markings
+> simple workshop objects
+> ```
+>
+> The game's world should retain warmth rather than becoming universally grey and grim, with sunlight, greenery and inhabited spaces where appropriate. :chatgpt-content-reference{index="7"}
+>
+> Keep these references code-buildable.
+>
+> ---
+>
+> # 10. FIRST UPGRADE REFERENCES
+>
+> Generate:
+>
+> ```text
+> upgrades/01_first-playable-upgrades.png
+> ```
+>
+> Include a small set of visibly distinct equipment concepts such as:
+>
+> ```text
+> propulsion module
+> defensive capacitor
+> lance enhancement
+> targeting / weak-point module
+> ```
+>
+> These should look like physical components that could visibly mount to Vanguard.
+>
+> The vision explicitly wants equipment changes to appear on the suit where meaningful. :chatgpt-content-reference{index="8"}
+>
+> ---
+>
+> # 11. VFX REFERENCES
+>
+> Generate:
+>
+> ```text
+> vfx/01_vanguard-combat-vfx.png
+> vfx/02_enemy-combat-vfx.png
+> ```
+>
+> Vanguard VFX should cover visual language for:
+>
+> ```text
+> spear thrust
+> spear sweep
+> hit sparks
+> armour impact
+> dodge/propulsion
+> counter/parry
+> strong finisher
+> ```
+>
+> Enemy VFX should cover:
+>
+> ```text
+> ranged warning
+> shield impact
+> repair beam/pulse
+> propulsion hunter boost
+> heavy/boss warning
+> machine damage sparks
+> armour break
+> ```
+>
+> Effects should be technological rather than mystical. The game vision calls for pressure waves, thrusters, heated edges, electrical discharge, fragments and venting machinery. :chatgpt-content-reference{index="9"}
+>
+> ---
+>
+> # 12. UI REFERENCE
+>
+> Generate one restrained UI direction sheet:
+>
+> ```text
+> ui/01_first-playable-hud.png
+> ```
+>
+> Base it on what already works in the current playable rather than redesigning the whole interface.
+>
+> Cover only:
+>
+> ```text
+> player health
+> guard/stability
+> overdrive
+> ability indicators
+> enemy/boss health
+> upgrade choice presentation
+> optional lock-on indicator
+> ```
+>
+> Do not build menus, inventory systems or long-term progression UI yet.
+>
+> ---
+>
+> # 13. SELF-REVIEW EVERY GENERATED IMAGE
+>
+> Before accepting a generated asset:
+>
+> compare it against the Vanguard style reference.
+>
+> Ask:
+>
+> ```text
+> Does it belong in the same game?
+> Is its silhouette immediately readable?
+> Can an agent realistically recreate the major shapes in code?
+> Are front/side/back views genuinely consistent?
+> Are its articulation points understandable?
+> Is important equipment readable from gameplay distance?
+> Does it have too much small noise?
+> ```
+>
+> Regenerate when there is a major failure.
+>
+> Do not endlessly optimise minor differences.
+>
+> ---
+>
+> # 14. MANIFEST
+>
+> Update:
+>
+> ```text
+> assets/reference/first-playable/manifest.json
+> ```
+>
+> For every asset, record approximately:
+>
+> ```json
+> {
+>   "id": "shield-carrier",
+>   "type": "character",
+>   "role": "formation defence",
+>   "reference": "characters/04_shield-carrier_character-sheet.png",
+>   "styleReference": "characters/01_vanguard_character-sheet.png",
+>   "productionPriority": 4,
+>   "implementationStatus": "not-started"
+> }
+> ```
+>
+> Also record:
+>
+> ```text
+> gameplay purpose
+> approximate relative scale
+> complexity target
+> whether animated
+> whether it needs a separate weapon
+> special VFX required
+> ```
+>
+> ---
+>
+> # 15. GENERATION LOG
+>
+> For every generated image, append to:
+>
+> ```text
+> GENERATION-LOG.md
+> ```
+>
+> Record:
+>
+> ```text
+> filename
+> purpose
+> generation prompt/instructions
+> accepted/rejected
+> reason for rejection if applicable
+> important visual decisions
+> ```
+>
+> Preserve useful prompts so future iterations are reproducible.
+>
+> ---
+>
+> # 16. OPTIONAL 2D-TO-3D VOXELIZER
+>
+> The repository:
+>
+> ```text
+> https://github.com/GazPrash/2d-to-3d-voxelizer
+> ```
+>
+> can be recorded under experimental/reference tooling.
+>
+> Do not use it for Vanguard or primary hero characters.
+>
+> It may later be useful for:
+>
+> ```text
+> simple props
+> crates
+> machinery
+> decorative objects
+> distant/background elements
+> intentionally chunky assets
+> ```
+>
+> Do not spend implementation time integrating it during this task.
+>
+> ---
+>
+> # 17. DO NOT IMPLEMENT THE SLICE YET
+>
+> This is important.
+>
+> Do not:
+>
+> ```text
+> build enemies
+> rewrite Vanguard
+> implement mission logic
+> implement upgrades
+> build the boss
+> create environment code
+> change combat
+> create another model viewer
+> start Blender work
+> start RunPod work
+> ```
+>
+> Finish the **reference pack and production documentation first**.
+>
+> ---
+>
+> # 18. COMPLETION REPORT
+>
+> When the task is complete, report:
+>
+> ```text
+> 1. Exact path of the saved Vanguard style reference.
+> 2. Exact path of FIRST-PLAYABLE-PRODUCTION.md.
+> 3. Exact path of MODEL-VIEWER.md.
+> 4. List of every generated image.
+> 5. Which generations required retries and why.
+> 6. Any visual consistency problems still unresolved.
+> 7. Manifest location.
+> 8. Generation log location.
+> 9. Recommended implementation order.
+> ```
+>
+> Then stop.
+>
+> Do not automatically begin implementation.
+>
+> The next phase will be a separate instruction once the user has reviewed the generated art pack.
+
+I’d let the agent run **that whole generation/organisation phase** now. The important thing is that when it finishes, you should have an actual folder of production references instead of another pile of screenshots scattered around the project.
+
+Then send me its completion report and, ideally, a contact sheet of what it generated. We can quickly reject anything ugly or inconsistent, lock the good assets, and **then** I’ll write the second master instruction that tells it to build the actual first playable end-to-end.

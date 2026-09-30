@@ -1,0 +1,820 @@
+{
+  "schemaVersion": 1,
+  "title": "EXO first playable art/reference pack",
+  "preparedAt": "2026-09-30",
+  "scope": "Reference production and documentation only. No new runtime models or gameplay implemented.",
+  "lockedAnchorSha256": "067ce2de375f0700831311bc2db3eae048bb522215dcf96b041cbed12afc2ef3",
+  "styleReference": "characters/01_vanguard_character-sheet.png",
+  "generationMode": "built-in image_gen; no fallback CLI used",
+  "reviewStatus": "Agent-reviewed references with documented limitations; awaiting Ash visual review; not model/animation acceptance.",
+  "requiredDocuments": [
+    "docs/GAME-VISION.md",
+    "docs/GAME-DESIGN-EXPANDED.md",
+    "docs/FIRST-PLAYABLE-PRODUCTION.md",
+    "docs/MODEL-VIEWER.md",
+    "docs/FIRST-PLAYABLE-IMPLEMENTATION-HANDOFF.md",
+    "assets/reference/first-playable/GENERATION-LOG.md",
+    "assets/reference/first-playable/ART-REVIEW.md",
+    ".agents/skills/exo-reference-handoff/SKILL.md"
+  ],
+  "assets": [
+    {
+      "id": "vanguard",
+      "type": "character",
+      "role": "locked hero style anchor and lance combat identity",
+      "gameplayPurpose": "locked hero style anchor and lance combat identity",
+      "reference": "characters/01_vanguard_character-sheet.png",
+      "styleReference": "characters/01_vanguard_character-sheet.png",
+      "productionPriority": 1,
+      "approximateRelativeScale": {
+        "vanguardHeightMultiplier": 1,
+        "status": "proposed; not measured",
+        "basis": "standing neutral body height, drone body span for repair-drone"
+      },
+      "complexityTarget": "moderate articulated mechanical character",
+      "animated": true,
+      "needsSeparateWeapon": true,
+      "separateEquipment": [
+        "vanguard-spear"
+      ],
+      "specialVFXRequired": [
+        "vanguard-vfx"
+      ],
+      "implementationStatus": "reference-only-existing-baseline-unverified",
+      "referenceStatus": "locked-user-original",
+      "reviewNotes": [
+        "Original provided by Ash, copied unchanged. All tiny facets and staged views are style evidence, not measured CAD."
+      ],
+      "constituents": [],
+      "sourceFile": "/var/folders/b4/8qh0t36j0_g9srqzx1g5t3z40000gn/T/codex-clipboard-964cfa15-abd5-4446-8c8d-9eee8f2c008f.png",
+      "sha256": "067ce2de375f0700831311bc2db3eae048bb522215dcf96b041cbed12afc2ef3",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 2271357
+    },
+    {
+      "id": "grunt",
+      "type": "character",
+      "role": "ordinary melee pressure",
+      "gameplayPurpose": "ordinary melee pressure",
+      "reference": "characters/02_grunt_character-sheet.png",
+      "styleReference": "characters/01_vanguard_character-sheet.png",
+      "productionPriority": 2,
+      "approximateRelativeScale": {
+        "vanguardHeightMultiplier": 0.8,
+        "status": "proposed; not measured",
+        "basis": "standing neutral body height, drone body span for repair-drone"
+      },
+      "complexityTarget": "simple crowd asset; significantly cheaper than hero",
+      "animated": true,
+      "needsSeparateWeapon": false,
+      "separateEquipment": [],
+      "specialVFXRequired": [
+        "enemy-vfx:damage-sparks",
+        "enemy-vfx:armour-break"
+      ],
+      "implementationStatus": "not-started",
+      "referenceStatus": "accepted-with-construction-notes",
+      "reviewNotes": [
+        "Accepted major masses, fists, articulated joints and rear battery. Reduce decorative seams for crowd LOD; image detail is not a mandatory part count."
+      ],
+      "constituents": [],
+      "sourceFile": "/Users/ash/.codex/generated_images/01a0e05e-dd3f-7203-9bd3-bf0c3873146d/exec-a8035d50-8249-4f6d-8b5f-ba7de5afdc4d.png",
+      "sha256": "db12ffcbd605de6a1866ea436992dc97491a3542d6dba5f859cdc9c7c8f1a2e2",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 2028721
+    },
+    {
+      "id": "gunner",
+      "type": "character",
+      "role": "ranged lane pressure",
+      "gameplayPurpose": "ranged lane pressure",
+      "reference": "characters/03_gunner_character-sheet.png",
+      "styleReference": "characters/01_vanguard_character-sheet.png",
+      "productionPriority": 3,
+      "approximateRelativeScale": {
+        "vanguardHeightMultiplier": 0.95,
+        "status": "proposed; not measured",
+        "basis": "standing neutral body height, drone body span for repair-drone"
+      },
+      "complexityTarget": "moderate articulated mechanical character",
+      "animated": true,
+      "needsSeparateWeapon": true,
+      "separateEquipment": [
+        "gunner-carbine"
+      ],
+      "specialVFXRequired": [
+        "enemy-vfx:ranged-warning"
+      ],
+      "implementationStatus": "not-started",
+      "referenceStatus": "accepted-with-construction-notes",
+      "reviewNotes": [
+        "Distinct slender ranged silhouette and visible tell lamp. Use dedicated carbine board for grip construction; action/scenery panels are pose/mood only."
+      ],
+      "constituents": [],
+      "sourceFile": "/Users/ash/.codex/generated_images/01a0e05e-dd3f-7203-9bd3-bf0c3873146d/exec-31e4ada8-dbf4-448d-8d37-9c764dfd82ec.png",
+      "sha256": "7ecacf1f1ad3bc4b280c47b818b62cba6bb42c6149b999d6652cdc892c319953",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 2192341
+    },
+    {
+      "id": "shield-carrier",
+      "type": "character",
+      "role": "formation defence",
+      "gameplayPurpose": "formation defence",
+      "reference": "characters/04_shield-carrier_character-sheet.png",
+      "styleReference": "characters/01_vanguard_character-sheet.png",
+      "productionPriority": 4,
+      "approximateRelativeScale": {
+        "vanguardHeightMultiplier": 1.1,
+        "status": "proposed; not measured",
+        "basis": "standing neutral body height, drone body span for repair-drone"
+      },
+      "complexityTarget": "moderate articulated mechanical character",
+      "animated": true,
+      "needsSeparateWeapon": true,
+      "separateEquipment": [
+        "shield-left",
+        "baton-right"
+      ],
+      "specialVFXRequired": [
+        "enemy-vfx:shield-impact"
+      ],
+      "implementationStatus": "not-started",
+      "referenceStatus": "accepted-with-construction-notes",
+      "reviewNotes": [
+        "Initial BACK panel reversed equipment sides; correction fixes shield anatomical left and baton right.",
+        "Shield inner bracket and rear battery must follow dedicated detail/back-three-quarter panels; corrected rear still simplifies these details. Do not copy a shield front face onto its inner surface."
+      ],
+      "constituents": [],
+      "sourceFile": "/Users/ash/.codex/generated_images/01a0e05e-dd3f-7203-9bd3-bf0c3873146d/exec-49f6e378-b4eb-440c-81ac-ccc817099263.png",
+      "sha256": "136b3dff3ede8626bb20ca7c587e65f03d569b79a8c8930ef012d3b21f47dd60",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 2198156
+    },
+    {
+      "id": "repair-drone",
+      "type": "character",
+      "role": "fragile formation repair support",
+      "gameplayPurpose": "fragile formation repair support",
+      "reference": "characters/05_repair-drone_character-sheet.png",
+      "styleReference": "characters/01_vanguard_character-sheet.png",
+      "productionPriority": 5,
+      "approximateRelativeScale": {
+        "vanguardHeightMultiplier": 0.5,
+        "status": "proposed; not measured",
+        "basis": "standing neutral body height, drone body span for repair-drone"
+      },
+      "complexityTarget": "moderate articulated mechanical character",
+      "animated": true,
+      "needsSeparateWeapon": false,
+      "separateEquipment": [],
+      "specialVFXRequired": [
+        "enemy-vfx:repair-link"
+      ],
+      "implementationStatus": "not-started",
+      "referenceStatus": "accepted-with-construction-notes",
+      "reviewNotes": [
+        "Clear non-humanoid twin-thruster form and claw articulation.",
+        "Illustrative repair-target vignette shows ivory/navy armour; gameplay contract overrides it: enemy drone repairs enemy allies only. Action beam is VFX, not rigid geometry."
+      ],
+      "constituents": [],
+      "sourceFile": "/Users/ash/.codex/generated_images/01a0e05e-dd3f-7203-9bd3-bf0c3873146d/exec-2dc3a28d-7a8f-42f1-8910-f676fe25db62.png",
+      "sha256": "0127ebaec125d206a07d5e5b7d03abe307e85cc89f185e258a1651a33d890cc6",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 2149618
+    },
+    {
+      "id": "propulsion-hunter",
+      "type": "character",
+      "role": "optional mobility specialist",
+      "gameplayPurpose": "optional mobility specialist",
+      "reference": "characters/06_propulsion-hunter_character-sheet.png",
+      "styleReference": "characters/01_vanguard_character-sheet.png",
+      "productionPriority": 6,
+      "approximateRelativeScale": {
+        "vanguardHeightMultiplier": 1.05,
+        "status": "proposed; not measured",
+        "basis": "standing neutral body height, drone body span for repair-drone"
+      },
+      "complexityTarget": "moderate articulated mechanical character",
+      "animated": true,
+      "needsSeparateWeapon": false,
+      "separateEquipment": [],
+      "specialVFXRequired": [
+        "enemy-vfx:hunter-boost"
+      ],
+      "implementationStatus": "not-started",
+      "referenceStatus": "accepted-with-construction-notes",
+      "reviewNotes": [
+        "Distinct paired back thrusters, long legs and forearm blades. Minor blade visibility varies with pose/occlusion; build a symmetric pair from neutral and detail views."
+      ],
+      "constituents": [],
+      "sourceFile": "/Users/ash/.codex/generated_images/01a0e05e-dd3f-7203-9bd3-bf0c3873146d/exec-f222af67-f31b-44e1-87c8-a00bf3f7a689.png",
+      "sha256": "245371946cad18f7e59e2710fcffc2024d9852f20a71b4b718dc8de9a9bbb3d5",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 2440198
+    },
+    {
+      "id": "factory-enforcer",
+      "type": "character",
+      "role": "culminating component-based boss",
+      "gameplayPurpose": "culminating component-based boss",
+      "reference": "characters/07_factory-enforcer_character-sheet.png",
+      "styleReference": "characters/01_vanguard_character-sheet.png",
+      "productionPriority": 7,
+      "approximateRelativeScale": {
+        "vanguardHeightMultiplier": 2.5,
+        "status": "proposed; not measured",
+        "basis": "standing neutral body height, drone body span for repair-drone"
+      },
+      "complexityTarget": "boss: distinct large subassemblies, bounded articulation",
+      "animated": true,
+      "needsSeparateWeapon": true,
+      "separateEquipment": [
+        "enforcer-machinery:shield",
+        "enforcer-machinery:pile-driver"
+      ],
+      "specialVFXRequired": [
+        "enemy-vfx:boss-warning",
+        "enemy-vfx:armour-break"
+      ],
+      "implementationStatus": "not-started",
+      "referenceStatus": "accepted-with-construction-notes",
+      "reviewNotes": [
+        "Distinct boss mass with consistent left shield/right ram, rear reactor and separate joints. Small surface seams and guide-rail details vary; equipment board supplies construction authority."
+      ],
+      "constituents": [],
+      "sourceFile": "/Users/ash/.codex/generated_images/01a0e05e-dd3f-7203-9bd3-bf0c3873146d/exec-07115164-e0d1-4ca0-b826-6344ce229fb7.png",
+      "sha256": "31a116dc94bc30a296da96dc3519bb7ed809857ef26425d8c5b6c64a4c1fe3bf",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 2533181
+    },
+    {
+      "id": "vanguard-spear",
+      "type": "weapon",
+      "role": "Vanguard detachable lance construction",
+      "gameplayPurpose": "Vanguard detachable lance construction",
+      "reference": "weapons/01_vanguard-spear.png",
+      "styleReference": "characters/01_vanguard_character-sheet.png",
+      "productionPriority": 8,
+      "approximateRelativeScale": "Approx 1.2–1.35x Vanguard full height; calibrate to original grip and reference, not printed claim.",
+      "complexityTarget": "modular simple-to-moderate geometry, reduced unseen detail",
+      "animated": true,
+      "needsSeparateWeapon": false,
+      "separateEquipment": [],
+      "specialVFXRequired": [],
+      "implementationStatus": "not-started",
+      "referenceStatus": "accepted-with-construction-notes",
+      "reviewNotes": [
+        "Shaft, collars, ivory/navy blade and amber insert match the anchor's vocabulary. Side profile is slightly three-quarter; infer cross-section explicitly. Printed length claim is illustrative, not a measurement."
+      ],
+      "constituents": [],
+      "sourceFile": "/Users/ash/.codex/generated_images/01a0e05e-dd3f-7203-9bd3-bf0c3873146d/exec-754db7f7-cd5f-41c1-847a-480686c90b18.png",
+      "sha256": "c28187e253911e29cb9ffad0319c72a35ccc6929909c48304516b2bee81b2ca6",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 1658257
+    },
+    {
+      "id": "gunner-carbine",
+      "type": "weapon",
+      "role": "readable ranged weapon and charging tell",
+      "gameplayPurpose": "readable ranged weapon and charging tell",
+      "reference": "weapons/02_gunner-carbine.png",
+      "styleReference": "characters/01_vanguard_character-sheet.png",
+      "productionPriority": 9,
+      "approximateRelativeScale": "Approx 0.45–0.6x Vanguard height in length.",
+      "complexityTarget": "modular simple-to-moderate geometry, reduced unseen detail",
+      "animated": true,
+      "needsSeparateWeapon": false,
+      "separateEquipment": [],
+      "specialVFXRequired": [],
+      "implementationStatus": "not-started",
+      "referenceStatus": "accepted-with-construction-notes",
+      "reviewNotes": [
+        "Dedicated weapon matches character silhouette. Front-grip inset differs from main side profile: preserve the main silhouette and author one actual support grip/socket without duplicating both designs."
+      ],
+      "constituents": [],
+      "sourceFile": "/Users/ash/.codex/generated_images/01a0e05e-dd3f-7203-9bd3-bf0c3873146d/exec-6383a04e-d4cc-4347-8bef-747d2414cc2d.png",
+      "sha256": "05b6c7c85a93e4e00500c17bb103779603a838c8a843f50c57f6596e90488ea2",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 1966790
+    },
+    {
+      "id": "enforcer-machinery",
+      "type": "weapon",
+      "role": "boss detachable shield ram and power systems",
+      "gameplayPurpose": "boss detachable shield ram and power systems",
+      "reference": "weapons/03_enforcer-machinery.png",
+      "styleReference": "characters/01_vanguard_character-sheet.png",
+      "productionPriority": 10,
+      "approximateRelativeScale": "Shield and ram scaled to a 2.5x-height boss; each is a separate attachment.",
+      "complexityTarget": "modular simple-to-moderate geometry, reduced unseen detail",
+      "animated": true,
+      "needsSeparateWeapon": false,
+      "separateEquipment": [],
+      "specialVFXRequired": [],
+      "implementationStatus": "not-started",
+      "referenceStatus": "accepted-with-construction-notes",
+      "reviewNotes": [
+        "Front/back equipment detail and ram extension are useful. A panel labeled BACK 3/4 still presents shield face; label is not authoritative. Use true BACK panel for inner construction. Rear reactor board includes torso context; detach only the named unit."
+      ],
+      "constituents": [
+        {
+          "id": "enforcer-machinery:shield",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "enforcer-machinery:pile-driver",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "enforcer-machinery:reactor",
+          "implementationStatus": "not-started"
+        }
+      ],
+      "sourceFile": "/Users/ash/.codex/generated_images/01a0e05e-dd3f-7203-9bd3-bf0c3873146d/exec-d3efec85-9fc7-4b50-a18c-0bd7f258490e.png",
+      "sha256": "4ac72678d858cf8e6ce2bd81041975b2450d96ad3be01f0bff9b4b3b54aa5490",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 2197981
+    },
+    {
+      "id": "industrial-district",
+      "type": "environment",
+      "role": "modular occupied district kit",
+      "gameplayPurpose": "modular occupied district kit",
+      "reference": "environment/01_industrial-district-kit.png",
+      "styleReference": "characters/01_vanguard_character-sheet.png",
+      "productionPriority": 11,
+      "approximateRelativeScale": "Proposed 2m module planning grid; all dimensions require normalization and traversal checks.",
+      "complexityTarget": "modular simple-to-moderate geometry, reduced unseen detail",
+      "animated": false,
+      "needsSeparateWeapon": false,
+      "separateEquipment": [],
+      "specialVFXRequired": [],
+      "implementationStatus": "not-started",
+      "referenceStatus": "accepted-with-construction-notes",
+      "reviewNotes": [
+        "Individual modules and connection views are readable. Printed dimensions are inconsistent headings versus diagrams; future spec must normalize a 2m planning grid and test traversability. Image is not CAD."
+      ],
+      "constituents": [
+        {
+          "id": "industrial-district:floor-tile",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "industrial-district:road-strip",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "industrial-district:low-wall",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "industrial-district:factory-wall",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "industrial-district:raised-walkway",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "industrial-district:stairs",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "industrial-district:cargo-container",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "industrial-district:gate-frame",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "industrial-district:pipe-elbow",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "industrial-district:power-cabinet",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "industrial-district:work-lamp",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "industrial-district:damaged-wall",
+          "implementationStatus": "not-started"
+        }
+      ],
+      "sourceFile": "/Users/ash/.codex/generated_images/01a0e05e-dd3f-7203-9bd3-bf0c3873146d/exec-23896359-9924-404f-baae-00d845728a1d.png",
+      "sha256": "e824275dc4b57558069b34c83941be007da349d2f1ac6a6f0263d6877efbe7bd",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 2182120
+    },
+    {
+      "id": "resistance-outpost",
+      "type": "environment",
+      "role": "warm preparation extraction space",
+      "gameplayPurpose": "warm preparation extraction space",
+      "reference": "environment/02_resistance-outpost-kit.png",
+      "styleReference": "characters/01_vanguard_character-sheet.png",
+      "productionPriority": 12,
+      "approximateRelativeScale": "Human/exosuit service scale; empty cradle clears full Vanguard and equipment.",
+      "complexityTarget": "modular simple-to-moderate geometry, reduced unseen detail",
+      "animated": false,
+      "needsSeparateWeapon": false,
+      "separateEquipment": [],
+      "specialVFXRequired": [],
+      "implementationStatus": "not-started",
+      "referenceStatus": "accepted-with-construction-notes",
+      "reviewNotes": [
+        "Warm modular cradle, tools, supply and greenery family. Fine tools/plant leaves are optional detail; preserve major forms. Small variant views need geometric reconciliation during spec."
+      ],
+      "constituents": [
+        {
+          "id": "resistance-outpost:maintenance-cradle",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "resistance-outpost:workbench",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "resistance-outpost:tripod-light",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "resistance-outpost:supply-chest",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "resistance-outpost:repair-trolley",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "resistance-outpost:antenna-terminal",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "resistance-outpost:scrap-barricade",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "resistance-outpost:planter",
+          "implementationStatus": "not-started"
+        }
+      ],
+      "sourceFile": "/Users/ash/.codex/generated_images/01a0e05e-dd3f-7203-9bd3-bf0c3873146d/exec-afa076d3-890e-4ab4-9d1e-30b31ae7bbf6.png",
+      "sha256": "7ba5e9ce3c6326aad72aaa74314eefa8543440f9d9776c9049e1881c5defbf54",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 2288812
+    },
+    {
+      "id": "machine-props",
+      "type": "prop",
+      "role": "objectives and machine infrastructure",
+      "gameplayPurpose": "objectives and machine infrastructure",
+      "reference": "props/01_machine-props.png",
+      "styleReference": "characters/01_vanguard_character-sheet.png",
+      "productionPriority": 13,
+      "approximateRelativeScale": "Approx 0.3–1.5x Vanguard height depending on module.",
+      "complexityTarget": "modular simple-to-moderate geometry, reduced unseen detail",
+      "animated": true,
+      "needsSeparateWeapon": false,
+      "separateEquipment": [],
+      "specialVFXRequired": [],
+      "implementationStatus": "not-started",
+      "referenceStatus": "accepted-with-construction-notes",
+      "reviewNotes": [
+        "Eight distinct machine/objective assets. Some labels describe perspective views as front/side; establish orthographic cameras in the future viewer. Do not build the entire board as one mesh."
+      ],
+      "constituents": [
+        {
+          "id": "machine-props:relay-pylon",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "machine-props:generator",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "machine-props:charging-rack",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "machine-props:conveyor",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "machine-props:vent",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "machine-props:control-console",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "machine-props:assembly-clamp",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "machine-props:pipe-junction",
+          "implementationStatus": "not-started"
+        }
+      ],
+      "sourceFile": "/Users/ash/.codex/generated_images/01a0e05e-dd3f-7203-9bd3-bf0c3873146d/exec-c94ec0fc-81d8-48c1-a0d3-aea4d5df0d0e.png",
+      "sha256": "6bf1c24ef87ea9ed68250cfec9c79c44234bb0cd7b78969f3e0076a0fc1bbd5a",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 2029276
+    },
+    {
+      "id": "cover-destructibles",
+      "type": "prop",
+      "role": "cover readable breakage and collision",
+      "gameplayPurpose": "cover readable breakage and collision",
+      "reference": "props/02_cover-and-destructibles.png",
+      "styleReference": "characters/01_vanguard_character-sheet.png",
+      "productionPriority": 14,
+      "approximateRelativeScale": "Low cover approx 0.4x hero height; tall crate approx 0.9x; reconcile all props in world scale.",
+      "complexityTarget": "modular simple-to-moderate geometry, reduced unseen detail",
+      "animated": true,
+      "needsSeparateWeapon": false,
+      "separateEquipment": [],
+      "specialVFXRequired": [],
+      "implementationStatus": "not-started",
+      "referenceStatus": "accepted-with-construction-notes",
+      "reviewNotes": [
+        "Intact/broken pairs clearly communicate large pieces. Foundation/frame collision persists only if explicitly designed; debris is pooled and bounded. Markings and individual fragments vary illustratively."
+      ],
+      "constituents": [
+        {
+          "id": "cover-destructibles:concrete-barrier",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "cover-destructibles:supply-crate",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "cover-destructibles:barrel",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "cover-destructibles:sheet-fence",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "cover-destructibles:scrap-stack",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "cover-destructibles:power-cell-rack",
+          "implementationStatus": "not-started"
+        }
+      ],
+      "sourceFile": "/Users/ash/.codex/generated_images/01a0e05e-dd3f-7203-9bd3-bf0c3873146d/exec-a56025c5-ea4c-460e-8c2f-a60b36e97493.png",
+      "sha256": "ea62d6d8ab0fc702ea52ff2c0b7a79beab873b408a28f32d59cb0c077cab65bf",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 2043845
+    },
+    {
+      "id": "upgrades",
+      "type": "upgrade",
+      "role": "four physical reward module families",
+      "gameplayPurpose": "four physical reward module families",
+      "reference": "upgrades/01_first-playable-upgrades.png",
+      "styleReference": "characters/01_vanguard_character-sheet.png",
+      "productionPriority": 15,
+      "approximateRelativeScale": "Small forearm/shoulder units approx 0.12–0.25x hero height; backpack approx 0.35x.",
+      "complexityTarget": "modular simple-to-moderate geometry, reduced unseen detail",
+      "animated": false,
+      "needsSeparateWeapon": false,
+      "separateEquipment": [],
+      "specialVFXRequired": [],
+      "implementationStatus": "not-started",
+      "referenceStatus": "accepted-with-construction-notes",
+      "reviewNotes": [
+        "Four readable mountable module families. Attachment examples are placement studies, not a redesign of Vanguard. Targeting housing resembles a small head; keep compact to avoid a second-face silhouette. Match mount clearances during rig review."
+      ],
+      "constituents": [
+        {
+          "id": "upgrades:propulsion-module",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "upgrades:defensive-capacitor",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "upgrades:lance-coil",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "upgrades:targeting-module",
+          "implementationStatus": "not-started"
+        }
+      ],
+      "sourceFile": "/Users/ash/.codex/generated_images/01a0e05e-dd3f-7203-9bd3-bf0c3873146d/exec-ba68ce07-b7b1-4f69-9ffd-17a4dfb04592.png",
+      "sha256": "4a6b9ae6e545a9378ddb2e4070d4f7457da0fc7f240f49f22cef6b070d460e0e",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 1910806
+    },
+    {
+      "id": "vanguard-vfx",
+      "type": "vfx",
+      "role": "player attack defence and motion visual grammar",
+      "gameplayPurpose": "player attack defence and motion visual grammar",
+      "reference": "vfx/01_vanguard-combat-vfx.png",
+      "styleReference": "characters/01_vanguard_character-sheet.png",
+      "productionPriority": 16,
+      "approximateRelativeScale": "Socket/contact-relative; thrust/sweep follows actual reach, finisher expands beyond body.",
+      "complexityTarget": "pooled procedural strips flashes jets and bounded debris",
+      "animated": true,
+      "needsSeparateWeapon": false,
+      "separateEquipment": [],
+      "specialVFXRequired": [
+        "thrust",
+        "sweep",
+        "hit-sparks",
+        "armour-impact",
+        "dodge-jets",
+        "counter-flash",
+        "finisher"
+      ],
+      "implementationStatus": "not-started",
+      "referenceStatus": "accepted-with-construction-notes",
+      "reviewNotes": [
+        "Seven readable time-sequence concepts. The finisher is deliberately broad; scale opacity/debris at gameplay distance and preserve danger telegraphs. Do not copy missing/foreshortened limbs from effect poses into models."
+      ],
+      "constituents": [
+        {
+          "id": "vanguard-vfx:thrust",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "vanguard-vfx:sweep",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "vanguard-vfx:hit-sparks",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "vanguard-vfx:armour-impact",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "vanguard-vfx:dodge-jets",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "vanguard-vfx:counter-flash",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "vanguard-vfx:finisher",
+          "implementationStatus": "not-started"
+        }
+      ],
+      "sourceFile": "/Users/ash/.codex/generated_images/01a0e05e-dd3f-7203-9bd3-bf0c3873146d/exec-85819c24-1661-469f-a915-0ba6913aeca4.png",
+      "sha256": "3c31155eee46054a73ca498d89522f9350587fcde9ef183810d6c8257a9a57e4",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 2016249
+    },
+    {
+      "id": "enemy-vfx",
+      "type": "vfx",
+      "role": "enemy warning readability and impacts",
+      "gameplayPurpose": "enemy warning readability and impacts",
+      "reference": "vfx/02_enemy-combat-vfx.png",
+      "styleReference": "characters/01_vanguard_character-sheet.png",
+      "productionPriority": 17,
+      "approximateRelativeScale": "Telegraph matches simulation area; do not infer radius from illustration.",
+      "complexityTarget": "pooled procedural strips flashes jets and bounded debris",
+      "animated": true,
+      "needsSeparateWeapon": false,
+      "separateEquipment": [],
+      "specialVFXRequired": [
+        "ranged-warning",
+        "shield-impact",
+        "repair-link",
+        "hunter-boost",
+        "boss-warning",
+        "damage-sparks",
+        "armour-break"
+      ],
+      "implementationStatus": "not-started",
+      "referenceStatus": "accepted-with-construction-notes",
+      "reviewNotes": [
+        "Seven warning/impact families readable by shape as well as hue. Neutral robots on this board are effect scale proxies, not replacement character designs. Repair ring/cross graphics are technical UI marks, not spiritual effects."
+      ],
+      "constituents": [
+        {
+          "id": "enemy-vfx:ranged-warning",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "enemy-vfx:shield-impact",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "enemy-vfx:repair-link",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "enemy-vfx:hunter-boost",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "enemy-vfx:boss-warning",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "enemy-vfx:damage-sparks",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "enemy-vfx:armour-break",
+          "implementationStatus": "not-started"
+        }
+      ],
+      "sourceFile": "/Users/ash/.codex/generated_images/01a0e05e-dd3f-7203-9bd3-bf0c3873146d/exec-55f7a511-0e89-48be-abfe-87afa3c6e418.png",
+      "sha256": "112beb49c3fd05c8cc6d85586a2c0624375560166f044d828e9d90b677073b8a",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 2012744
+    },
+    {
+      "id": "hud",
+      "type": "ui",
+      "role": "restrained combat HUD and upgrade choice reference",
+      "gameplayPurpose": "restrained combat HUD and upgrade choice reference",
+      "reference": "ui/01_first-playable-hud.png",
+      "styleReference": "characters/01_vanguard_character-sheet.png",
+      "productionPriority": 18,
+      "approximateRelativeScale": "Viewport-relative; responsive layout must be tested, no fixed physical scale.",
+      "complexityTarget": "restrained responsive overlay and three-card choice",
+      "animated": false,
+      "needsSeparateWeapon": false,
+      "separateEquipment": [],
+      "specialVFXRequired": [],
+      "implementationStatus": "not-started",
+      "referenceStatus": "accepted-with-construction-notes",
+      "reviewNotes": [
+        "Corrected draft replaces medieval scene, generic boss, Q/E labels and percentage-only choices with industrial setting and behavioral upgrade descriptions.",
+        "UI scene still mirrors Enforcer equipment relative to construction sheet and uses illustrative module icons. UI is layout-only: character/equipment sheets govern anatomical sides and upgrade board governs module shapes. Remaining numerical values are placeholders."
+      ],
+      "constituents": [
+        {
+          "id": "hud:health",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "hud:guard",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "hud:overdrive",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "hud:abilities",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "hud:boss-health-stability",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "hud:lock-bracket",
+          "implementationStatus": "not-started"
+        },
+        {
+          "id": "hud:upgrade-choice",
+          "implementationStatus": "not-started"
+        }
+      ],
+      "sourceFile": "/Users/ash/.codex/generated_images/01a0e05e-dd3f-7203-9bd3-bf0c3873146d/exec-25e7463a-3ad2-49b3-8a92-a638e0d94826.png",
+      "sha256": "e015bcd55b8ad12bd0e11e6b8d17767817c332459a8aef6f6b8f9c44951be6d4",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 2344983
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { applyRoll } from './hero/anims/locomotion.js';
-import { createRig, HERO_SCALE, POSE_SIZE, P } from './hero/rig.js';
+import { createRig, HERO_SCALE, POSE_SIZE, P, CH } from './hero/rig.js';
 import { createProceduralSuit } from './hero/procedural-suit.js';
 import { createHeroModel } from './hero/model.js';
 import { HERO } from './heroes/index.js';   // also merges the hero's rig proportions into DIM before the rig below is built
@@ -215,6 +215,58 @@ $('#pause').addEventListener('click', () => { playing = false; status('Motion pa
 $('#timeline').addEventListener('input', (e) => { playing = false; t = Number(e.target.value) / 100; $('#time').value = `${e.target.value}%`; });
 $('#action').addEventListener('change', () => { t = 0; $('#timeline').value = '0'; $('#time').value = '0%'; });
 
+
+// ---- pose editor: freeze the current frame of any action, tweak every rig channel with sliders, copy the result as a P({...}) spec
+// to paste into the clip (anims/attacks.js, anims/locomotion.js, rig.js STANCE). Angles are shown in degrees.
+const D2R = Math.PI / 180;
+const FIELDS = [   // [spec field, first channel, labels..., (kind)] ; kind: m = metres, d = degrees, g = grip/blend
+  ['hips', CH.hips, [['x', 'm', -0.5, 0.5], ['y', 'm', 0.4, 1.2], ['z', 'm', -0.6, 0.6]]],
+  ['hipsR', CH.hipsR, [['pitch', 'd', -60, 60], ['yaw', 'd', -90, 90], ['roll', 'd', -40, 40]]],
+  ['spine', CH.spine, [['pitch', 'd', -40, 40], ['yaw', 'd', -60, 60], ['roll', 'd', -30, 30]]],
+  ['chest', CH.chest, [['pitch', 'd', -40, 40], ['yaw', 'd', -60, 60], ['roll', 'd', -30, 30]]],
+  ['head', CH.head, [['pitch', 'd', -45, 45], ['yaw', 'd', -80, 80], ['roll', 'd', -30, 30]]],
+  ['footL', CH.footL, [['x', 'm', -0.7, 0.7], ['y', 'm', 0, 0.8], ['z', 'm', -1, 1], ['pitch', 'd', -60, 80], ['yaw', 'd', -90, 90]]],
+  ['footR', CH.footR, [['x', 'm', -0.7, 0.7], ['y', 'm', 0, 0.8], ['z', 'm', -1, 1], ['pitch', 'd', -60, 80], ['yaw', 'd', -90, 90]]],
+  ['spear', CH.spear, [['x', 'm', -0.8, 0.8], ['y', 'm', 0, 2], ['z', 'm', -0.8, 0.8], ['yaw', 'd', -180, 180], ['elev', 'd', -180, 180], ['roll', 'd', -180, 180]]],
+  ['gripR', CH.gripR, [['slide', 'g', -0.3, 1]]], ['gripL', CH.gripL, [['slide', 'g', -0.3, 1]]], ['lfree', CH.lfree, [['free arm', 'g', 0, 1]]],
+  ['armL', CH.armL, [['sh rx', 'd', -180, 180], ['sh ry', 'd', -180, 180], ['sh rz', 'd', -180, 180], ['elbow', 'd', 0, 150]]],
+];
+let edit = null;                                   // Float32Array while editing, else null
+const pe = $('#pose-editor');
+for (const [field, ch, items] of FIELDS) {
+  const g = document.createElement('div'); g.className = 'pgroup'; g.innerHTML = `<b>${field}</b>`;
+  items.forEach(([label, kind, lo, hi], i) => {
+    const step = kind === 'd' ? 1 : 0.005, l = document.createElement('label');
+    l.innerHTML = `<span>${label}</span><input type="range" min="${lo}" max="${hi}" step="${step}" data-ch="${ch + i}" data-kind="${kind}"><output></output>`;
+    g.append(l);
+  });
+  pe.append(g);
+}
+const sliders = [...pe.querySelectorAll('input[type=range]')];
+function syncSliders() {
+  for (const el of sliders) { const v = edit[el.dataset.ch] / (el.dataset.kind === 'd' ? D2R : 1); el.value = v; el.nextElementSibling.textContent = (+v).toFixed(el.dataset.kind === 'd' ? 0 : 2); }
+}
+pe.addEventListener('input', (e) => {
+  const el = e.target; if (!edit || el.dataset.ch === undefined) return;
+  const v = Number(el.value); edit[el.dataset.ch] = v * (el.dataset.kind === 'd' ? D2R : 1);
+  el.nextElementSibling.textContent = v.toFixed(el.dataset.kind === 'd' ? 0 : 2);
+});
+function poseSpec(p) {
+  const r = (v, d) => +(v / (d ? D2R : 1)).toFixed(d ? 0 : 3), out = [];
+  for (const [field, ch, items] of FIELDS) { const v = items.map(([, kind], i) => r(p[ch + i], kind === 'd')); out.push(`${field}: ${v.length === 1 ? v[0] : `[${v.join(', ')}]`}`); }
+  return `P({ ${out.join(', ')} })`;
+}
+$('#edit-on').addEventListener('click', () => {
+  playing = false; edit = new Float32Array(pose); syncSliders(); pe.hidden = false; $('#edit-on').hidden = true; $('#edit-off').hidden = false; $('#edit-copy').hidden = false;
+  status('Pose frozen — drag the sliders, then Copy as code.');
+});
+$('#edit-off').addEventListener('click', () => { edit = null; pe.hidden = true; $('#edit-on').hidden = false; $('#edit-off').hidden = true; $('#edit-copy').hidden = true; status('Back to the clip.'); });
+$('#edit-copy').addEventListener('click', async () => {
+  const code = poseSpec(edit); try { await navigator.clipboard.writeText(code); status('Copied pose spec to the clipboard.'); } catch { status(code); }
+  console.log(code);
+});
+window.__studioPose = { spec: () => edit && poseSpec(edit), set: (ch, v) => { if (edit) edit[ch] = v; } };
+
 function resize() {
   const w = canvas.clientWidth, h = canvas.clientHeight;
   renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
@@ -227,7 +279,8 @@ function frame(now) {
     t = (t + dt * ($('#action').value === 'idle' || $('#action').value === 'run' ? 0.28 : 0.42)) % 1;
     $('#timeline').value = String(Math.round(t * 100)); $('#time').value = `${Math.round(t * 100)}%`;
   }
-  if($('#action').value==='showcase')pose.set(showcase);else sampleAnim($('#action').value, $('#action').value === 'run' ? t * Math.PI * 2 : t, $('#action').value === 'run' ? 1 : 0.65, pose);
+  if (edit) pose.set(edit);
+  else if($('#action').value==='showcase')pose.set(showcase);else sampleAnim($('#action').value, $('#action').value === 'run' ? t * Math.PI * 2 : t, $('#action').value === 'run' ? 1 : 0.65, pose);
   rig.root.scale.setScalar(1);
   rig.apply(pose, root, 0); rig.root.scale.setScalar(HERO_SCALE);
   applyRoll(rig, {id: $('#action').value, t});

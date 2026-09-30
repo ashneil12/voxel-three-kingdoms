@@ -1,0 +1,13 @@
+{
+  "ok": true,
+  "referenceImages": 18,
+  "namedIdsIncludingConstituents": 80,
+  "scope": "file integrity and metadata only; visual review is separate",
+  "errors": [],
+  "date": "2026-09-30",
+  "reviewDocument": "ART-REVIEW.md",
+  "runtimeValidation": "not-performed-reference-only-task",
+  "skillValidation": "passed-frontmatter-and-structure",
+  "originalTrackedFilesModified": false,
+  "originalAnchorMatchesSource": true
+}
