@@ -114,8 +114,10 @@ for jid, (jparent, piv) in joints.items():
     comps.append(c)
 jl = {jid: (f"joint_{jid}" if jid != "root" else "root") for jid in joints}
 LEVEL = lambda pid: "micro" if re.search(r"light|gem|thumb|collar|cap$|taper|tip|trim|wrist|link", pid) else ("macro" if re.search(r"core|pelvis|chest_bar|chest_stem$|head_core|shaft", pid) else "meso")
-for wb in M.world_boxes(skip_spear=False):
+for bi, wb in enumerate(M.world_boxes(skip_spear=False)):
     x0, y0, z0, x1, y1, z1 = wb["box"]
+    g = 0.002 * bi                                    # later boxes win the overlap (as in the game's grid): grow by index so coplanar faces never z-fight
+    x0, y0, z0, x1, y1, z1 = x0 - g, y0 - g, z0 - g, x1 + g, y1 + g, z1 + g
     cx, cy, cz = (x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2
     piv = joints[wb["joint"]][1]
     center_local = (cx - piv[0], cy - piv[1], cz - piv[2])

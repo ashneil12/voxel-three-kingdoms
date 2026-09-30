@@ -270,6 +270,7 @@ $('#edit-copy').addEventListener('click', async () => {
   const code = poseSpec(edit); try { await navigator.clipboard.writeText(code); status('Copied pose spec to the clipboard.'); } catch { status(code); }
   console.log(code);
 });
+window.__studio = { rig, get model() { return model; }, THREE };
 window.__studioPose = { spec: () => edit && poseSpec(edit), set: (ch, v) => { if (edit) edit[ch] = v; } };
 
 // One studio frame of an action: pose, rig, dive-roll pitch, then the secondary motion. `tpose` is a design check against
