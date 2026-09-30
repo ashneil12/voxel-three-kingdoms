@@ -117,7 +117,7 @@ def main():
     side_grid = cell_grid(HERE / "ref/side_std.png", ox=395)
     side = {}
     for (i, j), c in side_grid.items():
-        z = -i - 1
+        z = -i - 1 - int(os.environ.get('SIDESHIFT', '2'))      # measured: the authored model sits ~2 voxels behind the sheet's side view
         if -14 <= z <= 16:
             side[(z, j)] = classify(c)
     for k in list(side):
@@ -136,20 +136,43 @@ def main():
         if x1 <= 0:                      # right-hand twins are mirrors of the left parts
             continue
         boxes.append((pt, (max(0, x0), y0, z0, x1, y1, z1)))
-    ENV = 0
+    ENV = int(os.environ.get('ENV', '0'))
     env = set()
+    EX, EY, EZ = (int(v) for v in os.environ.get('ENVXYZ', '1,1,1').split(','))
     for pt, (x0, y0, z0, x1, y1, z1) in boxes:
-        for x in range(int(np.floor(x0)) - ENV, int(np.ceil(x1)) + ENV):
+        for x in range(int(np.floor(x0)) - EX, int(np.ceil(x1)) + EX):
             if x < 0:
                 continue
-            for y in range(int(np.floor(y0)) - ENV, int(np.ceil(y1)) + ENV):
-                for z in range(int(np.floor(z0)) - ENV, int(np.ceil(z1)) + ENV):
+            for y in range(int(np.floor(y0)) - EY, int(np.ceil(y1)) + EY):
+                for z in range(int(np.floor(z0)) - EZ, int(np.ceil(z1)) + EZ):
                     env.add((x, y, z))
 
-    occ = set()
-    for (x, y, z) in env:
-        if fg(front, (x, y)) and fg(back, (x, y)) and fg(side, (z, y)):
-            occ.add((x, y, z))
+    hand_vox = set()
+    for pt, (x0, y0, z0, x1, y1, z1) in boxes:
+        for x in range(int(np.floor(x0)), int(np.ceil(x1))):
+            for y in range(int(np.floor(y0)), int(np.ceil(y1))):
+                for z in range(int(np.floor(z0)), int(np.ceil(z1))):
+                    if x >= 0:
+                        hand_vox.add((x, y, z))
+    passes = lambda v: fg(front, (v[0], v[1])) and fg(back, (v[0], v[1])) and fg(side, (v[2], v[1]))
+    hand_accent = {(x, y, z) for pt, (x0, y0, z0, x1, y1, z1) in boxes if pt['color'] in ('O', 'G') for x in range(int(np.floor(x0)), int(np.ceil(x1))) for y in range(int(np.floor(y0)), int(np.ceil(y1))) for z in range(int(np.floor(z0)), int(np.ceil(z1))) if x >= 0}
+    occ = {v for v in hand_vox if passes(v) or v in hand_accent}       # authored lights/trim are never carved away
+    # envelope voxels beyond the authored boxes are only added where the sheet's silhouette needs them (a cell no authored
+    # voxel covers in the front/back or side view); everywhere else they would just bury thin authored details
+    cov_f = {(x, y) for (x, y, z) in occ}
+    # silhouette-driven extras: ONE voxel per front-view cell no authored voxel covers, at the depth nearest the authored
+    # geometry of that row (never a whole slab, which would bury thin authored details behind it)
+    rows_z = {}
+    for (x, y, z) in hand_vox:
+        rows_z.setdefault(y, []).append((x, z))
+    cand = {}
+    for v in env - hand_vox:
+        if passes(v) and (v[0], v[1]) not in cov_f:
+            cand.setdefault((v[0], v[1]), []).append(v[2])
+    for (x, y), zs in cand.items():
+        near = [(abs(x - hx) * 2 + 0, hz) for hx, hz in rows_z.get(y, []) if abs(x - hx) <= 3]
+        zc = np.mean([hz for _, hz in near]) if near else 0
+        occ.add((x, y, min(zs, key=lambda z: abs(z - zc))))
 
     # ---- colour: hand-part colour by default; the sheet's own pixels override on the faces each view sees straight on
     def first_hit(direction):
@@ -164,11 +187,13 @@ def main():
         return hit
     vis = {"front": first_hit((2, +1)), "back": first_hit((2, -1)), "side": first_hit((0, +1))}
     hand_col = {}
+    hand_owner = {}
     for pt, (x0, y0, z0, x1, y1, z1) in sorted(boxes, key=lambda pb: -(pb[1][3] - pb[1][0]) * (pb[1][4] - pb[1][1]) * (pb[1][5] - pb[1][2])):
         for x in range(int(np.floor(x0)), int(np.ceil(x1))):
             for y in range(int(np.floor(y0)), int(np.ceil(y1))):
                 for z in range(int(np.floor(z0)), int(np.ceil(z1))):
                     hand_col[(x, y, z)] = pt["color"]           # small boxes are written last so they win
+                    hand_owner[(x, y, z)] = pt["id"]
     near = {}
     for cls in ("N", "O", "G"):
         base = [v for v, c in hand_col.items() if c == cls]
@@ -179,6 +204,15 @@ def main():
                     for dz in range(-2, 3):
                         nz.add((x + dx, y + dy, z + dz))
         near[cls] = nz
+    def hand_near(v):
+        if v in hand_col:
+            return hand_col[v]
+        for r in (1, 2):
+            cand = [hand_col[(v[0] + dx, v[1] + dy, v[2] + dz)] for dx in range(-r, r + 1) for dy in range(-r, r + 1) for dz in range(-r, r + 1)
+                    if (v[0] + dx, v[1] + dy, v[2] + dz) in hand_col and hand_col[(v[0] + dx, v[1] + dy, v[2] + dz)] in ("I", "K", "D", "N")]
+            if cand:
+                return max(set(cand), key=cand.count)
+        return "K"
     def dark_region(m, x, y):
         nb = [m.get((x + dx, y + dy)) for dx in (-1, 0, 1) for dy in (-1, 0, 1) if (dx or dy)]
         return sum(1 for n in nb if n in ("K", "D")) >= 3
@@ -196,7 +230,7 @@ def main():
     col = {}
     for v in occ:
         x, y, z = v
-        hand = hand_col.get(v, "K")
+        hand = hand_near(v)
         c = None
         if v in vis["front"]:
             c = take(front, (x, y), hand, v=v)
@@ -212,6 +246,22 @@ def main():
         for a, lo, hi in ((v[0] + .5, x0, x1), (v[1] + .5, y0, y1), (v[2] + .5, z0, z1)):
             d += max(lo - a, 0, a - hi) ** 2
         return d
+    # panel seams: where two different ivory plates meet, the outermost voxel of the thicker-than-3 plate becomes a dark line
+    seam = set()
+    if os.environ.get('SEAMS', '1') == '1':
+        ext = {}
+        for pt, (x0, y0, z0, x1, y1, z1) in boxes:
+            ext[pt['id']] = (x1 - x0, y1 - y0, z1 - z0)
+        for v in occ:
+            if col[v] != 'I':
+                continue
+            for a, d in ((0, 1), (1, 1), (2, 1), (0, -1), (1, -1), (2, -1)):
+                n = list(v); n[a] += d; n = tuple(n)
+                if n in occ and col.get(n) == 'I' and hand_owner.get(n) != hand_owner.get(v) and hand_owner.get(v) and hand_owner.get(n):
+                    if ext.get(hand_owner[v], (9, 9, 9))[a] >= 4 and (hand_owner[v] > hand_owner[n]):
+                        seam.add(v)
+        for v in seam:
+            col[v] = 'D'
     out = []
     for v in sorted(occ):
         best = min(boxes, key=lambda pb: (dist(pb[1], v), (pb[1][3] - pb[1][0]) * (pb[1][4] - pb[1][1]) * (pb[1][5] - pb[1][2])))
@@ -228,6 +278,10 @@ def main():
         pr = pid[:-1] + "R" if pid.endswith("_L") else pid
         mir.append([-x - 1, y, z, c, jr, pr])
     allv = out + mir
+    # coverage report: reference figure cells (front) that the model's silhouette misses / adds
+    cover = {(x, y) for (x, y, z) in occ}
+    ref_cells = {k for k in front if front[k] != 'bg'}
+    print('front silhouette: missing', len(ref_cells - cover), 'extra', len(cover - ref_cells), 'ref', len(ref_cells))
     Path(HERE / "vox").mkdir(exist_ok=True)
     json.dump(allv, open(HERE / "vox/vanguard_voxels.json", "w"))
     from collections import Counter

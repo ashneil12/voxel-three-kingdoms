@@ -236,25 +236,33 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 
-// ?sheet=<action>:<view>:<count> renders a contact sheet of engine frames across the action (for reviewing motion).
-if (qs.get('sheet')) {
-  const [act, cam = 'side', count = '8'] = qs.get('sheet').split(':'), N = Number(count), cols = Math.min(N, 4), rows = Math.ceil(N / cols);
-  const CW = 400, CH = 520, sheet = document.createElement('canvas');
+// ?sheet=<action>:<view>:<count> renders a contact sheet of engine frames across the action (for reviewing motion);
+// ?rows=idle,run,n1,...&view=angle&n=6 stacks several actions, one row each.
+if (qs.get('sheet') || qs.get('rows')) {
+  const rowsList = qs.get('rows') ? qs.get('rows').split(',') : [qs.get('sheet').split(':')[0]];
+  const cam = qs.get('view') || (qs.get('sheet') ? qs.get('sheet').split(':')[1] : 'side') || 'side';
+  const N = Number(qs.get('n') || (qs.get('sheet') ? qs.get('sheet').split(':')[2] : 8) || 8);
+  const cols = qs.get('rows') ? N : Math.min(N, 4), rows = qs.get('rows') ? rowsList.length : Math.ceil(N / cols);
+  const CW = Number(qs.get('cw') || 400), CH = Number(qs.get('ch') || 520), sheet = document.createElement('canvas');
   sheet.width = CW * cols; sheet.height = CH * rows;
   Object.assign(sheet.style, { position: 'fixed', inset: '0', zIndex: 99, width: '100vw', background: '#fff' });
   const ctx = sheet.getContext('2d');
   Promise.resolve(model.ready).then(() => {
-    [orbit.yaw, orbit.pitch, orbit.radius] = views[cam]; target.set(cam === 'detail' ? 0 : -.1, cam === 'detail' ? 1.48 : .95, 0); if (qs.get('ty')) target.y = Number(qs.get('ty')); if (qs.get('tx')) target.x = Number(qs.get('tx')); if (qs.get('r')) orbit.radius = Number(qs.get('r')); if (qs.get('yaw')) orbit.yaw = Number(qs.get('yaw')); updateCamera();
-    const prevW = canvas.clientWidth, prevH = canvas.clientHeight; renderer.setSize(CW, CH, false); camera.aspect = CW / CH; camera.updateProjectionMatrix();
-    for (let i = 0; i < N; i++) {
-      const tt = i / N;
-      sampleAnim(act, act === 'run' ? tt * Math.PI * 2 : tt, Number(qs.get('k') ?? 1), pose);
-      rig.root.scale.setScalar(1); rig.apply(pose, root, 0); rig.root.scale.setScalar(HERO_SCALE);
-      applyRoll(rig, { id: act, t: tt }); rig.root.updateMatrixWorld(true);
-      renderer.render(scene, camera);
-      ctx.drawImage(canvas, 0, 0, canvas.width, canvas.height, (i % cols) * CW, Math.floor(i / cols) * CH, CW, CH);
-      ctx.fillStyle = '#000'; ctx.font = '20px monospace'; ctx.fillText(`${act} ${tt.toFixed(2)}`, (i % cols) * CW + 8, Math.floor(i / cols) * CH + 22);
-    }
+    [orbit.yaw, orbit.pitch, orbit.radius] = views[cam]; target.set(cam === 'detail' ? 0 : -.1, cam === 'detail' ? 1.48 : .95, 0);
+    if (qs.get('ty')) target.y = Number(qs.get('ty')); if (qs.get('tx')) target.x = Number(qs.get('tx')); if (qs.get('r')) orbit.radius = Number(qs.get('r')); if (qs.get('yaw')) orbit.yaw = Number(qs.get('yaw')); updateCamera();
+    renderer.setSize(CW, CH, false); camera.aspect = CW / CH; camera.updateProjectionMatrix();
+    rowsList.forEach((act, r) => {
+      for (let i = 0; i < (qs.get('rows') ? N : N); i++) {
+        const tt = i / N, idx = qs.get('rows') ? i : i, cx = (qs.get('rows') ? i : i % cols) * CW, cy = (qs.get('rows') ? r : Math.floor(i / cols)) * CH;
+        sampleAnim(act, act === 'run' ? tt * Math.PI * 2 : tt, Number(qs.get('k') ?? 1), pose);
+        rig.root.scale.setScalar(1); rig.apply(pose, root, 0); rig.root.scale.setScalar(HERO_SCALE);
+        applyRoll(rig, { id: act, t: tt }); rig.root.updateMatrixWorld(true);
+        if (qs.get('focus')) { const f = new THREE.Vector3(); rig.joints[qs.get('focus')].getWorldPosition(f); target.copy(f); updateCamera(); }
+        renderer.render(scene, camera);
+        ctx.drawImage(canvas, 0, 0, canvas.width, canvas.height, cx, cy, CW, CH);
+        ctx.fillStyle = '#000'; ctx.font = '20px monospace'; ctx.fillText(`${act} ${tt.toFixed(2)}`, cx + 8, cy + 22);
+      }
+    });
     document.body.appendChild(sheet); window.sheetDone = true;
   });
 }
