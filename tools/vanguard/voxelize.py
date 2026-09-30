@@ -18,7 +18,7 @@ import vanguard_parts as VP
 
 HERE = Path(__file__).parent
 import os
-PROJECT = os.environ.get('PROJECT', '0') == '1'   # 0 = hand-authored colours only (shape still carved from the views)
+PROJECT = os.environ.get('PROJECT', '2')      # 0 hand colours | 1 also project seams/plates | 2 (default) refine accents only   # 0 = hand-authored colours only (shape still carved from the views)
 CELL = 15
 XR, YR = (-26, 27), (0, 92)
 
@@ -86,6 +86,28 @@ def despeckle(m, passes=2):
     return m
 
 
+def drop_small_regions(m, min_area=4, classes=("K", "D", "N", "I", "O", "G")):
+    """Connected regions (4-neighbour) of one class smaller than min_area cells are re-labelled with their neighbours' majority class."""
+    from collections import Counter, deque
+    seen = set(); m = dict(m)
+    for start, c in list(m.items()):
+        if start in seen or c not in classes:
+            continue
+        comp = []; dq = deque([start]); seen.add(start)
+        while dq:
+            x, y = dq.popleft(); comp.append((x, y))
+            for d in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                n = (x + d[0], y + d[1])
+                if n not in seen and m.get(n) == c:
+                    seen.add(n); dq.append(n)
+        if len(comp) < min_area:
+            nb = Counter(m.get((x + dx, y + dy)) for x, y in comp for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)) if m.get((x + dx, y + dy)) not in (None, c))
+            if nb:
+                for k in comp:
+                    m[k] = nb.most_common(1)[0][0]
+    return m
+
+
 def fill_holes(m, passes=3):
     """A background cell with >= 5 figure neighbours is a hole in the figure, not sky: fill it with the neighbours' majority class."""
     from collections import Counter
@@ -123,7 +145,7 @@ def main():
     for k in list(side):
         if k[1] > 76:
             side[k] = "bg"
-    front, back, side = (fill_holes(despeckle(m)) for m in (front, back, side))
+    front, back, side = (drop_small_regions(fill_holes(despeckle(m)), int(os.environ.get('MINREG', '5'))) for m in (front, back, side))
     fg = lambda m, k: m.get(k, "bg") != "bg"
 
     # ---- hand-authored model as a depth envelope
@@ -225,20 +247,26 @@ def main():
         if accents_only:
             return None
         if c in ("K", "D"):
+            if PROJECT != '1':
+                return None
+            if v is not None and v[1] < 10:
+                return None                                   # boots: the sheet's toe shading is not armour structure
             return c if (hand in ("K", "D") or dark_region(m, *k)) else None
-        return c                                             # I
+        return c if PROJECT == '1' else None                  # I
     col = {}
     for v in occ:
         x, y, z = v
         hand = hand_near(v)
         c = None
+        if v in hand_accent:
+            col[v] = hand; continue
         if v in vis["front"]:
             c = take(front, (x, y), hand, v=v)
         if c is None and v in vis["back"]:
             c = take(back, (x, y), hand, v=v)
         if c is None and v in vis["side"]:
             c = take(side, (z, y), hand, accents_only=True, v=v)
-        col[v] = (c or hand) if PROJECT else hand
+        col[v] = (c or hand) if PROJECT != '0' else hand
     # ---- joint assignment: nearest hand part by box-distance
     def dist(box, v):
         x0, y0, z0, x1, y1, z1 = box
