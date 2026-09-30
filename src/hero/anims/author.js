@@ -104,8 +104,6 @@ export function makeAuthor(MOVES, ENTRY_ = {}) {
     keys = keys.slice().sort((a, b) => a[0] - b[0]);
     const c = clip(keys.filter(([, s]) => !s.feet).map(([f, spec, e]) => [Math.min(1, f / F), P({ ...spec, plant: 1 }), e]), false, true);
     Object.assign(c, bakeFeet(id, keys, prev && prev.exit));
-    const M = MOVES[id], last = M.hits.length ? M.hits[M.hits.length - 1].f[1] : 0;
-    if (!M.air && M.cancel > last + 8) c.settle = { a: (last + 5) / F, b: M.cancel / F, end: 1, w: 0.4 };   // no frozen finish
     BUILT[id] = c;
     return c;
   }

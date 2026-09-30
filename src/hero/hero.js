@@ -27,11 +27,12 @@ export const CLIPS = { ...LOCO_CLIPS, ...(OWN || ATTACK_CLIPS) };
 const LOCO_IDS = new Set(Object.keys(LOCO_CLIPS));
 // weapon carry while running / rolling (moveset.carry.run / .roll: weapon + arm channels over the shared procedural poses)
 const W0 = CH.spear, W1 = CH.spin;
+// (a hero on the shared spear set may bring just a carry: `HERO.carry`)
 const mkCarry = (ms) => ms?.carry && Object.fromEntries(Object.entries(ms.carry).map(([k, spec]) => [k, P(spec)]));
-const CARRY = mkCarry(HERO.moveset);
+const CARRY = mkCarry(HERO.moveset?.carry ? HERO.moveset : HERO);
 const GUARD_POSE = P({ hipsR: [0, 0, 0], chest: [0, 0, 0],
   spear: [-0.12, 1.05, 0.1, 0, 78, 0], gripR: 0, gripL: 0.45 });
-export function carryFor(def) { return mkCarry(def.moveset); }
+export function carryFor(def) { return mkCarry(def.moveset?.carry ? def.moveset : def); }
 const MOVE_FEET = OWN ? {} : SPEAR_FEET;
 
 export function createHero(game) {

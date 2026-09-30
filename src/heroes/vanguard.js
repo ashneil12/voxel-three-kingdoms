@@ -256,6 +256,11 @@ export const VANGUARD = {
   lines: { open: ['EXO-01 deployed.', 'The evacuation is behind us. Hold the line.'], musou: ['OVERDRIVE', 'Overdrive engaged.'] },
   face, pal: { G: '#f0cfa6', g: '#c8a880', T: '#2b282f', w: '#ff9528' },
   matColor: 0.66, fill: 0.3, rim: 0.6, glow: 0.8,
+  // run: an armoured lancer's run — both hands keep the lance at the ready across the body (carry.run), the torso stays
+  // upright and half-turned behind it, the pelvis glides (less bounce, lower knee drive than Zhao Yun's DW8 sprint)
+  run: { lean: [4, 6], chest: [3, 1], hipsY: [0.88, 0.04], bounce: 0.022, shift: 0.02, twist: 0.18, roll: 2, rock: 3,
+    yaw: -14, yawUp: [4, 6], stepH: [0.05, 0.2], kick: 0.1, footX: 0.09 },
+  carry: { run: { spear: [-0.24, 1.0, 0.06, 28, 24, 0], gripR: 0, gripL: 0.5, lfree: 0, armL: [0, 0, 0, 0] } },
   build: () => ({ parts: limbs(torso()), head: head(), hv: HV, bv: FV, headOff: [0, 0, 0], pauldrons: pauldronBoxes, weapon: weaponGeo() }),
   chains() {
     const hit = [['thighL', 0.01], ['thighR', 0.01], ['kneeL', 0.02], ['kneeR', 0.02]];

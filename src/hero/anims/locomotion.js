@@ -4,15 +4,17 @@ import * as THREE from 'three';
 import { P, clip, sampleClip, blendPose, spearAbout, CH, POSE_SIZE, STANCE, HERO_SCALE } from '../rig.js';
 import { LOCO, cadence } from '../locomotion.js';
 import { MOVES } from '../moves.js';
+import { HERO } from '../../heroes/index.js';
 
 const D2R = Math.PI / 180, TAU = Math.PI * 2;
 const sstep = (a, b, x) => { const u = Math.min(1, Math.max(0, (x - a) / (b - a))); return u * u * (3 - 2 * u); };
 
-// Run carry: a fighter's run — both hands stay on the lance at the ready across the body, upright torso, level gliding pelvis.
+// Run carry (DW8): upright forward lean; the right hand holds the shaft at the hip, butt end up ahead-left past the
+// head, blade trailing low behind-right; left arm free.
 const RUN_SPEC = {
-  hips: [0, 0.88, 0.02], hipsR: [6, -14, 0], spine: [3, 4, 0], chest: [3, 6, 0], head: [0, 4, 0],
+  hips: [0, 0.84, 0.03], hipsR: [16, 0, 0], spine: [6, 0, 0], chest: [4, 0, 0], head: [2, 0, 0],
   footL: [0.13, 0.08, 0.2, 0, 5], footR: [-0.13, 0.1, -0.22, 20, -5],
-  spear: [-0.24, 1.0, 0.06, 28, 24, 0], gripR: 0, gripL: 0.5, lfree: 0, armL: [0, 0, 0, 0],
+  spear: spearAbout([-0.3, 1.0, 0.05], 222, -22, 0, 0.5), gripR: 0.5, gripL: 0.5, lfree: 1, armL: [10, 0, 14, 85],
 };
 const RUN_BASE = P(RUN_SPEC);
 const AIR_FALL = {
@@ -78,17 +80,29 @@ export const LOCO_CLIPS = {
 };
 
 /**
+ * Run style (per hero, `HERO.run`, merged over these defaults = Zhao Yun's DW8 run): lean [deg, +deg at full speed],
+ * chest pitch [deg, +deg], pelvis height [m, −m at speed], bounce (m per step), pelvis shift over the stance foot (m),
+ * pelvis twist toward the forward leg (× stride), shoulder rock / pelvis roll (deg), a constant body yaw (deg, e.g. a
+ * half-turned carry) with how much the spine / chest keep of it back toward the front, swing-foot height [m, +m], heel
+ * kick (m), foot track half-width (m). The weapon/arm channels come from the hero's `carry.run` when it has one.
+ */
+const RUN_DEFAULT = { lean: [10, 14], chest: [4, 4], hipsY: [0.86, 0.06], bounce: 0.05, shift: 0.035, twist: 0.3, roll: 4, rock: 6,
+  yaw: 0, yawUp: [0, 0], stepH: [0.08, 0.34], kick: 0.2, footX: 0.11 };
+const RUN = { ...RUN_DEFAULT, ...(HERO.run || {}) };
+
+/**
  * Procedural run cycle. phase in radians (2π = one stride = two steps; left foot plants at 0, right at π),
  * k = speed / LOCO.runSpeed, lean = banked turn lean (rad, + = into a left turn).
  * Planted feet slide back at exactly the ground speed (stance travel = v · stance time), so nothing skates.
  */
 export function runPose(phase, k, out, lean = 0) {
   out.set(RUN_BASE);
+  const R = RUN;
   const v = k * LOCO.runSpeed, T = 2 / cadence(v);
   const s = 0.5 - 0.2 * k;                      // stance fraction of the cycle per foot (flight phase at speed)
   const Ls = v * s * T, zc = 0.04;
   let zL = 0, zR = 0;
-  for (const [b, off, x, side] of [[CH.footL, 0, 0.09, 1], [CH.footR, 0.5, -0.09, -1]]) {
+  for (const [b, off, x, side] of [[CH.footL, 0, R.footX, 1], [CH.footR, 0.5, -R.footX, -1]]) {
     let p = phase / TAU + off; p -= Math.floor(p);
     let z, y, pitch;
     if (p < s) {                                 // stance: heel strike ahead → toe-off behind
@@ -96,8 +110,8 @@ export function runPose(phase, k, out, lean = 0) {
       z = zc + Ls * (0.5 - u); y = 0.08; pitch = -0.15 + 0.75 * u * u;
     } else {                                     // swing: heel kicks up behind, knee drives through, reach
       const u = (p - s) / (1 - s), e = u * u * (3 - 2 * u);
-      z = zc + Ls * (e - 0.5) - 0.1 * k * Math.sin(Math.PI * u) * (1 - u);
-      y = 0.08 + (0.05 + 0.2 * k) * Math.sin(Math.PI * Math.pow(u, 0.75));
+      z = zc + Ls * (e - 0.5) - R.kick * k * Math.sin(Math.PI * u) * (1 - u);
+      y = 0.08 + (R.stepH[0] + R.stepH[1] * k) * Math.sin(Math.PI * Math.pow(u, 0.75));
       pitch = 0.9 * (1 - e) - 0.25 * e;
     }
     out[b] = x; out[b + 1] = y; out[b + 2] = z; out[b + 3] = pitch * (0.4 + 0.6 * k); out[b + 4] = side * 5 * D2R;
@@ -109,18 +123,22 @@ export function runPose(phase, k, out, lean = 0) {
   // locomotion-dodge r3: the stride has to read from the chase camera behind a cape that hides the legs, so the body
   // shows it: a deeper bounce per step, the pelvis shifting over the stance foot and the shoulders rocking with it
   const sw = Math.cos(phase - Math.PI * s);                          // +1 at left mid-stance, -1 at right mid-stance
-  out[CH.hips] = lean * 0.18 + sw * 0.02 * k;
-  out[CH.hips + 1] = 0.9 - 0.04 * k + bob * 0.02 * k - al * 0.2;      // snap turns drop into a low bank; otherwise a level, gliding pelvis
-  out[CH.hipsR] = (5 + 3 * k + al * 20) * D2R + bob * 0.015 * k;
-  const hy = (zR - zL) * 0.18;                                       // hips follow the forward leg a little...
-  out[CH.hipsR + 1] = -14 * D2R + hy;
-  out[CH.hipsR + 2] = -lean - sw * 2 * k * D2R;
-  out[CH.spine + 1] = 4 * D2R - 0.6 * hy; out[CH.chest + 1] = 6 * D2R - 0.9 * hy;   // ...shoulders counter-rotate, so the lance stays steady
-  out[CH.chest] = (3 + k) * D2R;
-  out[CH.chest + 2] = sw * 3 * k * D2R;
-  out[CH.head + 2] = lean * 0.5;
-  out[CH.spear] += sw * 0.015 * k;                                   // both hands stay on the shaft: the arms ride the torso, no flailing
-  out[CH.spear + 1] += bob * 0.02 * k;
+  out[CH.hips] = lean * 0.18 + sw * R.shift * k;
+  out[CH.hips + 1] = R.hipsY[0] - R.hipsY[1] * k + bob * R.bounce * k - al * 0.2;    // snap turns drop into a low bank
+  out[CH.hipsR] = (R.lean[0] + R.lean[1] * k + al * 20) * D2R + bob * 0.8 * R.bounce * k;
+  const hy = (zR - zL) * R.twist;                                        // hips follow the forward leg...
+  out[CH.hipsR + 1] = R.yaw * D2R + hy;
+  out[CH.hipsR + 2] = -lean - sw * R.roll * k * D2R;
+  out[CH.spine + 1] = R.yawUp[0] * D2R - 0.5 * hy; out[CH.chest + 1] = R.yawUp[1] * D2R - 0.8 * hy;      // ...shoulders counter-rotate
+  out[CH.chest] = (R.chest[0] + R.chest[1] * k) * D2R;
+  out[CH.chest + 2] = sw * R.rock * k * D2R;                              // shoulders rock over the stance leg
+  out[CH.head + 2] = lean * 0.5;                                     // keep the eyes nearer level in the bank
+  out[CH.armL] = (zL / half) * (30 + 35 * k) * D2R;                  // left arm swings against the left leg
+  out[CH.armL + 3] = (80 + 15 * k) * D2R;
+  out[CH.spear] += sw * 0.03 * k;
+  out[CH.spear + 1] += bob * 0.04 * k;                               // right arm (spear) swings against the right leg
+  out[CH.spear + 2] -= (zR / half) * 0.14 * k;
+  out[CH.spear + 4] -= bob * 3 * k * D2R;
   return out;
 }
 
@@ -134,7 +152,7 @@ const _S = new Float32Array(POSE_SIZE);
 export function rollPose(u, out) {
   sampleClip(LOCO_CLIPS.dodge, u, out);
   const th = rollAngle(u), e = -(th > Math.PI ? th - TAU : th) / D2R;
-  const sp = spearAbout([-0.34, ROLL_PIVOT[1], ROLL_PIVOT[2]], -6, -e, 0, 0.95);
+  const sp = spearAbout([-0.34, ROLL_PIVOT[1], ROLL_PIVOT[2]], 186, e, 0, 0.55);
   _S.set(out);
   for (let i = 0; i < 6; i++) _S[CH.spear + i] = i < 3 ? sp[i] : sp[i] * D2R;
   _S[CH.gripR] = 0;
