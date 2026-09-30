@@ -27,7 +27,7 @@ def refmap(kind):
     else:
         g = V.cell_grid(Path('ref/side_std.png'), ox=395); m = {}
         for (i, j), c in g.items():
-            z = -i - 1 - int(os.environ.get('SIDESHIFT', '2'))
+            z = -i - 1 - V.side_shift(j)
             if -14 <= z <= 16 and j <= 76: m[(z, j)] = V.classify(c)
     return V.fill_holes(V.despeckle(m))
 def panel(kind):

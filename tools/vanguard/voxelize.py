@@ -36,6 +36,14 @@ def cell_grid(path, ox=395, oy=1345):
     return g
 
 
+SIDE_KEYS = [(0, -3), (12, -3), (20, -1), (30, 4), (40, 4), (52, 2), (68, 1), (90, 1)]   # (y, z shift of the sheet's side view vs the authored model)
+def side_shift(y):
+    for (y0, s0), (y1, s1) in zip(SIDE_KEYS, SIDE_KEYS[1:]):
+        if y0 <= y <= y1:
+            return round(s0 + (s1 - s0) * (y - y0) / (y1 - y0))
+    return 0
+
+
 def classify(rgb):
     r, gg, b = (float(v) / 255 for v in rgb)
     h, s, v = colorsys.rgb_to_hsv(r, gg, b)
@@ -139,7 +147,7 @@ def main():
     side_grid = cell_grid(HERE / "ref/side_std.png", ox=395)
     side = {}
     for (i, j), c in side_grid.items():
-        z = -i - 1 - int(os.environ.get('SIDESHIFT', '2'))      # measured: the authored model sits ~2 voxels behind the sheet's side view
+        z = -i - 1 - side_shift(j)                                # measured per body region: the sheet's side view leans relative to the authored model
         if -14 <= z <= 16:
             side[(z, j)] = classify(c)
     for k in list(side):
@@ -178,7 +186,8 @@ def main():
                         hand_vox.add((x, y, z))
     passes = lambda v: fg(front, (v[0], v[1])) and fg(back, (v[0], v[1])) and fg(side, (v[2], v[1]))
     hand_accent = {(x, y, z) for pt, (x0, y0, z0, x1, y1, z1) in boxes if pt['color'] in ('O', 'G') for x in range(int(np.floor(x0)), int(np.ceil(x1))) for y in range(int(np.floor(y0)), int(np.ceil(y1))) for z in range(int(np.floor(z0)), int(np.ceil(z1))) if x >= 0}
-    occ = {v for v in hand_vox if passes(v) or v in hand_accent}       # authored lights/trim are never carved away
+    dark_hand = {(x, y, z) for pt, (x0, y0, z0, x1, y1, z1) in boxes if pt['color'] in ('K', 'D') and pt['id'].startswith(('ear', 'neck', 'face', 'visor', 'helmet_back', 'hand', 'finger')) for x in range(int(np.floor(x0)), int(np.ceil(x1))) for y in range(int(np.floor(y0)), int(np.ceil(y1))) for z in range(int(np.floor(z0)), int(np.ceil(z1))) if x >= 0}
+    occ = {v for v in hand_vox if passes(v) or v in hand_accent or (v in dark_hand and fg(side, (v[2], v[1])))}   # black parts read as backdrop in the views, so they are only carved by depth       # authored lights/trim are never carved away
     # envelope voxels beyond the authored boxes are only added where the sheet's silhouette needs them (a cell no authored
     # voxel covers in the front/back or side view); everywhere else they would just bury thin authored details
     cov_f = {(x, y) for (x, y, z) in occ}
