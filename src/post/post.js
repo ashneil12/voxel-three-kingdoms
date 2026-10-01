@@ -13,7 +13,8 @@ import * as THREE from 'three';
 import { STAGE } from '../stages/index.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
-import { createLightingEffects } from '../lighting/effects.js';   // shadow-mapped participating media (shared with the lighting lab)
+import { createLightingEffects } from '../lighting/effects.js';
+import { numParam } from '../core/params.js';   // shadow-mapped participating media (shared with the lighting lab)
 import { NOISE_GLSL, WET_GLSL, FLOOR_LIGHTS, MAX_FLOOR_LIGHTS } from '../world/floor-glsl.js';
 
 // Tunables. Every key k is uniform u<K> in all passes.
@@ -92,7 +93,7 @@ const QS = new URLSearchParams(location.search);
 const lookName = QS.get('look') || STAGE.look;
 if (lookName && LOOKS[lookName]) Object.assign(P, LOOKS[lookName]);
 if (!QS.get('look') && STAGE.post) Object.assign(P, STAGE.post);   // per-stage tweaks of its look
-if (QS.has('ae')) P.aeStrength = Number(QS.get('ae'));   // debug: ?ae=0 off, ?ae=0.5 force on (probe with post.aeProbe())
+P.aeStrength = numParam('ae', P.aeStrength, 0, 1);   // debug: ?ae=0 off, ?ae=0.5 force on (probe with post.aeProbe())
 // ?fx=low drops the screen-space effects (floor mirror + AO) for weaker GPUs; ?fx=ssr / ?fx=ao isolate one
 const FX = QS.get('fx');
 if (FX === 'low') { P.ssr = 0; P.ao = 0; } else if (FX === 'ssr') P.ao = 0; else if (FX === 'ao') P.ssr = 0;

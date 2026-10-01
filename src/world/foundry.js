@@ -10,6 +10,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { NOISE_GLSL, WET_GLSL, FLOOR_LIGHTS } from './floor-glsl.js';
 import { SHADOW } from './world.js';
+import { numParam } from '../core/params.js';
 
 export const HALL = 88;            // half-extent of the square hall (m); the sim arena (r ≈ 46) sits well inside
 const WALL_Y = 36;                  // roof height
@@ -409,7 +410,7 @@ export function buildFoundry(scene, ctx) {
   const embers = new THREE.Points(eg, emberMat); embers.frustumCulled = false; embers.renderOrder = 3; scene.add(embers);
 
   // ---- floor smoke
-  const SMOKE_K = new URLSearchParams(location.search).has('smoke') ? Number(new URLSearchParams(location.search).get('smoke')) : 1;
+  const SMOKE_K = numParam('smoke', 1, 0, 4);
   const SN = 64, sPos = new Float32Array(SN * 12), sSeed = new Float32Array(SN * 4), sCorner = new Float32Array(SN * 8), sIdx = [];
   for (let i = 0; i < SN; i++) {
     const x = (rnd() - 0.5) * 120, z = (rnd() - 0.5) * 120, sd = rnd();

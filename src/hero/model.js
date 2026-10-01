@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { hash01 } from '../core/rng.js';
 import { shade } from '../core/voxel.js';
 import { voxelSurface } from './voxel-surface.js';
+import { numParam } from '../core/params.js';
 import { createProceduralSuit } from './procedural-suit.js';
 import { attachGeneratedSuit } from './generated-suit.js?v=skin-2';
 import { loadSuitDesign } from '../heroes/suit-design.js';
@@ -154,8 +155,7 @@ export function lamellar(a, b, { base = 0xdcdee2, rowH = 3, pw = 4, trim = null,
  * it lifts the shade side without blowing sunlit armour into the bloom. Does not touch the scene or other materials.
  */
 // ?rig=0 drops the camera-relative key, ?rig=k scales it
-const _rq = new URLSearchParams(location.search);
-const HERO_KEY = (_rq.has('rig') ? Number(_rq.get('rig')) : 1) * 0.6;
+const HERO_KEY = numParam('rig', 1, 0, 3) * 0.6;
 export function heroLook(mat, fill = 0.4, rim = 0.9, glow = 0) {
   mat.onBeforeCompile = (sh) => {
     sh.uniforms.uHeroFill = { value: fill };

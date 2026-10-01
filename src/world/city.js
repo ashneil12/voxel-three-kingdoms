@@ -8,6 +8,7 @@
 import * as THREE from 'three';
 import { NOISE_GLSL, FLOOR_LIGHTS } from './floor-glsl.js';
 import { SHADOW } from './world.js';
+import { numParam } from '../core/params.js';
 import { boxGeo, merged, tint, floorMaterial, coneMaterial, createLampPool } from './foundry.js';
 
 const R_KERB = 46, LAMP_Y = 9;
@@ -104,7 +105,6 @@ const RAIN_FS = /* glsl */`
 // ================================================================= the set
 export function buildCity(scene, ctx) {
   const { sun, hemi, sky, lightDir } = ctx;
-  const Q = new URLSearchParams(location.search);
   let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 
   // ---- floor (wet asphalt plaza + streets)
@@ -182,7 +182,7 @@ export function buildCity(scene, ctx) {
   }
 
   // ---- rain
-  const RAIN = Q.has('rain') ? Number(Q.get('rain')) : 1;
+  const RAIN = numParam('rain', 1, 0, 4);
   const RN = Math.round(2600 * RAIN), rp = new Float32Array(RN * 6), rs = new Float32Array(RN * 2), re = new Float32Array(RN * 2);
   for (let i = 0; i < RN; i++) {
     const x = (rnd() - 0.5) * 44, z = (rnd() - 0.5) * 44, sd = rnd();

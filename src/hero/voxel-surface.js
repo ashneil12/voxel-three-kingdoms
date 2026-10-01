@@ -3,8 +3,9 @@
 // already does: a bevelled edge (bump from the face-edge distance), chipped paint that exposes dark steel / rust at edges,
 // fine speckle and grime streaks, and per-block roughness variation. Geometry without `vuv` (spear, blade) is untouched.
 // ?vox=0 turns it off; ?vox=<n> scales the strength.
-const Q = new URLSearchParams(location.search);
-const AMT = Q.has('vox') ? Number(Q.get('vox')) : 1;
+import { numParam } from '../core/params.js';
+
+const AMT = numParam('vox', 1, 0, 3);
 
 const VERT_PARS = 'attribute vec3 vuv;\nattribute vec2 vsz;\nvarying vec2 vVsz;\nvarying vec3 vVuv;\nvarying vec3 vVoxPos;\n';
 const FRAG_PARS = `varying vec2 vVsz;
