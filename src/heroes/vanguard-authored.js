@@ -100,22 +100,24 @@ function limbs(P_) {
     P_['upperArm' + s] = [
       B([-4, -22, -4], [4, 2, 4], C.K),
       B([-5, -13, -5], [5, -4, 5], (x, y) => (md(y, 3) === 0 ? C.K : C.D)),
-      shell([-5, -23, -6], [5, -17, 4], 'I', 2, 2),                     // elbow cop ends at the elbow joint and is rounder: no bite into the forearm when it bends
+      shell([-5, -20, -6], [5, -17, 4], 'I', 2, 2),
+      shell([-4, -22, -5], [4, -20, 3], 'I', 2, 0), shell([-3, -23, -4], [3, -22, 2], 'I', 1, 0),   // elbow end tapers (stepped) so it clears the forearm                     // elbow cop ends at the elbow joint and is rounder: no bite into the forearm when it bends
     ];
     // forearm: chunky ivory gauntlet, navy plate on the outside (on top in the T-pose), dark wrist cuff, orange wrist light
     P_['foreArm' + s] = [
-      B([-3, -22, -3], [3, -2, 3], C.K),                                  // slim core = the visible hinge between cop and gauntlet
-      shell([-6, -17, -6], [6, -5, 7], 'I', 3, 2),                     // gauntlet starts below the elbow, narrower and more chamfered at the top
+      B([-3, -20, -3], [3, -2, 3], C.K),                                  // slim core = the visible hinge between cop and gauntlet
+      shell([-6, -17, -6], [6, -8, 7], 'I', 3, 0),
+      shell([-5, -8, -5], [5, -6, 6], 'I', 2, 0), shell([-4, -6, -4], [4, -5, 5], 'I', 1, 0),   // top end tapers the same way                     // gauntlet starts below the elbow, narrower and more chamfered at the top
       shell(...m([6, -15, -5], [8, -3, 6]), 'N', 1),
-      B([-5, -21, -5], [5, -17, 5], (x, y) => (y === -18 ? C.M : C.D)),
+      B([-5, -20, -5], [5, -17, 5], (x, y) => (y === -18 ? C.M : C.D)),
       light([-1, -20, 5], [1, -18, 6]),
       P([-7, -10, -7], [7, -9, 8], C.Id),
       P(...m([7, -14, -3], [8, -13, -2]), C.M), P(...m([7, -14, 3], [8, -13, 4]), C.M),
     ];
     // fist around the shaft (hand local Z = along the spear): black glove, dark grey knuckle guard
     P_['hand' + s] = [
-      shell([-4, -4, -3], [4, 4, 3], 'K', 1),
-      shell([-4, 4, -3], [4, 6, 3], 'D', 1),
+      shell([-4, -4, -3], [4, 2, 3], 'K', 1),                            // fist stops 3 voxels short of the gauntlet cuff: it rotates against the forearm
+      shell([-4, 2, -3], [4, 3, 3], 'D', 1),
       B(...m([4, -2, -2], [5, 3, 2]), C.D),
     ];
     // thigh: black frame, ivory plate above the knee, and the layered skirt plates (tassets) over the front and outside —
