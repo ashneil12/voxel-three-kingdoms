@@ -6,7 +6,7 @@ import { rng, vrng } from './core/rng.js';
 import { emit } from './core/events.js';
 import { createInput } from './core/input.js';
 import { createPost } from './post/post.js';
-import { createWorld, createStageEnv, leadShadow } from './world/world.js';
+import { createWorld, createStageEnv, leadShadow, SHADOW } from './world/world.js';
 import { createHero, createHeroView, updateAnim } from './hero/hero.js';
 import { MOVES } from './hero/moves.js';
 import { createCrowd, CROWD } from './crowd/crowd.js';
@@ -79,7 +79,7 @@ const camRig = createCameraRig(game, vw, vh);
 const vfx = createVfx(scene, game, world);
 const combatLights = createCombatLights(scene, game);   // pooled point lights fired by hits / KOs / parries / Overdrive
 const impact = createImpact(scene, game);                // hot sparks that bounce + scorch marks (src/vfx/impact.js)
-const quality = createQualityGovernor({ P: POST_P, sun: world.sun, setScale: (k) => { renderScale = k; post.setSize(Math.round(vw * k), Math.round(vh * k)); } });
+const quality = createQualityGovernor({ P: POST_P, sun: world.sun, shadow: SHADOW, setScale: (k) => { renderScale = k; post.setSize(Math.round(vw * k), Math.round(vh * k)); } });
 if (params.has('debug')) window.quality = quality;
 const sigFx = createSignatureFx(scene, game, vfx, camRig.camera);   // per-hero projectiles, beams, roar (render-only)
 const chargeFx = HERO.anim === 'fan' ? null : createChargeFx(scene, game, camRig.camera, heroView);   // charge-hold glow at the blade

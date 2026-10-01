@@ -5,20 +5,21 @@
 //   2  floor reflections off, AO off, sun shadow map 4096 -> 2048
 //   3  render at 75% resolution (the canvas is CSS-scaled with pixelated upsampling: reads as chunkier voxels)
 // ?quality=auto (default) | high (tier 0, locked) | low (tier 3, locked) | 0..3 (that tier, locked).
-import { SHADOW } from '../world/world.js';
-
-const MODE = new URLSearchParams(location.search).get('quality') || 'auto';
+const QUALITY_MODE = () => new URLSearchParams(globalThis.location?.search ?? '').get('quality') || 'auto';
 const SLOW_MS = 21, WINDOW = 120, COOLDOWN = 180, MAX_TIER = 3;
 
-export function createQualityGovernor({ P, sun, setScale }) {
+/** P: post params (live), sun: the shadow-casting light, shadow: world.js SHADOW (res is updated in place), setScale(k):
+ *  render-resolution scale, mode: 'auto' | 'high' | 'low' | '0'..'3' (default: ?quality=). */
+export function createQualityGovernor({ P, sun, shadow, setScale, mode = QUALITY_MODE() }) {
+  const MODE = mode;
   let tier = 0, cooldown = COOLDOWN, last = 0;
   const dts = [];
   const apply = (t) => {
     if (t >= 1) { P.volume = 0; P.aoContact = 0; }
     if (t >= 2) {
       P.ssr = 0; P.ao = 0;
-      if (SHADOW.res > 2048) {
-        SHADOW.res = 2048;
+      if (shadow.res > 2048) {
+        shadow.res = 2048;
         sun.shadow.map?.dispose(); sun.shadow.map = null;
         sun.shadow.mapSize.set(2048, 2048); sun.shadow.needsUpdate = true;
       }
