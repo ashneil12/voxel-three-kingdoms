@@ -175,7 +175,7 @@ function bladeGeo() {
   return vox(boxes, bv, { jitter: 0.03, ao: 0.2 });
 }
 
-function weaponGeo() {
+export function weaponGeo() {
   const [shaft, collar] = spearGeo();
   return [{ geo: shaft, mat: 'body' }, { geo: collar, mat: 'body' }, { geo: bladeGeo(), mat: 'blade' }];
 }
