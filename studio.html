@@ -56,6 +56,7 @@
 <body>
   <main>
     <canvas id="preview" aria-label="Interactive 3D suit preview"></canvas>
+    <img id="target-overlay" alt="" hidden style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;opacity:.5">
     <div class="overlay"><div class="eyebrow">EXO / SUIT STUDIO</div><h1>VANGUARD</h1><p>The same rig and model builder used in the playable game.</p></div>
     <div class="hint">Drag to orbit · Scroll to zoom<br><span id="metrics"></span></div>
   </main>
@@ -66,7 +67,12 @@
       <h3>View and motion</h3>
       <label><span>Suit</span><select id="representation"><option value="voxel">Voxel Vanguard (game model)</option><option value="generated">Prepared combat suit</option><option value="procedural">Code-built editable suit</option></select></label>
       <label><span>Surface</span><select id="surface"><option value="textured">Textured</option><option value="clean">Clean paint · preview</option><option value="clay">Clay · inspect geometry</option><option value="weights">Skin weights · inspect joints</option></select></label>
-      <label><span>Camera</span><select id="camera"><option value="angle">Three-quarter</option><option value="front">Front</option><option value="side">Side</option><option value="back">Back</option><option value="detail">Helmet / chest</option><option value="game">Game distance</option></select></label>
+      <label><span>Hero build</span><select id="build"><option value="">Default (reskin)</option><option value="block">Block concept (chunky)</option><option value="sheet">Sheet reconstruction</option><option value="authored">Authored</option><option value="ref">Turnaround</option></select></label>
+      <label><span>Scene</span><select id="scene"><option value="foundry">Foundry (interior, furnace)</option><option value="day">Day (open ground, noon sun)</option><option value="dusk">Dusk (golden hour)</option><option value="night">Night (moonlight + fires)</option><option value="city">Neon city (rain, night)</option></select></label>
+      <label><span>Graphics</span><select id="gfx"><option value="game">Game look (foundry + post)</option><option value="neutral">Neutral inspection light</option></select></label>
+      <label><span>Reference</span><select id="overlay"><option value="">Off</option><option value="./assets/reference/first-playable/lighting/02_beauty-shot-target.webp">Beauty-shot target</option><option value="./assets/reference/first-playable/lighting/01_material-and-lighting-target.png">Material + lighting target</option></select></label>
+      <label><span>Ref. opacity</span><input id="overlay-opacity" type="range" min="0" max="100" value="50"><output id="overlay-out">50%</output></label>
+      <label><span>Camera</span><select id="camera"><option value="angle">Three-quarter</option><option value="front">Front</option><option value="side">Side</option><option value="back">Back</option><option value="detail">Helmet / chest</option><option value="game">Game distance</option><option value="beauty">Beauty shot (game look)</option></select></label>
       <label><span>Action</span><select id="action"><option value="showcase">Reference stance</option><option value="tpose">T-pose (design check)</option><option value="idle">Idle</option><option value="run">Run</option><option value="guard">Guard</option><option value="dodge">Dodge</option><option value="n1">First strike</option><option value="n3">Wide sweep</option><option value="c1">Heavy launcher</option><option value="c4">Spin attack</option><option value="mu_act">Overdrive start</option><option value="mu_fin">Overdrive finish</option></select></label>
       <label><span>Timeline</span><input id="timeline" type="range" min="0" max="100" value="20"><output id="time">20%</output></label>
       <div class="row"><button id="play" type="button">Play motion</button><button id="pause" type="button">Pause</button></div>

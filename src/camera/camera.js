@@ -42,7 +42,10 @@ export const CAM = {
   kickMaxPx: 4,             // shake ceiling at 720p (bench: ≤ 4 px, finishers only)
   cutJump: 40,              // hero moved faster than this (m/s, ≥ 1 m) between two renders: teleport → hard cut (dodge 22)
 };
-const VIEW = new URLSearchParams(location.search).get('view')?.split(',').map(Number);
+// debug: ?shot=hero is the beauty-shot camera (low three-quarter, close) for matching the art target; pair with ?preview=idle
+const SHOTS = { hero: '-1.25,0.62,-3.0,0,0.98,0', wide: '-3.5,1.3,-8,0,1.0,0' };
+const _q = new URLSearchParams(location.search);
+const VIEW = (_q.get('view') || SHOTS[_q.get('shot')])?.split(',').map(Number);
 // debug: ?zoom=0.5 halves the follow distance (model close-ups)
 const ZOOM = Number(new URLSearchParams(location.search).get('zoom')) || 1;
 CAM.dist *= ZOOM; CAM.height -= (1 - ZOOM) * 0.5 - (Number(new URLSearchParams(location.search).get('aimy')) || 0);   // ?aimy=0.4 raises the aim

@@ -10,37 +10,66 @@ import { SUIT_DEFAULT, suitDesign, loadSuitDesign, saveSuitDesign, SUIT_STORAGE_
 import { sampleAnim } from './hero/hero.js';
 import { createSecondary } from './hero/secondary.js';
 import './musou/musou.js'; // registers the existing overdrive clips
+import { createPost } from './post/post.js';
+import { createWorld, createStageEnv } from './world/world.js';
+import { stabilizeEmissiveEdges } from './lighting/materials.js';
 
 const $ = (q) => document.querySelector(q);
 const canvas = $('#preview');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFShadowMap;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.05;
+// ?gfx=neutral is the flat beige inspection light; the default renders through the game's own world, lights and post chain
+// (the same createWorld / createPost main.js uses), so what you judge here is what the game draws.
+const GFX = new URLSearchParams(location.search).get('gfx') !== 'neutral';
+const post = GFX ? createPost({ canvas, width: canvas.clientWidth || 800, height: canvas.clientHeight || 600, preserveDrawingBuffer: true,
+  taa: !/[?&](sheet|rows)=/.test(location.search) }) : null;   // contact sheets render many poses per frame: no history blend
+const renderer = post ? post.renderer : new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+if (!GFX) {
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.05;
+}
+const rsize = (w, h) => (post ? post.setSize(w, h) : renderer.setSize(w, h, false));
 
 const scene = new THREE.Scene();
-const pmrem = new THREE.PMREMGenerator(renderer), room = new RoomEnvironment();
-scene.environment = pmrem.fromScene(room, .04).texture;
-scene.environmentIntensity = .7; room.dispose(); pmrem.dispose();
-scene.background = new THREE.Color(0xd7d0c5);
-scene.fog = new THREE.Fog(0xd7d0c5, 9, 22);
-const hemi = new THREE.HemisphereLight(0xf2f1ed, 0x827c72, 2.4); scene.add(hemi);
+const focus = new THREE.Vector3(0, 1, 0);
+let world = null;
+const pmrem = new THREE.PMREMGenerator(renderer);
+if (GFX) {
+  world = createWorld(scene);
+  stabilizeEmissiveEdges(scene);
+  const env = createStageEnv();
+  scene.environment = pmrem.fromScene(env.scene, .04).texture;
+  scene.environmentIntensity = env.intensity;
+  pmrem.dispose();
+}
+const room = new RoomEnvironment();
+if (!GFX) scene.environment = pmrem.fromScene(room, .04).texture;
+if (!GFX) { scene.environmentIntensity = .7; pmrem.dispose(); } room.dispose();
+if (!GFX) { scene.background = new THREE.Color(0xd7d0c5); scene.fog = new THREE.Fog(0xd7d0c5, 9, 22); }
+const hemi = new THREE.HemisphereLight(0xf2f1ed, 0x827c72, 2.4); if (!GFX) scene.add(hemi);
 const key = new THREE.DirectionalLight(0xffebd5, 3.6);
 key.position.set(-3, 6, 5); key.castShadow = true; key.shadow.mapSize.set(2048, 2048);
 key.shadow.camera.left = -2.8; key.shadow.camera.right = 2.8; key.shadow.camera.top = 3; key.shadow.camera.bottom = -2;
 key.shadow.normalBias=.018; key.shadow.bias=0;
 key.shadow.blurSamples = 8; key.shadow.radius = 3;
-scene.add(key);
-const rim = new THREE.DirectionalLight(0xc7deed, 2.1); rim.position.set(4, 3, -4); scene.add(rim);
-const fill = new THREE.DirectionalLight(0xffffff, 1.1); fill.position.set(4,2,5); scene.add(fill);
+if (!GFX) scene.add(key);
+const rim = new THREE.DirectionalLight(0xc7deed, 2.1); rim.position.set(4, 3, -4); if (!GFX) scene.add(rim);
+const fill = new THREE.DirectionalLight(0xffffff, 1.1); fill.position.set(4,2,5); if (!GFX) scene.add(fill);
 const floor = new THREE.Mesh(new THREE.PlaneGeometry(100,100),
   new THREE.MeshStandardMaterial({ color: 0xc9c2b7, roughness: .91 }));
-floor.rotation.x=-Math.PI/2; floor.position.y = .003; floor.receiveShadow = true; scene.add(floor);
+floor.rotation.x=-Math.PI/2; floor.position.y = .003; floor.receiveShadow = true; if (!GFX) scene.add(floor);
 
-const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
+const camera = new THREE.PerspectiveCamera(38, 1, 0.1, GFX ? 500 : 100);
+if (world) for (let i = 0; i < 150; i++) world.update(1 / 60, focus);   // settle the foundry's lamp pool before the first frame
+let gfxTime = 0;
+function draw(dt = 0) {
+  if (!post) { draw(); return; }
+  gfxTime += dt;
+  world.update(dt, focus);
+  post.render(scene, camera, gfxTime, focus, world.sunDir, world.sun);
+}
 const orbit = { yaw: -.38, pitch: 0.10, radius: 4.65 };
 const target = new THREE.Vector3(-.49, 1.00, 0);
 function updateCamera() {
@@ -51,18 +80,29 @@ function updateCamera() {
 updateCamera();
 const views = { angle: [-.38, .10, 4.65], front: [0, .06, 4.45], side: [Math.PI / 2, .08, 4.2],
   back: [Math.PI, .08, 4.2], detail: [-.30,.03,1.85], game: [.28, .55, 6.7],
-  art: [-.36, .045, 4.30], artfront: [-.05, .04, 4.05], arthead: [-.45, .06, 1.30] };
+  beauty: [-.62, -.04, 4.0], art: [-.36, .045, 4.30], artfront: [-.05, .04, 4.05], arthead: [-.45, .06, 1.30] };
 // ?capture=<view> sets a deterministic framing for repeatable screenshots; ?target=x,y,z overrides the look-at.
 const qs = new URLSearchParams(location.search);
 if (qs.get('capture') && views[qs.get('capture')]) {
   [orbit.yaw, orbit.pitch, orbit.radius] = views[qs.get('capture')];
   if (qs.get('capture').startsWith('art')) target.set(qs.get('capture') === 'arthead' ? 0 : -.12, qs.get('capture') === 'arthead' ? 1.52 : .98, 0);
+  if (qs.get('capture') === 'beauty') target.set(0, .98, 0);
   updateCamera();
   // Clean frame for repeatable screenshots: drop the panels and labels.
   document.querySelector('aside').style.display = 'none';
   document.body.style.gridTemplateColumns = '1fr';
   for (const sel of ['.overlay', '.hint']) document.querySelector(sel).style.display = 'none';
 }
+$('#build').value = new URLSearchParams(location.search).get('vanguard') || '';
+$('#build').addEventListener('change', (e) => { const u = new URL(location.href); if (e.target.value) u.searchParams.set('vanguard', e.target.value); else u.searchParams.delete('vanguard'); location.href = u.href; });
+$('#scene').value = new URLSearchParams(location.search).get('stage') || 'foundry';
+$('#scene').addEventListener('change', (e) => { const u = new URL(location.href); u.searchParams.set('stage', e.target.value); location.href = u.href; });
+$('#gfx').value = GFX ? 'game' : 'neutral';
+$('#gfx').addEventListener('change', (e) => { const u = new URL(location.href); u.searchParams.set('gfx', e.target.value); location.href = u.href; });
+const overlayImg = $('#target-overlay');
+$('#overlay').addEventListener('change', (e) => { overlayImg.hidden = !e.target.value; if (e.target.value) overlayImg.src = e.target.value; });
+$('#overlay-opacity').addEventListener('input', (e) => { overlayImg.style.opacity = e.target.value / 100; $('#overlay-out').value = `${e.target.value}%`; });
+if (qs.get('overlay')) { $('#overlay').selectedIndex = Number(qs.get('overlay')); $('#overlay').dispatchEvent(new Event('change')); }
 $('#camera').addEventListener('change', (e) => {
   [orbit.yaw, orbit.pitch, orbit.radius] = views[e.target.value];
   target.set(e.target.value==='detail'?0:e.target.value==='angle'?-.49:0,e.target.value==='detail'?1.48:1,0); updateCamera();
@@ -203,7 +243,7 @@ $('#export').addEventListener('click', () => {
   status('Exported a portable design preset.');
 });
 $('#screenshot').addEventListener('click', async () => {
-  renderer.render(scene, camera);
+  draw();
   const image=canvas.toDataURL('image/png'),name=`vanguard-${$('#representation').value}-${$('#surface').value}-${$('#camera').value}-${$('#action').value}-${Math.round(t*100)}.png`;
   if(['localhost','127.0.0.1'].includes(location.hostname)&&location.port==='8767') {
     try {
@@ -299,7 +339,7 @@ function stage(act, tt, k, dt, settle) {
 
 function resize() {
   const w = canvas.clientWidth, h = canvas.clientHeight;
-  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+  rsize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix();
 }
 addEventListener('resize', resize); resize();
 function frame(now) {
@@ -311,7 +351,7 @@ function frame(now) {
   }
   const act = $('#action').value;
   stage(act, t, act === 'run' ? 1 : 0.65, playing ? dt : 0, false);
-  renderer.render(scene, camera);
+  draw();
 }
 requestAnimationFrame(frame);
 
@@ -329,13 +369,13 @@ if (qs.get('sheet') || qs.get('rows')) {
   Promise.resolve(model.ready).then(() => {
     [orbit.yaw, orbit.pitch, orbit.radius] = views[cam]; target.set(cam === 'detail' ? 0 : -.1, cam === 'detail' ? 1.48 : .95, 0);
     if (qs.get('ty')) target.y = Number(qs.get('ty')); if (qs.get('tx')) target.x = Number(qs.get('tx')); if (qs.get('r')) orbit.radius = Number(qs.get('r')); if (qs.get('yaw')) orbit.yaw = Number(qs.get('yaw')); updateCamera();
-    renderer.setSize(CW, CH, false); camera.aspect = CW / CH; camera.updateProjectionMatrix();
+    rsize(CW, CH); camera.aspect = CW / CH; camera.updateProjectionMatrix();
     rowsList.forEach((act, r) => {
       for (let i = 0; i < (qs.get('rows') ? N : N); i++) {
         const tt = i / N, idx = qs.get('rows') ? i : i, cx = (qs.get('rows') ? i : i % cols) * CW, cy = (qs.get('rows') ? r : Math.floor(i / cols)) * CH;
         stage(act, tt, Number(qs.get('k') ?? 1), 0, true);
         if (qs.get('focus')) { const f = new THREE.Vector3(); rig.joints[qs.get('focus')].getWorldPosition(f); target.copy(f); updateCamera(); }
-        renderer.render(scene, camera);
+        draw();
         ctx.drawImage(canvas, 0, 0, canvas.width, canvas.height, cx, cy, CW, CH);
         ctx.fillStyle = '#000'; ctx.font = '20px monospace'; ctx.fillText(`${act} ${tt.toFixed(2)}`, cx + 8, cy + 22);
       }

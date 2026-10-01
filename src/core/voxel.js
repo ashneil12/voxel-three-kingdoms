@@ -14,11 +14,15 @@ const FACES = [
 ];
 
 function makeBuilder() {
-  const pos = [], nor = [], col = [], idx = [];
+  const pos = [], nor = [], col = [], idx = [], vuv = [], vsz = [];
   return {
-    quad(corners, n, r, g, b) {
+    /** plate?: per-corner [u, v] inside the face's plate (voxels) + [w, h, hash] (hero/voxel-surface.js reads them) */
+    quad(corners, n, r, g, b, plate) {
       const base = pos.length / 3;
-      for (const c of corners) { pos.push(c[0], c[1], c[2]); nor.push(n[0], n[1], n[2]); col.push(r, g, b); }
+      corners.forEach((c, q) => {
+        pos.push(c[0], c[1], c[2]); nor.push(n[0], n[1], n[2]); col.push(r, g, b);
+        if (plate) { vuv.push(plate.uv[q][0], plate.uv[q][1], 1 + plate.h); vsz.push(plate.w, plate.hh); }
+      });
       idx.push(base, base + 1, base + 2, base, base + 2, base + 3);
     },
     build() {
@@ -26,6 +30,7 @@ function makeBuilder() {
       g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
       g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
       g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+      if (vuv.length) { g.setAttribute('vuv', new THREE.Float32BufferAttribute(vuv, 3)); g.setAttribute('vsz', new THREE.Float32BufferAttribute(vsz, 2)); }
       g.setIndex(idx);
       g.computeBoundingSphere();
       g.computeBoundingBox();
@@ -71,16 +76,44 @@ export function voxelGeometry(nx, ny, nz, size, fn, origin = [0, 0, 0]) {
     if (c != null && c >= 0) grid[i + nx * (j + ny * k)] = c;
   }
   const b = makeBuilder();
-  const [ox, oy, oz] = origin;
+  const [ox, oy, oz] = origin, dims = [nx, ny, nz];
+  // plates: per face direction, greedy-merge coplanar exposed faces of one colour (same idea as hero/model.js vox()),
+  // so the voxel surface shader bevels / chips plate edges instead of every voxel
+  const exposed = (f, i, j, k) => at(i, j, k) >= 0 && at(i + f.n[0], j + f.n[1], k + f.n[2]) < 0;
+  const plates = FACES.map((f) => {
+    const sA = f.n[0] ? 0 : f.n[1] ? 1 : 2, A0 = f.n[0] ? 1 : 0, A1 = f.n[2] ? 1 : 2;
+    const map = new Int32Array(nx * ny * nz).fill(-1), rects = [], c3 = [0, 0, 0], t = [0, 0, 0];
+    const id = (q) => q[0] + nx * (q[1] + ny * q[2]);
+    const ok = (q, col) => exposed(f, q[0], q[1], q[2]) && map[id(q)] < 0 && at(q[0], q[1], q[2]) === col;
+    for (let sl = 0; sl < dims[sA]; sl++) for (let bb = 0; bb < dims[A1]; bb++) for (let a = 0; a < dims[A0]; a++) {
+      c3[sA] = sl; c3[A0] = a; c3[A1] = bb;
+      if (!exposed(f, c3[0], c3[1], c3[2]) || map[id(c3)] >= 0) continue;
+      const col = at(c3[0], c3[1], c3[2]);
+      let w = 1, h = 1;
+      t[0] = c3[0]; t[1] = c3[1]; t[2] = c3[2];
+      while (a + w < dims[A0] && (t[A0] = a + w, ok(t, col))) w++;
+      grow: while (bb + h < dims[A1]) {
+        t[A1] = bb + h;
+        for (let q = 0; q < w; q++) { t[A0] = a + q; if (!ok(t, col)) break grow; }
+        h++;
+      }
+      const rid = rects.length;
+      rects.push([a, bb, w, h, hash01(a, bb, sl * 7 + sA * 3 + (f.n[0] + f.n[1] + f.n[2] > 0 ? 1 : 0))]);
+      t[sA] = sl;
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { t[A0] = a + x; t[A1] = bb + y; map[id(t)] = rid; }
+    }
+    return { map, rects, A0, A1, id };
+  });
   for (let k = 0; k < nz; k++) for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
     const c = at(i, j, k);
     if (c < 0) continue;
     _c.set(c);
-    for (const f of FACES) {
-      if (at(i + f.n[0], j + f.n[1], k + f.n[2]) >= 0) continue;
+    FACES.forEach((f, fi) => {
+      if (at(i + f.n[0], j + f.n[1], k + f.n[2]) >= 0) return;
       const corners = f.v.map((cv) => [ox + (i + cv[0]) * size, oy + (j + cv[1]) * size, oz + (k + cv[2]) * size]);
-      b.quad(corners, f.n, _c.r, _c.g, _c.b);
-    }
+      const pl = plates[fi], cell = [i, j, k], rc = pl.rects[pl.map[pl.id(cell)]];
+      b.quad(corners, f.n, _c.r, _c.g, _c.b, { uv: f.v.map((cv) => [cell[pl.A0] + cv[pl.A0] - rc[0], cell[pl.A1] + cv[pl.A1] - rc[1]]), w: rc[2], hh: rc[3], h: rc[4] });
+    });
   }
   return b.build();
 }

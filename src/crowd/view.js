@@ -9,6 +9,9 @@
 // (crowd.raiseF) brandish their weapons and shout with him. Officers carry a spinning ▼ marker. Never writes sim state.
 import * as THREE from 'three';
 import { STAGE } from '../stages/index.js';
+import { DEMO } from '../heroes/index.js';
+import { voxelSurface } from '../hero/voxel-surface.js';
+const MACHINES = DEMO;   // the EXO demo fights the machine legion on every stage
 import { sculpt, shade, boxesGeometry } from '../core/voxel.js';
 import { ST, KIND, CROWD } from './crowd.js';
 import { patchHitMaterial, hitAttr, hitGlow, recoilPose } from '../combat/hitfx.js';   // hit-impact: victim flash/tint + recoil pose
@@ -37,7 +40,7 @@ const WOOD = 0x5e3d24, STEEL = 0x98968f, RED = 0xc02a1c, BRONZE = 0x9a7838;
 const J = { waist: 0.04, neck: 0.5, shX: 0.235, shY: 0.43, hipX: 0.095, hipY: -0.02, knee: 0.42, hand: 0.5 };
 
 function bodyParts(C, officer) {
-  if (STAGE.id === 'foundry') {
+  if (MACHINES) {
     const shell = officer ? 0x693743 : 0x344956, trim = officer ? 0xffa075 : 0x75c7de;
     return {
       hips:[b([-0.16,-0.1,-0.1],[0.16,0.06,0.1],0x17232b),b([-0.17,-0.04,-0.11],[0.17,0.06,0.11],shell)],
@@ -125,7 +128,7 @@ function bodyParts(C, officer) {
 // weapons in weapon space: grip at the origin, +Z along the weapon
 const box = (s, p, c) => ({ s, p, c });
 function weaponGeos() {
-  if (STAGE.id === 'foundry') {
+  if (MACHINES) {
     const metal = 0x8299a5, dark = 0x26343e, hot = 0xff9363;
     const baton = (length) => boxesGeometry([
       box([0.065,0.065,length],[0,0,length/2-0.48],dark),
@@ -196,13 +199,13 @@ export function buildCrowdGeometries() {
 function flagTexture() {
   const c = document.createElement('canvas'); c.width = 64; c.height = 112;
   const g = c.getContext('2d');
-  g.fillStyle = STAGE.id === 'foundry' ? '#334956' : '#b8301e'; g.fillRect(0, 0, 64, 112);
+  g.fillStyle = MACHINES ? '#334956' : '#b8301e'; g.fillRect(0, 0, 64, 112);
   g.fillStyle = '#e0b058'; g.fillRect(0, 0, 64, 5); g.fillRect(0, 0, 4, 112); g.fillRect(60, 0, 4, 112);
   g.fillStyle = 'rgba(255,225,180,0.28)'; g.fillRect(10, 16, 44, 60);                  // lighter panel behind the character
   g.fillStyle = '#1a0f0c';
   g.font = 'bold 44px "Xingkai SC","STXingkai","Kaiti SC","STKaiti","KaiTi","Songti SC",serif';
   g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.font = STAGE.id === 'foundry' ? 'bold 28px sans-serif' : g.font;
+  g.font = MACHINES ? 'bold 28px sans-serif' : g.font;
   g.fillText(STAGE.enemy.ch, 32, 46);
   g.globalCompositeOperation = 'destination-out';                                    // swallow-tail bottom
   g.beginPath(); g.moveTo(14, 112); g.lineTo(32, 88); g.lineTo(50, 112); g.fill();
@@ -251,10 +254,22 @@ export function createCrowdView(scene, game) {
       #ifdef USE_COLOR
         float cRed = smoothstep(0.3, 0.5, vColor.r - max(vColor.g, vColor.b));
         totalEmissiveRadiance += vColor.rgb * (0.08 + cRed * 0.32);
-      #endif`);
+      #endif`).replace('#include <opaque_fragment>', `
+      // readability fill (camera-relative, so it works from every chase angle): a soft key from the upper left of the
+      // view plus a cool Fresnel rim; faded where the surface is already lit, so backlit machines read as forms, not
+      // black cut-outs, while sunlit ones are unchanged
+      {
+        vec3 cN = normalize(normal);
+        float cKey = max(dot(cN, normalize(vec3(-0.45, 0.55, 0.7))), 0.0);
+        float cRim = pow(1.0 - abs(dot(cN, normalize(vViewPosition))), 3.0);
+        vec3 cAdd = diffuseColor.rgb * cKey * vec3(0.42, 0.44, 0.48) + vec3(0.32, 0.5, 0.7) * cRim * 0.35;
+        outgoingLight += cAdd * (1.0 - smoothstep(0.08, 0.5, dot(outgoingLight, vec3(0.2126, 0.7152, 0.0722))));
+      }
+      #include <opaque_fragment>`);
   });
   patchHitMaterial(mat);                                     // hit-impact: victim flash/tint (src/combat/hitfx.js)
   fadeOccluder(mat);                                         // camera part: occluder fade (src/camera/occlusion.js)
+  voxelSurface(mat, { vox: V, grime: 1.3 });                 // plate bevels, chipped paint, grime: the machines match the suit
   const meshes = [];
   const proxyMat = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false }), proxies = [];
   /** shadow: true (the mesh casts), false, or a proxy geometry that casts instead (shares the instance matrices) */
