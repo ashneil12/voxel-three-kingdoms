@@ -100,12 +100,12 @@ function limbs(P_) {
     P_['upperArm' + s] = [
       B([-4, -24, -4], [4, 2, 4], C.K),
       B([-5, -13, -5], [5, -4, 5], (x, y) => (md(y, 3) === 0 ? C.K : C.D)),
-      shell([-5, -26, -7], [5, -18, 4], 'I', 2, 1),
+      shell([-5, -24, -6], [5, -18, 4], 'I', 2, 2),                     // elbow cop ends at the elbow joint and is rounder: no bite into the forearm when it bends
     ];
     // forearm: chunky ivory gauntlet, navy plate on the outside (on top in the T-pose), dark wrist cuff, orange wrist light
     P_['foreArm' + s] = [
-      B([-4, -22, -4], [4, 0, 4], C.K),
-      shell([-7, -17, -7], [7, -1, 8], 'I', 2, 1),
+      B([-4, -22, -4], [4, -2, 4], C.K),
+      shell([-6, -17, -6], [6, -3, 7], 'I', 3, 2),                     // gauntlet starts below the elbow, narrower and more chamfered at the top
       shell(...m([6, -15, -5], [8, -3, 6]), 'N', 1),
       B([-5, -21, -5], [5, -17, 5], (x, y) => (y === -18 ? C.M : C.D)),
       light([-1, -20, 5], [1, -18, 6]),
