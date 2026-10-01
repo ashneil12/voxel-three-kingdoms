@@ -105,20 +105,20 @@ function limbs(P_) {
     ];
     // forearm: chunky ivory gauntlet, navy plate on the outside (on top in the T-pose), dark wrist cuff, orange wrist light
     P_['foreArm' + s] = [
-      B([-3, -20, -3], [3, -2, 3], C.K),                                  // slim core = the visible hinge between cop and gauntlet
+      B([-3, -19, -3], [3, -2, 3], C.K),                                  // slim core = the visible hinge between cop and gauntlet
       shell([-6, -17, -6], [6, -8, 7], 'I', 3, 0),
       shell([-5, -8, -5], [5, -6, 6], 'I', 2, 0), shell([-4, -6, -4], [4, -5, 5], 'I', 1, 0),   // top end tapers the same way                     // gauntlet starts below the elbow, narrower and more chamfered at the top
       shell(...m([6, -15, -5], [8, -3, 6]), 'N', 1),
-      B([-5, -20, -5], [5, -17, 5], (x, y) => (y === -18 ? C.M : C.D)),
-      light([-1, -20, 5], [1, -18, 6]),
+      B([-4, -19, -4], [4, -17, 4], (x, y) => (y === -18 ? C.M : C.D)),                 // slim wrist cuff: leaves a gap above the fist
+      light([-1, -19, 4], [1, -18, 5]),
       P([-7, -10, -7], [7, -9, 8], C.Id),
       P(...m([7, -14, -3], [8, -13, -2]), C.M), P(...m([7, -14, 3], [8, -13, 4]), C.M),
     ];
     // fist around the shaft (hand local Z = along the spear): black glove, dark grey knuckle guard
     P_['hand' + s] = [
-      shell([-4, -4, -3], [4, 2, 3], 'K', 1),                            // fist stops 3 voxels short of the gauntlet cuff: it rotates against the forearm
-      shell([-4, 2, -3], [4, 3, 3], 'D', 1),
-      B(...m([4, -2, -2], [5, 3, 2]), C.D),
+      shell([-3, -4, -3], [3, 0, 3], 'K', 2),                            // small rounded fist, wholly below the wrist: it rotates on the shaft against the forearm
+      shell([-3, 0, -3], [3, 1, 3], 'D', 2),
+      B(...m([3, -3, -2], [4, 0, 2]), C.D),
     ];
     // thigh: black frame, ivory plate above the knee, and the layered skirt plates (tassets) over the front and outside —
     // ivory, navy, ivory tiers stepping out and down, an orange running light on the navy tier; metal piston behind
@@ -274,7 +274,7 @@ export const VANGUARD_AUTHORED = {
   // upright and half-turned behind it, the pelvis glides (less bounce, lower knee drive than Zhao Yun's DW8 sprint)
   run: { lean: [4, 6], chest: [3, 1], hipsY: [0.88, 0.04], bounce: 0.022, shift: 0.02, twist: 0.18, roll: 2, rock: 3,
     yaw: -14, yawUp: [4, 6], stepH: [0.05, 0.2], kick: 0.1, footX: 0.09 },
-  carry: { run: { spear: [-0.24, 1.0, 0.06, 28, 24, 0], gripR: 0, gripL: 0.5, lfree: 0, armL: [0, 0, 0, 0] } },
+  carry: { run: { spear: [-0.33, 0.9, 0.12, 28, 26, 0], gripR: 0, gripL: 0.5, lfree: 0, armL: [0, 0, 0, 0] } },
   build: () => ({ parts: limbs(torso()), head: head(), hv: HV, bv: FV, headOff: [0, 0, 0], pauldrons: pauldronBoxes, weapon: weaponGeo() }),
   chains() {
     const hit = [['thighL', 0.01], ['thighR', 0.01], ['kneeL', 0.02], ['kneeR', 0.02]];
