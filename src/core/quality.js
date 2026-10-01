@@ -18,7 +18,7 @@ export function createQualityGovernor({ P, sun, shadow, setScale, mode = QUALITY
     if (t >= 1) { P.volume = 0; P.aoContact = 0; }
     if (t >= 2) {
       P.ssr = 0; P.ao = 0;
-      if (shadow.res > 2048) {
+      if (shadow && shadow.res > 2048) {   // shadow optional: a caller on the old signature must not crash on tier 2
         shadow.res = 2048;
         sun.shadow.map?.dispose(); sun.shadow.map = null;
         sun.shadow.mapSize.set(2048, 2048); sun.shadow.needsUpdate = true;

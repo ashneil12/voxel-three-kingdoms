@@ -39,3 +39,9 @@ test('locked modes: high never moves, low applies tier 3 at once, unknown modes 
   const two = rig('2'); assert.equal(two.q.tier, 2); assert.deepEqual(two.scale, []);
   const odd = rig('ultra'); odd.feed(600, 30); assert.ok(odd.q.tier >= 1);
 }));
+
+test('a caller that does not pass `shadow` (old signature) still steps through tier 2 without throwing', () => quiet(() => {
+  const P = { volume: 1, aoContact: 1, ssr: 1, ao: 1 }, sun = { shadow: { mapSize: { set() {} } } };
+  const q = createQualityGovernor({ P, sun, setScale() {}, mode: '2' });
+  assert.equal(q.tier, 2); assert.equal(P.ssr, 0);
+}));
