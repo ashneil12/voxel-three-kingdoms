@@ -9,14 +9,14 @@ import { FV, glove, bracer, bootFoot, symH } from './parts.js';
 
 const HV = 0.0135;
 const C = {
-  T: 0x2f5ea8, Td: 0x1f4080, Tl: 0x4a7cc8,                                  // navy (was teal robe)
-  S: 0xe4cfa8, Sd: 0xa89468, Sl: 0xf6ead0,                                  // ivory plate (was engraved silver)
-  L: 0x55535f, Ld: 0x3c3a46, U: 0x4c4a57, pants: 0x676573, pantsD: 0x4c4a57, // dark frame (was leather / trousers)
-  skin: 0x3c3a46, skinD: 0x2a2830, skinH: 0x4e4c58, lip: 0x2a2830, eye: 0x160f12, iris: 0x4a2e22, scl: 0xe8e0d8,
+  T: 0x2450a0, Td: 0x17356e, Tl: 0x3b6cc4,                                  // deep navy
+  S: 0xe9d8b6, Sd: 0xb09d74, Sl: 0xfbf1d8,                                  // warm ivory plate
+  L: 0x5a596a, Ld: 0x403f4e, U: 0x4a4958, pants: 0x6a6980, pantsD: 0x4a4958, // graphite frame (contrast: the ivory pops)
+  skin: 0x3a3944, skinD: 0x24232b, skinH: 0x4a4956, lip: 0x24232b, eye: 0x160f12, iris: 0x4a2e22, scl: 0xe8e0d8,
   hair: 0x221a18, hairH: 0x3e302a,
-  gem: 0xff9a28, gemL: 0xffd070,                                            // orange power light (was blue gem)
-  shaft: 0x2a2c34, shaftH: 0x3c3e48, band: 0xe4cfa8, gold: 0xdcd0b0,
-  blue: 0xff9a28, blueH: 0xffd070, blueD: 0xc86a10,
+  gem: 0xff8c1a, gemL: 0xffc850,                                            // orange power light
+  shaft: 0x2a2c34, shaftH: 0x3c3e48, band: 0xe9d8b6, gold: 0xdcd0b0,
+  blue: 0xff8c1a, blueH: 0xffc850, blueD: 0xc86a10,
 };
 // the robe cloth is now the suit's dark under-frame (sleeves, waist, chest sides); `navy` is the clean tabard cloth
 const teal = (x, y) => (md(y, 5) === 0 ? C.Ld : C.U);                     // dark frame: clean horizontal panel seams (no speckle)
@@ -78,13 +78,13 @@ function limbs(P_) {
   for (const [s, sx] of [['R', -1], ['L', 1]]) {
     P_['upperArm' + s] = [B([-5, -24, -5], [5, 2, 5], teal), B([-6, -24, -6], [6, -20, 6], C.Td),
       P(sx > 0 ? [5, -23, -1] : [-6, -23, -1], sx > 0 ? [6, -21, 1] : [-5, -21, 1], C.gem)];          // elbow bearing light
-    P_['foreArm' + s] = [...bracer(C.T, [C.S, C.Sd, C.Sl]), P([-1, -14, 5], [1, -10, 6], C.gem)];       // gauntlet power slot
+    P_['foreArm' + s] = [...bracer(C.T, [C.S, C.Sd, C.Sl]), P([-2, -15, 5], [2, -9, 6], C.gem)];       // gauntlet power slot
     P_['hand' + s] = glove(sx, C.L, C.Ld);
     // grey trousers under silver tassets that flare over the front and outside of the thigh
     P_['thigh' + s] = [
       B([-7, -36, -7], [7, 2, 7], (x, y) => (md(y, 6) === 0 ? C.pantsD : C.pants)),
       ...lamellar([-6, -16, -9], [10, 4, 9], { base: C.S, rowH: 5, pw: 40, trim: C.T }).map((b) => mirX(b, sx)),   // stacked hip plates (was scales)
-      mirX(P([10, -6, -2], [11, -4, 3], C.gem), sx),                                                     // tasset running light
+      mirX(P([10, -8, -3], [11, -3, 4], C.gem), sx),                                                     // tasset running light
     ];
     // greave with an arrow motif, diamond knee guard
     P_['shin' + s] = [
@@ -95,7 +95,7 @@ function limbs(P_) {
       B([-6, -5, 3], [6, 7, 9], (x, y) => { const u = Math.abs(x + 0.5), v = Math.abs(y - 0.5), d = Math.max(u, v, (u + v) * 0.74);
         return d > 6 ? null : d > 4.8 ? C.Sl : d > 2.4 ? C.T : d > 1.2 ? C.gem : C.gemL; }),
     ];
-    P_['foot' + s] = bootFoot(C.Sd, shade(C.Sd, 0.7), C.Ld, { trim: C.S });
+    P_['foot' + s] = [...bootFoot(C.S, C.Sd, C.Ld, { trim: C.T }), mirX(P([5, -4, 0], [7, -2, 4], C.gem), sx), mirX(P([-6, -3, 2], [-5, 0, 10], C.T), sx)];   // ivory boot, navy trim, ankle light
   }
   return P_;
 }
@@ -120,18 +120,23 @@ function head() {
     const dx = Math.min(x - a[0], b[0] - 1 - x), dz = Math.min(z - a[2], b[2] - 1 - z);
     return dx + dz < r ? null : f(x, y, z);
   });
-  const disc = (x0, x1) => B([x0, 3, -4], [x1, 11, 4], (x, y, z) => {                // octagonal ear disc, glowing core
+  const disc = (x0, x1) => B([x0, 2, -5], [x1, 12, 5], (x, y, z) => {                // bigger octagonal ear disc, glowing core
     const u = Math.abs(y - 7 + 0.5), v = Math.abs(z + 0.5), d = Math.max(u, v, (u + v) * 0.74);
-    return d > 4 ? null : d > 3 ? C.Ld : d > 1.8 ? C.L : C.gem;
+    return d > 5 ? null : d > 4.2 ? C.Ld : d > 3 ? C.L : d > 1.6 ? C.gem : C.gemL;
   });
   return [
     round([-7, 3, -7], [8, 14, 7], 3), round([-6, 14, -6], [7, 17, 5], 3),         // rounded dome
     round([-6, -1, -4], [7, 5, 7], 2),                                              // jaw guard
     B([-5, -1, 6], [6, 6, 8], C.U),                                                 // dark lower face
-    B([-6, 5, 5], [7, 10, 9], C.Ld), B([-5, 6, 8], [6, 9, 10], C.gem), B([-4, 7, 9], [5, 8, 10], C.gemL),   // visor recess + glowing visor
-    round([-7, 10, 4], [8, 12, 9], 1),                                              // brow
-    B([-2, 14, -6], [3, 18, 7], C.T), B([-1, 17, -5], [2, 19, 6], C.Tl),            // navy crest
-    disc(8, 10), disc(-9, -7),
+    ...[1, 3].map((y) => P([-4, y, 7], [5, y + 1, 8], C.Ld)),                       // chin vents
+    B([-7, 5, 4], [8, 10, 9], C.Ld),                                                // visor recess wraps the sides
+    B([-6, 6, 8], [7, 9, 10], C.gem), B([-5, 7, 9], [6, 8, 10], C.gemL),            // wide glowing visor
+    B([-8, 6, 5], [-6, 9, 8], C.gem), B([7, 6, 5], [9, 9, 8], C.gem),               // visor wraps round to the cheeks
+    round([-8, 10, 3], [9, 13, 9], 1), P([-6, 12, 8], [7, 13, 10], C.T),           // brow plate with a navy edge
+    B([-3, 14, -6], [4, 17, 7], C.T),                                               // navy crest: stepped ridges
+    ...[-5, -2, 1, 4].map((z) => B([-2, 17, z], [3, 19, z + 2], C.Tl)),
+    B([-1, 6, -8], [2, 13, -7], C.gem),                                             // rear exhaust slit
+    disc(8, 11), disc(-10, -7),
   ];
 }
 
@@ -230,7 +235,7 @@ export const VANGUARD_RESKIN = {
   sub: 'BUILT TO HOLD THE LINE', copy: 'HOLD THE<br>LINE', tagline: 'Break the machine assault. Protect the people behind you.',
   cut: { sub: 'VANGUARD OVERDRIVE', seal: 'OVERDRIVE' },
   lines: { open: ['EXO-01 deployed.', 'The evacuation is behind us. Hold the line.'], musou: ['OVERDRIVE', 'Overdrive engaged.'] },
-  face: FACE, pal: PAL, glow: 0.8, matColor: 0.9, fill: 0.3, rim: 0.4,
+  face: FACE, pal: PAL, glow: 1.1, matColor: 0.9, fill: 0.3, rim: 0.4,
   build: () => ({ parts: limbs(torso()), head: head(), hv: HV, bv: FV, pauldrons: pauldronBoxes, weapon: weaponGeo() }),
   chains() {
     const out = [];
