@@ -14,7 +14,7 @@ import { buildFoundry } from './foundry.js';
 import { buildCity, createCityEnv } from './city.js';
 import { createFoundryEnv } from './foundry.js';
 
-export const ARENA_RADIUS = 46;
+export const ARENA_RADIUS = 46;          // sim clamps hero/crowd inside this
 // sun shadow: a ±24 m box around the focus at 4096² ≈ 1.2 cm texels, fine enough for the suit's plates to shadow each
 // other (armour overlap is most of the art target's form). ?fx=low drops to 2048² over ±28 m.
 const LOW_FX = new URLSearchParams(location.search).get('fx') === 'low';
@@ -24,7 +24,7 @@ export const SHADOW = LOW_FX ? { half: 28, res: 2048, lead: { x: 0, z: 0 } } : {
 export function leadShadow(camera, k = 0.5) {
   const e = camera.matrixWorld.elements, fx = -e[8], fz = -e[10], l = Math.hypot(fx, fz) || 1;
   SHADOW.lead.x = fx / l * SHADOW.half * k; SHADOW.lead.z = fz / l * SHADOW.half * k;
-}          // sim clamps hero/crowd inside this
+}
 // castle wall face (sim clamps, minimap and the castle set): far enough back that its skyline (wall top, towers, sun
 // gap) fits under the gameplay frame's top edge
 export const WALL_Z = 100;

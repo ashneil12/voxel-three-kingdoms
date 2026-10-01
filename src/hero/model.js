@@ -219,13 +219,9 @@ export function createHeroModel(rig, def) {
     const odd = !built.bv && /foreArm|thigh|shin/.test(joint);       // odd-width parts: centre them
     add(rig.joints[joint], vox(boxes, bv, { off: odd ? [-0.5, 0, -0.5] : [0, 0, 0], jitter: built.bv ? 0.035 : 0.05 }), joint);
   }
-  let headMat = mkBody(built.hv || HV);
-  if (built.headLook) {
-    const look = built.headLook;
-    headMat = voxelSurface(heroLook(headMat.clone(), look.fill, look.rim, look.glow), { vox: built.hv || HV });
-    headMat.color.setRGB(look.matColor, look.matColor, look.matColor);
-    headMat.roughness = look.roughness;
-  }
+  // the head has its own voxel size (plate noise scale) and, optionally, its own look (helmet fill/rim/glow/albedo)
+  const look = built.headLook, headMat = mkBody(built.hv || HV, ...(look ? [look.fill, look.rim, look.glow ?? 0] : []));
+  if (look) { headMat.color.setRGB(look.matColor, look.matColor, look.matColor); headMat.roughness = look.roughness; }
   add(rig.joints.head, vox(built.head, built.hv || HV, { off: built.headOff || [-0.5, 0, 0], jitter: 0.04 }), 'head', headMat);   // hv: finer head voxels for detailed faces
   // pauldrons ride on a helper under each shoulder; secondary.js turns it halfway with the upper arm
   if (built.pauldrons) for (const [s, sx] of [['R', -1], ['L', 1]]) {
