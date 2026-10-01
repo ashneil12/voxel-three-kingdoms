@@ -1,4 +1,4 @@
-// VANGUARD (EXO-01) as a RESKIN of Zhao Yun's suit: the original officer's body, proportions, rig, spear moveset and clips untouched —
+// VANGUARD (EXO-01), grown from a reskin of Zhao Yun's suit: the original officer's body, proportions, rig, spear moveset and clips untouched —
 // only the surface changes. Silver plate -> ivory plate, teal robe -> navy, brown leather / grey trousers -> dark frame, gems and tassels ->
 // orange power lights, the face and hair -> a visored helmet with a navy crest, the robe tail and apron -> navy tabards, the dragon spear -> a
 // power lance. Geometry (parts, pauldrons, tassets, greaves, boots, chains) is the original's.
@@ -19,8 +19,8 @@ const C = {
   blue: 0xff9a28, blueH: 0xffd070, blueD: 0xc86a10,
 };
 // the robe cloth is now the suit's dark under-frame (sleeves, waist, chest sides); `navy` is the clean tabard cloth
-const teal = (x, y, z) => (md(x * 2 + y + z, 16) === 0 && hash01(x, y, z) < 0.5 ? C.pants : md(x + z * 3, 11) === 0 ? C.Ld : C.U);
-const navy = (x, y, z) => (md(x * 2 + y + z, 16) === 0 && hash01(x, y, z) < 0.3 ? C.Tl : C.T);
+const teal = (x, y) => (md(y, 5) === 0 ? C.Ld : C.U);                     // dark frame: clean horizontal panel seams (no speckle)
+const navy = (x, y) => (md(y, 6) === 0 ? C.Td : C.T);                     // tabard cloth: clean, faint fold lines
 // silver with a symmetric engraved cloud-scroll: thin dark grooves mirrored about the centre line, soft highlights
 const silver = (x, y, z) => (md(x * 5 + y * 3 + z * 7, 23) === 0 ? C.Sl : C.S);   // plain plate, a few glints; structure comes from the parts
 
@@ -30,13 +30,15 @@ function torso() {
   P_.hips = [
     B([-12, -10, -8], [12, 6, 8], C.U),
     B([-14, -12, -10], [14, -2, 10], teal),
-    B([-15, -2, -11], [15, 6, 11], (x, y) => (y === -2 || y === 5 ? C.Ld : C.L)),
+    B([-15, -2, -11], [15, 6, 11], (x, y, z) => (y === -2 || y === 5 ? C.Ld : md(x, 5) === 0 ? C.Ld : C.L)),
+    ...[1, -1].map((sx) => P(sx > 0 ? [14, 1, -2] : [-15, 1, -2], sx > 0 ? [15, 3, 2] : [-14, 3, 2], C.gem)),
     B([-4, -2, 11], [4, 6, 13], C.S), B([-3, -1, 13], [3, 5, 14], C.Sl), P([-1, 1, 13], [1, 3, 14], C.gem),   // buckle
   ];
   P_.spine = [
     B([-10, -6, -8], [10, 16, 8], C.U),
     B([-12, -4, -10], [12, 16, 10], teal),
-    ...lamellar([-10, -2, 10], [10, 14, 12], { base: C.S, rowH: 3, pw: 6, lipX: false, lipZ: false }),   // belly plates
+    ...lamellar([-10, -2, 10], [10, 14, 12], { base: C.S, rowH: 4, pw: 40, lipX: false, lipZ: false }),   // belly: stacked ab plates (was staggered scales)
+    B([-1, -2, 11], [1, 14, 13], (x, y) => (y === 3 || y === 9 ? C.gem : C.Ld)),
   ];
   // chest: teal robe, a sculpted silver breastplate (two pectoral plates, centre ridge, scroll engraving, blue gem),
   // silver back plate, high teal collar
@@ -51,13 +53,21 @@ function torso() {
       P([a + 1, 16, 14], [b - 1, 17, 15], C.Sd), P([a + 1, 7, 14], [b - 1, 8, 15], C.Sd),
     ]),
     B([-1, 2, 13], [1, 18, 16], C.Sl),
-    // teal cloud-scroll inlay on each pectoral (mirrored) and the blue gem at the centre
-    ...[1, -1].flatMap((sx) => [[3, 11], [4, 12], [5, 13], [6, 13], [7, 12], [7, 11], [6, 10], [5, 10], [8, 10], [9, 11]].map(([x, y]) =>
-      P(sx > 0 ? [x, y, 14] : [-x - 1, y, 14], sx > 0 ? [x + 1, y + 1, 15] : [-x, y + 1, 15], C.Tl))),
-    B([-2, 10, 16], [2, 14, 17], C.Sl), P([-1, 11, 16], [1, 13, 17], C.gem),
+    // (was a cloud-scroll inlay) a navy chevron on each pectoral, stepping down toward the centre — the suit's mark
+    ...[1, -1].flatMap((sx) => [[2, 9], [3, 10], [4, 11], [5, 12], [6, 13], [7, 14], [8, 15], [9, 15], [10, 15]].map(([x, y]) =>
+      P(sx > 0 ? [x, y, 14] : [-x - 1, y, 14], sx > 0 ? [x + 1, y + 2, 15] : [-x, y + 2, 15], C.T))),
+    // (was the blue gem) the reactor: ivory housing, orange ring, hot core
+    B([-3, 9, 16], [3, 15, 17], C.Sl), P([-2, 10, 16], [2, 14, 17], C.gem), P([-1, 11, 16], [1, 13, 17], C.gemL),
     P([-13, 0, 12], [13, 1, 13], C.Sd),
     B([-12, 2, -14], [12, 18, -12], silver),
-    B([-8, 16, -8], [8, 23, 8], teal), P([-8, 22, -8], [8, 23, 8], C.S),   // high collar with a silver rim
+    // power pack (new): dark housing with ivory side cheeks, navy top plate, twin orange exhaust vents and a status light
+    B([-7, 3, -18], [7, 16, -14], (x, y) => (md(y, 3) === 0 ? C.Ld : C.L)),
+    B([-9, 4, -17], [-7, 15, -14], silver), B([7, 4, -17], [9, 15, -14], silver),
+    B([-7, 16, -17], [7, 18, -13], C.T),
+    ...[-5, 2].map((x) => B([x, 5, -19], [x + 3, 12, -18], (xx, y) => (y === 5 || y === 11 ? C.Ld : y >= 8 ? C.gem : C.gemL))),
+    P([-1, 14, -18], [1, 15, -17], C.gem),
+    B([-8, 16, -8], [8, 23, 8], (x, y) => (md(y, 2) === 0 ? C.Ld : C.L)), P([-8, 22, -8], [8, 23, 8], C.S),   // armoured neck seal (was a high cloth collar)
+    P([-8, 18, 7], [-6, 20, 8], C.gem), P([6, 18, 7], [8, 20, 8], C.gem),
     B([-6, 16, -6], [6, 26, 6], -1),
   ];
   P_.neck = [B([-4, -2, -4], [4, 6, 4], C.skinD), P([-4, 2, 3], [4, 6, 4], C.skin)];
@@ -66,20 +76,24 @@ function torso() {
 
 function limbs(P_) {
   for (const [s, sx] of [['R', -1], ['L', 1]]) {
-    P_['upperArm' + s] = [B([-5, -24, -5], [5, 2, 5], teal), B([-6, -24, -6], [6, -20, 6], C.Td)];
-    P_['foreArm' + s] = bracer(C.T, [C.S, C.Sd, C.Sl]);
+    P_['upperArm' + s] = [B([-5, -24, -5], [5, 2, 5], teal), B([-6, -24, -6], [6, -20, 6], C.Td),
+      P(sx > 0 ? [5, -23, -1] : [-6, -23, -1], sx > 0 ? [6, -21, 1] : [-5, -21, 1], C.gem)];          // elbow bearing light
+    P_['foreArm' + s] = [...bracer(C.T, [C.S, C.Sd, C.Sl]), P([-1, -14, 5], [1, -10, 6], C.gem)];       // gauntlet power slot
     P_['hand' + s] = glove(sx, C.L, C.Ld);
     // grey trousers under silver tassets that flare over the front and outside of the thigh
     P_['thigh' + s] = [
       B([-7, -36, -7], [7, 2, 7], (x, y) => (md(y, 6) === 0 ? C.pantsD : C.pants)),
-      ...lamellar([-6, -16, -9], [10, 4, 9], { base: C.S, rowH: 4, pw: 6, trim: C.T }).map((b) => mirX(b, sx)),
+      ...lamellar([-6, -16, -9], [10, 4, 9], { base: C.S, rowH: 5, pw: 40, trim: C.T }).map((b) => mirX(b, sx)),   // stacked hip plates (was scales)
+      mirX(P([10, -6, -2], [11, -4, 3], C.gem), sx),                                                     // tasset running light
     ];
     // greave with an arrow motif, diamond knee guard
     P_['shin' + s] = [
       B([-5, -34, -5], [5, 0, 5], C.pantsD),
-      B([-6, -32, 0], [6, -5, 7], (x, y) => (Math.abs(x + 0.5) < 1 + (-5 - y) * 0.12 && y > -22 && y < -8 ? C.T : silver(x, y, 7))),
+      B([-6, -32, 0], [6, -5, 7], (x, y) => (Math.abs(x + 0.5) < 1 && y >= -11 && y < -8 ? C.gem : Math.abs(x + 0.5) < 1 + (-5 - y) * 0.12 && y > -22 && y < -8 ? C.T : silver(x, y, 7))),
       B([-6, -34, -6], [6, -31, 6], C.S),
-      B([-6, -5, 3], [6, 7, 9], (x, y) => (Math.abs(x + 0.5) + Math.abs(y - 1) < 7 ? (Math.abs(x + 0.5) + Math.abs(y - 1) > 5 ? C.Sl : silver(x, y, 9)) : null)),
+      // (was a diamond knee guard) octagonal knee bearing: ivory rim, navy ring, glowing core
+      B([-6, -5, 3], [6, 7, 9], (x, y) => { const u = Math.abs(x + 0.5), v = Math.abs(y - 0.5), d = Math.max(u, v, (u + v) * 0.74);
+        return d > 6 ? null : d > 4.8 ? C.Sl : d > 2.4 ? C.T : d > 1.2 ? C.gem : C.gemL; }),
     ];
     P_['foot' + s] = bootFoot(C.Sd, shade(C.Sd, 0.7), C.Ld, { trim: C.S });
   }
@@ -92,7 +106,9 @@ function pauldronBoxes(sx) {
     B([-6, 4, -10], [6, 8, 10], silver),
     B([-2, 0, -12], [9, 5, 12], silver), P([-2, 0, -12], [9, 1, 12], C.Sd),
     B([1, -6, -12], [12, 0, 12], silver), P([1, -6, -12], [12, -5, 12], C.T), P([11, -6, -12], [12, 0, 12], C.Sl),
-    B([5, 6, -9], [9, 10, 9], C.S), B([8, 9, -8], [11, 13, 8], C.Sl), B([10, 12, -6], [12, 14, 6], C.S),   // swept wing
+    P([-6, 7, -10], [6, 8, 10], C.T),                                                                // navy cap on the top tier
+    B([5, 6, -9], [9, 10, 9], C.S), B([8, 9, -8], [11, 13, 8], C.Sl), B([10, 12, -6], [12, 14, 6], C.S),   // swept fin
+    P([11, 12, -6], [12, 14, 6], C.T), P([11, 12, -1], [12, 14, 1], C.gem),                          // fin edge: navy strip, light
   ];
   return b.map((bx) => mirX(bx, sx));
 }
@@ -129,19 +145,15 @@ function spearGeo() {
     B([-2, -2, -38], [2, 2, -35], C.S),
     B([-1, -1, -41], [1, 1, -38], C.S),
   ], sv, { jitter: 0.04, ao: 0.3 });
-  // gold dragon-head collar at 0.012 (z 1.44 … 1.62): ring, head, jaws, swept-back horns, teal eyes, whiskers
+  // energy collar at 0.012 (z 1.4 … 1.62; was the gold dragon head): ivory rings, navy fins, glowing cells, a hot ring under the blade
   const cv = 0.012;
   const collar = vox([
-    B([-3, -3, 120], [3, 3, 123], C.gold),
-    B([-4, -3, 123], [4, 4, 130], (x, y, z) => ((z + y) % 3 === 0 ? shade(C.gold, 0.8) : C.gold)),
-    B([-3, 1, 130], [3, 4, 135], C.gold),                            // upper jaw
-    B([-3, -3, 130], [3, -1, 133], shade(C.gold, 0.85)),             // lower jaw
-    B([-3, 4, 121], [-1, 6, 126], C.gold), B([1, 4, 121], [3, 6, 126], C.gold),
-    B([-3, 5, 117], [-1, 7, 121], shade(C.gold, 0.9)), B([1, 5, 117], [3, 7, 121], shade(C.gold, 0.9)),
-    B([-5, 1, 127], [-4, 3, 129], C.Tl), B([4, 1, 127], [5, 3, 129], C.Tl),
-    B([-6, 0, 131], [-3, 1, 132], C.gold), B([3, 0, 131], [6, 1, 132], C.gold),
-    // bushy blue tassel root ring under the collar
-    B([-4, -4, 116], [4, 4, 120], (x, y, z) => (hash01(x, y, z) < 0.25 ? null : hash01(y, z, x) < 0.3 ? C.blueH : C.blue)),
+    B([-3, -3, 116], [3, 3, 135], C.S),
+    B([-4, -4, 118], [4, 4, 120], C.Sl), B([-4, -4, 131], [4, 4, 133], C.Sl),
+    B([-3, -3, 121], [3, 3, 130], (x, y, z) => (Math.abs(x + 0.5) < 2 && Math.abs(y + 0.5) < 2 ? C.gemL : md(z, 3) === 0 ? C.Ld : C.gem)),
+    B([-7, -1, 122], [7, 1, 131], (x) => (Math.abs(x + 0.5) < 3.5 ? null : C.T)),
+    B([-1, -7, 123], [1, 7, 130], (x, y) => (Math.abs(y + 0.5) < 3.5 ? null : C.Td)),
+    B([-3, -3, 133], [3, 3, 135], C.gem),
   ], cv, { jitter: 0.05, ao: 0.35 });
   return [shaft, collar];
 }
@@ -160,7 +172,7 @@ function bladeGeo() {
 
 function weaponGeo() {
   const [shaft, collar] = spearGeo();
-  return [{ geo: shaft, mat: 'body' }, { geo: collar, mat: 'metal' }, { geo: bladeGeo(), mat: 'blade' }];
+  return [{ geo: shaft, mat: 'body' }, { geo: collar, mat: 'body' }, { geo: bladeGeo(), mat: 'blade' }];
 }
 
 // ---------------------------------------------------------------- spring-chain segments (local -Y along the chain)
