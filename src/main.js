@@ -1,12 +1,12 @@
 // Boot + fixed 60 Hz loop. Sim modules (hero, combat, crowd, musou, camera control yaw) advance only in step();
 // render-side modules read sim state in render() and never write it.
 import * as THREE from 'three';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { stabilizeEmissiveEdges } from './lighting/materials.js';
 import { rng, vrng } from './core/rng.js';
 import { emit } from './core/events.js';
 import { createInput } from './core/input.js';
 import { createPost } from './post/post.js';
-import { createWorld } from './world/world.js';
+import { createWorld, createStageEnv, leadShadow, SHADOW } from './world/world.js';
 import { createHero, createHeroView, updateAnim } from './hero/hero.js';
 import { MOVES } from './hero/moves.js';
 import { createCrowd, CROWD } from './crowd/crowd.js';
@@ -16,6 +16,7 @@ import { createMusou } from './musou/musou.js';
 import { createMusouView } from './musou/view.js';
 import { createCamSim, createCameraRig } from './camera/camera.js';
 import { createVfx } from './vfx/vfx.js';
+import { createCombatLights } from './vfx/lights.js';
 import { createSignatureFx } from './vfx/signature.js';
 import { createChargeFx } from './vfx/charge.js';
 import { createHud, paintPortrait } from './ui/hud.js';
@@ -27,6 +28,9 @@ import { createBossView } from './boss/view.js';
 import { createAudio } from './audio/audio.js';
 import { createPickups } from './ui/pickups.js';
 import { on } from './core/events.js';
+import { createImpact } from './vfx/impact.js';
+import { createQualityGovernor } from './core/quality.js';
+import { P as POST_P } from './post/post.js';
 
 const params = new URLSearchParams(location.search);
 const ENEMIES = Math.max(0, Math.min(2000, params.get('enemies') ? Number(params.get('enemies')) | 0 : DEMO ? 72 : 300));
@@ -39,16 +43,18 @@ if (DEMO) {
 }
 
 const canvas = document.getElementById('c');
-let vw = innerWidth, vh = innerHeight;
+let vw = innerWidth, vh = innerHeight, renderScale = 1;   // renderScale < 1 only when the quality governor drops to tier 3
 
 const post = createPost({ canvas, width: vw, height: vh });
 const scene = new THREE.Scene();
 const world = createWorld(scene);
+post.configureWorld?.(world, scene);
+stabilizeEmissiveEdges(scene);   // furnace/gate glow: pow() of a negative base at MSAA edge samples is NaN
 if (DEMO) {
-  const room = new RoomEnvironment(), pmrem = new THREE.PMREMGenerator(post.renderer);
-  scene.environment = pmrem.fromScene(room, .04).texture;
-  scene.environmentIntensity = .65;
-  room.dispose(); pmrem.dispose();
+  const pmrem = new THREE.PMREMGenerator(post.renderer), env = createStageEnv();
+  scene.environment = pmrem.fromScene(env.scene, .04).texture;
+  scene.environmentIntensity = env.intensity;
+  pmrem.dispose();
 }
 
 // ---- sim
@@ -64,16 +70,21 @@ game.boss = bossCfg ? createBoss(game, HEROES.find((h) => h.id === bossCfg.id) |
 if (DEMO) on('boss:enter', () => game.crowd.reset());
 const input = createInput();
 const pickups = createPickups(game, scene);   // meat buns: heal on pickup (ui/pickups.js)
-if (params.has('debug') || params.has('rec')) Object.assign(window, { game, scene });   // debug: inspect sim state from the console
+if (params.has('debug') || params.has('rec')) Object.assign(window, { game, scene, post, world });   // debug: inspect sim state from the console
 
 // ---- render side
 const heroView = createHeroView(scene, game.hero);
 const crowdView = createCrowdView(scene, game);
 const camRig = createCameraRig(game, vw, vh);
 const vfx = createVfx(scene, game, world);
+const combatLights = createCombatLights(scene, game);   // pooled point lights fired by hits / KOs / parries / Overdrive
+const impact = createImpact(scene, game);                // hot sparks that bounce + scorch marks (src/vfx/impact.js)
+const quality = createQualityGovernor({ P: POST_P, sun: world.sun, shadow: SHADOW, setScale: (k) => { renderScale = k; post.setSize(Math.round(vw * k), Math.round(vh * k)); } });
+if (params.has('debug')) window.quality = quality;
 const sigFx = createSignatureFx(scene, game, vfx, camRig.camera);   // per-hero projectiles, beams, roar (render-only)
 const chargeFx = HERO.anim === 'fan' ? null : createChargeFx(scene, game, camRig.camera, heroView);   // charge-hold glow at the blade
 const bossView = game.boss ? createBossView(scene, game, vfx, { bossIntro: bossCfg.intro }) : null;
+if (params.has('debug')) window.camRig = camRig;
 const musouView = createMusouView(scene, game, camRig.camera);   // musou part: grade, dragon, cut-in (render-only)
 // hud part: camera passed so officer name/HP tags can be projected over their heads (read-only)
 const hud = createHud(document.getElementById('hud'), game, { camera: camRig.camera });
@@ -123,15 +134,18 @@ function render() {
   heroView.update(Math.min(dt, 0.1));
   crowdView.update(dt);
   vfx.update(dt);
+  combatLights.update();
+  impact.update();
   sigFx.update(dt);
   pickups.update();
   if (chargeFx) chargeFx.update(dt);
   if (bossView) bossView.update(dt);
   camRig.update(dt);
+  leadShadow(camRig.camera);
   world.update(dt, camRig.focus);
   musouView.update(dt);
   post.flash(vfx.flash);
-  post.render(scene, camRig.camera, game.frame / 60, camRig.focus, world.sunDir);   // post-fx: DoF focus + haze sun
+  post.render(scene, camRig.camera, game.frame / 60, camRig.focus, world.sunDir, world.sun);   // post-fx: DoF focus + haze sun
   hud.update();
 }
 
@@ -185,7 +199,7 @@ function start() {
 
 addEventListener('resize', () => {
   vw = innerWidth; vh = innerHeight;
-  post.setSize(vw, vh);
+  post.setSize(Math.round(vw * renderScale), Math.round(vh * renderScale));
   camRig.resize(vw, vh);
   render();
 });
@@ -282,7 +296,8 @@ const frame = (now) => {
   // clamp at 0 too: the first rAF timestamp can precede the performance.now() taken at module init
   acc += Math.min(0.1, Math.max(0, (now - last) / 1000));
   last = now;
-  if (paused) { acc = 0; input.sample(); return; }
+  if (paused) { acc = 0; input.sample(); quality.reset(); return; }
+  if (!PREVIEW) quality.tick(now);
   let n = 0;
   while (acc >= 1 / 60 && n < 4) { step(); acc -= 1 / 60; n++; }
   if (n === 4) acc = 0;

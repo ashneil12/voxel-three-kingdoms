@@ -235,7 +235,7 @@ export const VANGUARD_RESKIN = {
   sub: 'BUILT TO HOLD THE LINE', copy: 'HOLD THE<br>LINE', tagline: 'Break the machine assault. Protect the people behind you.',
   cut: { sub: 'VANGUARD OVERDRIVE', seal: 'OVERDRIVE' },
   lines: { open: ['EXO-01 deployed.', 'The evacuation is behind us. Hold the line.'], musou: ['OVERDRIVE', 'Overdrive engaged.'] },
-  face: FACE, pal: PAL, glow: 1.1, matColor: 0.9, fill: 0.3, rim: 0.4,
+  face: FACE, pal: PAL, glow: 1.1, matColor: 0.76, fill: 0.3, rim: 0.4,
   build: () => ({ parts: limbs(torso()), head: head(), hv: HV, bv: FV, pauldrons: pauldronBoxes, weapon: weaponGeo() }),
   chains() {
     const out = [];

@@ -23,7 +23,9 @@ const params = new URLSearchParams(location.search);
 const VAR = params.get('vanguard');
 const VANGUARD_PICK = VAR === 'sheet' ? VANGUARD_SHEET : VAR === 'block' ? VANGUARD_BLOCK : VAR === 'reskin' ? VANGUARD_RESKIN : VAR === 'sheet' ? VANGUARD_SHEET : VAR === 'ref' ? VANGUARD_REF : VAR === 'authored' ? VANGUARD_AUTHORED : VANGUARD_AUTHORED;
 export const DEMO = !new URLSearchParams(location.search).has('classic');
-export const HEROES = DEMO ? [VANGUARD_PICK, BASTION, BREAKER, APEX, ORACLE, EXOSUIT] : [zhaoyun, guanyu, zhangfei, zhugeliang, lubu];
+// the block concept ships as its own roster card (EXO-01B) beside the reskin, so both can be picked from the menu
+const VANGUARD_BLOCK_CARD = { ...VANGUARD_BLOCK, id: 'vanguard-block', zh: 'EXO-01B', en: 'VANGUARD BLOCK', role: 'BLOCK BUILD' };
+export const HEROES = DEMO ? [VANGUARD_PICK, VANGUARD_BLOCK_CARD, BASTION, BREAKER, APEX, ORACLE, EXOSUIT] : [zhaoyun, guanyu, zhangfei, zhugeliang, lubu];
 const pick = new URLSearchParams(location.search).get('hero');
 export const HERO = HEROES.find((h) => h.id === pick) || HEROES[0];
 if (HERO.rigDim) Object.assign(DIM, HERO.rigDim);       // per-hero body proportions, before any rig is created

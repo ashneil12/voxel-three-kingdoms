@@ -58,8 +58,8 @@ const CLASSIC_STAGES = [
     },
   },
 ];
-export const STAGES = DEMO ? [{
-  id:'foundry', zh:'THE FOUNDRY', en:'FOUNDRY', seal:'01', time:'EVACUATION', look:'night',
+const FOUNDRY = {
+  id:'foundry', set:'foundry', zh:'THE FOUNDRY', en:'FOUNDRY', seal:'01', time:'EVACUATION', look:'foundry',
   intro:['<em>HOLD THE LINE</em>', 'Keep the machines away from the evacuation route'],
   enemy:{ ch:'AI', army:'MACHINE LEGION', en:'Machine', band:0xe65b46, cloth:0x3b454f,
     officers:[['SCOUT','SCOUT'],['BREAKER','BREAKER'],['HUNTER','HUNTER'],['SENTINEL','SENTINEL']] },
@@ -69,8 +69,32 @@ export const STAGES = DEMO ? [{
     skyMid:0x334253, skyTop:0x101d2b, hznSun:0xb47d60, hznAway:0x536478,
     cloudRose:0x78818a, cloudShade:0x333f4a, cloudLit:0xa8b8c3, dustLit:0xb99d83,
     dustShade:0x687b87, apCool:0x7197b0, sunCore:[2.4,1.6,1.2] },
-  light:{ hemi:[0xb6d3e0,0x303744,2.3], sun:[0xffc08f,3.2], rim:[0x75c8e8,0.7], fire:0.4 },
+  // furnace key from the far wall (low: long shadows run toward the camera), cool fill from the camera side
+  light:{ hemi:[0x4a5668,0x1a1410,1.0], sun:[0xffb27a,1.5], rim:[0xa4c4e0,0.8], dir:[0.3,0.5,0.8], rimDir:[-0.55,0.6,-0.55], fire:0.4 },
   lines:{},
-}] : CLASSIC_STAGES;
+};
+// Lighting test beds for the EXO demo: the same machine legion and boss in other environments, so the suit, materials
+// and post can be judged under daylight, golden hour, moonlight and neon. Day / dusk / night reuse the classic outdoor
+// sets (sky, sun, castle, terrain, fires) with their skies and lights; the city is its own night set (world/city.js).
+// demo post caps: bloom only on real lights, small near-field blur, HDR clamp (combat flashes up close stay sparks, not blobs)
+const DEMO_POST = { bloom: 0.45, bloomThreshold: 1.8, bloomRadius: 0.1, nearBlur: 10, hdrClamp: 2.0, aeStrength: 0.5, aeMin: 0.65, aeMax: 1.5,
+  volume: 0.2, volumeDensity: 0.006, volumeHeight: 10, volumeAnisotropy: 0.5 };
+const demoOn = (classic, over) => ({ ...FOUNDRY, look: classic.look, set: classic.set, sky: classic.sky, light: { ...classic.light, ...over.light },
+  ...over, post: { ...classic.post, ...over.post, ...DEMO_POST, aeKey: over.aeKey } });
+const [CHANGBAN, HULAO, CHIBI] = CLASSIC_STAGES;
+const DEMO_STAGES = [
+  FOUNDRY,
+  demoOn(HULAO, { aeKey: 0.13, post: { cloud: 0.4 }, light: { bounce: 0.55 }, id: 'day', zh: 'OPEN GROUND', seal: '02', time: 'MIDDAY', intro: ['<em>HOLD THE PASS</em>', 'Full sun on the mountain pass'] }),
+  demoOn(CHANGBAN, { aeKey: 0.165, post: { cloud: 0.22, cloudWind: [1.4, 0, 0.6] }, light: { bounce: 0.7 }, id: 'dusk', zh: 'GOLDEN HOUR', seal: '03', time: 'DUSK', intro: ['<em>HOLD THE ROAD</em>', 'Low sun over the plain'] }),
+  demoOn(CHIBI, { aeKey: 0.03, post: { ...CHIBI.post, exposure: 1.42 }, id: 'night', zh: 'RIVER NIGHT', seal: '04', time: 'NIGHT', intro: ['<em>HOLD THE RIVER</em>', 'Moonlight and fire on the water'] }),
+  { ...FOUNDRY, id: 'city', set: 'city', zh: 'NEON CITY', seal: '05', time: 'NIGHT', look: 'city',
+    intro: ['<em>HOLD THE STREET</em>', 'Rain-soaked downtown under neon'],
+    sky: { ...FOUNDRY.sky, haze: 0x161a2a, hazeWarm: 0x2a2140, glow: 0xff5ab4, skyMid: 0x1a1d33, skyTop: 0x07081a,
+      hznSun: 0x6a3a6a, hznAway: 0x26405a, sunCore: [1.6, 1.4, 2.2] },
+    // cool moon key from high behind, magenta/cyan neon fills, low ambient: the street lamps and signs do the work
+    light: { hemi: [0x34406a, 0x120c14, 0.8], sun: [0x9ab0ff, 0.9], rim: [0xff4fae, 0.9], dir: [-0.35, 0.75, 0.55], rimDir: [0.6, 0.4, -0.6], fire: 0 },
+  },
+];
+export const STAGES = DEMO ? DEMO_STAGES : CLASSIC_STAGES;
 const pick = new URLSearchParams(location.search).get('stage');
 export const STAGE = STAGES.find((s) => s.id === pick) || STAGES[0];
