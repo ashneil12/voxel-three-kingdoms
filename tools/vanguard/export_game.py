@@ -15,7 +15,7 @@ PIV = {"hips": (0, 38, 0), "spine": (0, 40, 0), "chest": (0, 44, 0), "neck": (0,
 for s, sg in (("L", 1), ("R", -1)):
     PIV.update({f"pauldron{s}": (sg * 17, 55, 0), f"upperArm{s}": (sg * 17, 55, 0), f"foreArm{s}": (sg * 17, 46, 0), f"hand{s}": (sg * 17, 32, 0),
                 f"thigh{s}": (sg * 12, 37, 0), f"shin{s}": (sg * 12, 22, 0), f"foot{s}": (sg * 12, 3, 0)})
-WAIST_PARTS = {"hips_core", "waist_plate", "waist_light", "hip_cube_L", "hip_cube_R"}
+WAIST_PARTS = {"belly_core", "belly_side_L", "belly_side_R", "belly_plate", "hips_core", "waist_plate", "waist_light", "hip_cube_L", "hip_cube_R"}
 
 
 def game_joint(x, y, z, c, j, part):

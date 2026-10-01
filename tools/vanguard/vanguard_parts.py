@@ -47,6 +47,12 @@ def PMj(pid, joint_l, joint_r, box, color, **kw):
 
 # ------------------------------------------------------------------ hips / waist / tabard
 P("hips_core", "hips", (-9, 36, -6, 9, 44, 5), "K", level="macro", role="pelvis", note="black pelvis core")
+# fuller belly (Ash 2026-10-01: "too skinny in the middle"): wider dark midsection with ivory side plates and a front ab plate,
+# exempt from the sheet carve (the sheet's waist is narrow)
+P("belly_core", "hips", (-11.5, 40, -7.5, 11.5, 46, 5.5), "K", note="wider dark midsection")
+P("belly_side_L", "hips", (9.5, 40.5, -6, 12.5, 45.5, 4.5), "I", note="ivory side plate")
+P("belly_side_R", "hips", (-12.5, 40.5, -6, -9.5, 45.5, 4.5), "I", note="ivory side plate")
+P("belly_plate", "hips", (-5, 44.5, 5, 5, 46.5, 6.8), "I", note="ivory ab plate under the chest")
 P("waist_plate", "hips", (-3, 40, 4, 3, 44.5, 6.5), "I", note="ivory belt block, front centre")
 P("waist_light", "hips", (-1, 41.3, 6.5, 1, 43.3, 7.2), "O", level="micro", role="emissive", emissive=True, note="orange belt square")
 for s, sgn in (("L", 1), ("R", -1)):

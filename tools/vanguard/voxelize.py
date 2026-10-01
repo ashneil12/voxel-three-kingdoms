@@ -187,7 +187,8 @@ def main():
     passes = lambda v: fg(front, (v[0], v[1])) and fg(back, (v[0], v[1])) and fg(side, (v[2], v[1]))
     hand_accent = {(x, y, z) for pt, (x0, y0, z0, x1, y1, z1) in boxes if pt['color'] in ('O', 'G') for x in range(int(np.floor(x0)), int(np.ceil(x1))) for y in range(int(np.floor(y0)), int(np.ceil(y1))) for z in range(int(np.floor(z0)), int(np.ceil(z1))) if x >= 0}
     dark_hand = {(x, y, z) for pt, (x0, y0, z0, x1, y1, z1) in boxes if pt['color'] in ('K', 'D') and pt['id'].startswith(('ear', 'neck', 'face', 'visor', 'helmet_back', 'hand', 'finger')) for x in range(int(np.floor(x0)), int(np.ceil(x1))) for y in range(int(np.floor(y0)), int(np.ceil(y1))) for z in range(int(np.floor(z0)), int(np.ceil(z1))) if x >= 0}
-    occ = {v for v in hand_vox if passes(v) or v in hand_accent or (v in dark_hand and fg(side, (v[2], v[1])))}   # black parts read as backdrop in the views, so they are only carved by depth       # authored lights/trim are never carved away
+    belly = {(x, y, z) for pt, (x0, y0, z0, x1, y1, z1) in boxes if pt['id'].startswith('belly') for x in range(int(np.floor(x0)), int(np.ceil(x1))) for y in range(int(np.floor(y0)), int(np.ceil(y1))) for z in range(int(np.floor(z0)), int(np.ceil(z1)))}   # authored wider than the sheet: never carved
+    occ = {v for v in hand_vox if passes(v) or v in belly or v in hand_accent or (v in dark_hand and fg(side, (v[2], v[1])))}   # black parts read as backdrop in the views, so they are only carved by depth       # authored lights/trim are never carved away
     # envelope voxels beyond the authored boxes are only added where the sheet's silhouette needs them (a cell no authored
     # voxel covers in the front/back or side view); everywhere else they would just bury thin authored details
     cov_f = {(x, y) for (x, y, z) in occ}
