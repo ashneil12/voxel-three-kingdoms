@@ -64,10 +64,11 @@ function torso() {
   ];
   // lean abdomen: black core, three dark grey rib plates, ribbed flanks, dark back plates
   P_.spine = [
-    B([-8, -6, -7], [8, 16, 7], C.K),
-    shell([-6, -3, 7], [6, 2, 9], 'D', 1), shell([-7, 2, 7], [7, 7, 9], 'D', 1), shell([-7, 7, 7], [7, 12, 9], 'D', 1),
-    ...[1, -1].map((sx) => B(...mx(sx, [7, -4, -5], [9, 14, 5]), (x, y) => (md(y, 3) === 0 ? C.K : C.D))),
-    shell([-7, -2, -9], [7, 12, -7], 'D', 1),
+    // fuller midsection (Ash 2026-10-01: "too skinny in the middle")
+    B([-10, -6, -8], [10, 16, 8], C.K),
+    shell([-8, -3, 8], [8, 2, 10], 'D', 1), shell([-9, 2, 8], [9, 7, 10], 'D', 1), shell([-9, 7, 8], [9, 12, 10], 'D', 1),
+    ...[1, -1].map((sx) => B(...mx(sx, [9, -4, -6], [11, 14, 6]), (x, y) => (md(y, 3) === 0 ? C.K : C.D))),
+    shell([-9, -2, -10], [9, 12, -8], 'D', 1),
   ];
   // chest: ivory shell and pectoral plates, the layered navy centre plate (wide on top, narrowing down onto the belly)
   // with an orange chevron, high ivory collar blocks; back plate with navy shoulder-blade panels and the power slot
